@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.6
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Janggi", "Janggi\Janggi.csproj", "{8E961DBA-7716-49C2-B14D-15B2D1B9CA65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunnerConsole", "Runner\RunnerConsole.csproj", "{E2534B44-D5AE-46DA-B807-0F6C13A867FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunnerWpf", "RunnerWpf\RunnerWpf.csproj", "{B053AAB1-410A-480C-8815-F6B8CEDC0B21}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8E961DBA-7716-49C2-B14D-15B2D1B9CA65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E961DBA-7716-49C2-B14D-15B2D1B9CA65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E961DBA-7716-49C2-B14D-15B2D1B9CA65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E961DBA-7716-49C2-B14D-15B2D1B9CA65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2534B44-D5AE-46DA-B807-0F6C13A867FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2534B44-D5AE-46DA-B807-0F6C13A867FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2534B44-D5AE-46DA-B807-0F6C13A867FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2534B44-D5AE-46DA-B807-0F6C13A867FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B053AAB1-410A-480C-8815-F6B8CEDC0B21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B053AAB1-410A-480C-8815-F6B8CEDC0B21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B053AAB1-410A-480C-8815-F6B8CEDC0B21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B053AAB1-410A-480C-8815-F6B8CEDC0B21}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
