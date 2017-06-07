@@ -61,16 +61,113 @@ namespace Janggi
 			}
 		}
 
+		public static bool IsMy(Stones stone)
+		{
+			return ((byte)stone & 128) > 0;
+		}
+
+		public static bool IsYo(Stones stone)
+		{
+			return ((byte)stone & 64) > 0;
+		}
+
+		public static bool AreAllies(Stones stone1, Stones stone2)
+		{
+			if (stone1 == Stones.Empty || stone2 == Stones.Empty)
+			{
+				return false;
+			}
+
+			return ((byte)stone1 & 64) == ((byte)stone2 & 64);
+		}
+
+		public static Stones GetStone(Stones[][] board, Pos pos)
+		{
+			return board[pos.Y][pos.X];
+		}
+
 		public static List<Move> GetAllMoves(Stones[][] board, Pos pos)
 		{
 			List<Move> moves = new List<Move>();
-			Stones stone = board[pos.Y][pos.X];
+			Stones stone = GetStone(board, pos);
+			int px = pos.X;
+			int py = pos.Y;
+
+
+			//비어있으면, 비어있지 않고 적이면 추가하고
+			//아군 멱이면 그만
+			bool confirmAndAdd(int x, int y)
+			{
+				if (board[y][x] == Stones.Empty)
+				{
+					moves.Add(new Move(px, py, x, y));
+					return true;
+				}
+				else
+				{
+					if (!AreAllies(board[y][x], stone))
+					{
+						moves.Add(new Move(px, py, x, y));
+					}
+					return false;
+				}
+			}
+
 			if (stone == Stones.Empty)
 			{
-				
+
+			}
+			else if (stone == Stones.MyCha || stone == Stones.YoCha)
+			{
+				for (int y = py - 1; y >= 0; y--)
+				{
+					if (!confirmAndAdd(px, y))
+					{
+						break;
+					}
+				}
+
+				for (int y = py + 1; y < BoardHeight; y++)
+				{
+					if (!confirmAndAdd(px, y))
+					{
+						break;
+					}
+				}
+
+				for (int x = px - 1; px >= 0; px--)
+				{
+					if (!confirmAndAdd(x, py))
+					{
+						break;
+					}
+				}
+
+				for (int x = px + 1; px < BoardWidth; x++)
+				{
+					if (!confirmAndAdd(x, py))
+					{
+						break;
+					}
+				}
+			}
+			else if (stone == Stones.MyPo || stone == Stones.YoPo)
+			{
+				bool 
+				for (int y = py - 1; y >= 0; y--)
+				{
+					if (!confirmAndAdd(px, y))
+					{
+						break;
+					}
+				}
 			}
 
 			return moves;
 		}
+
+
+		
+		
 	}
 }
