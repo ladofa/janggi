@@ -10,7 +10,7 @@ namespace Janggi
 	{
 		public class Node
 		{
-			Stones[][] board;
+			Stone[][] board;
 			float rate;
 			List<Node> children;
 		}

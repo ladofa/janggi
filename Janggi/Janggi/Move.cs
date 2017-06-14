@@ -16,6 +16,24 @@ namespace Janggi
 			X = x;
 			Y = y;
 		}
+
+		public Pos(System.Collections.IEnumerable arr)
+		{
+			var e = arr.GetEnumerator();
+			X = (int)e.Current;
+			e.MoveNext();
+			Y = (int)e.Current;
+		}
+
+		static public Pos operator +(Pos p1, Pos p2)
+		{
+			return new Pos(p1.X + p2.X, p1.Y + p2.Y);
+		}
+
+		static public Pos operator -(Pos p1, Pos p2)
+		{
+			return new Pos(p1.X - p2.X, p1.Y - p2.Y);
+		}
 	}
 
 	public struct Move
