@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Janggi
 {
-    public class Class1
-    {
-    }
+	public static class Global
+	{
+		public static Random Rand = new Random();
+	}
 }

@@ -8,23 +8,25 @@ namespace Janggi
 {
 	public struct Stone
 	{
+		static int[] points = { 0, -20, -30, -50, -70, -130, -30, -10000, 20, 30, 50, 70, 130, 30, 10000 };
+
 		public enum Val : byte
 		{
 			Empty = 0,
-			MyJol = 1 + 128,
-			MySang = 2 + 128,
-			MyMa = 3 + 128,
-			MyPo = 4 + 128,
-			MyCha = 5 + 128,
-			MySa = 6 + 128,
-			MyGoong = 7 + 128,
-			YoJol = 1 + 64,
-			YoSang = 2 + 64,
-			YoMa = 3 + 64,
-			YoPo = 4 + 64,
-			YoCha = 5 + 64,
-			YoSa = 6 + 64,
-			YoGoong = 7 + 64
+			MyJol = 1,
+			MySang = 2,
+			MyMa = 3,
+			MyPo = 4,
+			MyCha = 5,
+			MySa = 6,
+			MyGoong = 7,
+			YoJol = 1 + 7,
+			YoSang = 2 + 7,
+			YoMa = 3 + 7,
+			YoPo = 4 + 7,
+			YoCha = 5 + 7,
+			YoSa = 6 + 7,
+			YoGoong = 7 + 7
 		}
 
 		Val val;
@@ -41,12 +43,12 @@ namespace Janggi
 
 		public bool IsMy
 		{
-			get => (byte)val > 128;
+			get => val != 0 && (byte)val <= 7;
 		}
 
 		public bool IsYo
 		{
-			get => val != 0 && (byte)val < 128;
+			get => (byte)val > 7;
 		}
 
 		public bool IsAlliesWith(Stone stone)
@@ -56,7 +58,7 @@ namespace Janggi
 				return false;
 			}
 
-			return !((byte)val > 128 ^ (byte)stone.val > 128);
+			return !((byte)val > 7 ^ (byte)stone.val > 7);
 		}
 
 		public bool IsCha
@@ -107,14 +109,22 @@ namespace Janggi
 				{
 					return new Stone();
 				}
-				else if ((byte)val > 128)
+				else if ((byte)val > 7)
 				{
-					return new Stone(val - 64);
+					return new Stone(val - 7);
 				}
 				else
 				{
-					return new Stone(val + 64);
+					return new Stone(val + 7);
 				}
+			}
+		}
+
+		public int Point
+		{
+			get
+			{
+				return points[(byte)val];
 			}
 		}
 	}

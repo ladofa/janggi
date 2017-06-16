@@ -9,13 +9,45 @@ namespace Janggi
 	public class Board
 	{
 		Stone[,] stones;
+		bool isMyTurn;
+		public int Point;
+
+
+		public bool IsMyTurn
+		{
+			get => isMyTurn;
+		}
 
 		public static int Width = 9;
 		public static int Height = 10;
 
 		public Board()
 		{
-			SetUp();
+			stones = new Stone[Height, Width];
+			for (int i = 0; i < Height; i++)
+			{
+				for (int k = 0; k < Width; k++)
+				{
+					stones[i, k] = new Stone();
+				}
+			}
+
+			Point = 0;
+		}
+
+		public Board(Board board)
+		{
+			stones = new Stone[Height, Width];
+			for (int i = 0; i < Height; i++)
+			{
+				for (int k = 0; k < Width; k++)
+				{
+					stones[i, k] = board.stones[i, k];
+				}
+			}
+
+			Point = board.Point;
+			isMyTurn = board.isMyTurn;
 		}
 
 		public enum Tables
@@ -26,7 +58,12 @@ namespace Janggi
 			Right
 		}
 
-		public void SetUp()
+		public Board(Tables myTable, Tables yoTable, bool myFirst)
+		{
+			SetUp(myTable, yoTable, myFirst);
+		}
+
+		public void SetUp(Tables myTable, Tables yoTable, bool myfirst)
 		{
 			stones = new Stone[Height, Width];
 			for (int i = 0; i < Height; i++)
@@ -36,93 +73,100 @@ namespace Janggi
 					stones[i, k] = new Stone();
 				}
 			}
-		}
 
-		public void SetUp(Tables myTable, Tables yoTable)
-		{
-			SetUp();
-			stones[0][0] = new Stone(Stone.Val.YoCha);
-			stones[0][3] = new Stone(Stone.Val.YoSa);
-			stones[0][5] = new Stone(Stone.Val.YoSa);
-			stones[0][8] = new Stone(Stone.Val.YoCha);
-			stones[1][4] = new Stone(Stone.Val.YoGoong);
-			stones[2][1] = new Stone(Stone.Val.YoPo);
-			stones[2][7] = new Stone(Stone.Val.YoPo);
-			stones[3][0] = new Stone(Stone.Val.YoJol);
-			stones[3][2] = new Stone(Stone.Val.YoJol);
-			stones[3][4] = new Stone(Stone.Val.YoJol);
-			stones[3][6] = new Stone(Stone.Val.YoJol);
-			stones[3][8] = new Stone(Stone.Val.YoJol);
+			stones[0, 0] = new Stone(Stone.Val.YoCha);
+			stones[0, 3] = new Stone(Stone.Val.YoSa);
+			stones[0, 5] = new Stone(Stone.Val.YoSa);
+			stones[0, 8] = new Stone(Stone.Val.YoCha);
+			stones[1, 4] = new Stone(Stone.Val.YoGoong);
+			stones[2, 1] = new Stone(Stone.Val.YoPo);
+			stones[2, 7] = new Stone(Stone.Val.YoPo);
+			stones[3, 0] = new Stone(Stone.Val.YoJol);
+			stones[3, 2] = new Stone(Stone.Val.YoJol);
+			stones[3, 4] = new Stone(Stone.Val.YoJol);
+			stones[3, 6] = new Stone(Stone.Val.YoJol);
+			stones[3, 8] = new Stone(Stone.Val.YoJol);
 
-			stones[6][0] = new Stone(Stone.Val.MyJol);
-			stones[6][2] = new Stone(Stone.Val.MyJol);
-			stones[6][4] = new Stone(Stone.Val.MyJol);
-			stones[6][6] = new Stone(Stone.Val.MyJol);
-			stones[6][8] = new Stone(Stone.Val.MyJol);
-			stones[7][1] = new Stone(Stone.Val.MyPo);
-			stones[7][7] = new Stone(Stone.Val.MyPo);
-			stones[8][4] = new Stone(Stone.Val.MyGoong);
-			stones[9][0] = new Stone(Stone.Val.MyCha);
-			stones[9][3] = new Stone(Stone.Val.MySa);
-			stones[9][5] = new Stone(Stone.Val.MySa);
-			stones[9][8] = new Stone(Stone.Val.MyCha);
+			stones[6, 0] = new Stone(Stone.Val.MyJol);
+			stones[6, 2] = new Stone(Stone.Val.MyJol);
+			stones[6, 4] = new Stone(Stone.Val.MyJol);
+			stones[6, 6] = new Stone(Stone.Val.MyJol);
+			stones[6, 8] = new Stone(Stone.Val.MyJol);
+			stones[7, 1] = new Stone(Stone.Val.MyPo);
+			stones[7, 7] = new Stone(Stone.Val.MyPo);
+			stones[8, 4] = new Stone(Stone.Val.MyGoong);
+			stones[9, 0] = new Stone(Stone.Val.MyCha);
+			stones[9, 3] = new Stone(Stone.Val.MySa);
+			stones[9, 5] = new Stone(Stone.Val.MySa);
+			stones[9, 8] = new Stone(Stone.Val.MyCha);
 
 			if (myTable == Tables.Inner)
 			{
-				stones[9][1] = new Stone(Stone.Val.MyMa);
-				stones[9][2] = new Stone(Stone.Val.MySang);
-				stones[9][6] = new Stone(Stone.Val.MySang);
-				stones[9][7] = new Stone(Stone.Val.MyMa);
+				stones[9, 1] = new Stone(Stone.Val.MyMa);
+				stones[9, 2] = new Stone(Stone.Val.MySang);
+				stones[9, 6] = new Stone(Stone.Val.MySang);
+				stones[9, 7] = new Stone(Stone.Val.MyMa);
 			}
 			else if (myTable == Tables.Outer)
 			{
-				stones[9][1] = new Stone(Stone.Val.MySang);
-				stones[9][2] = new Stone(Stone.Val.MyMa);
-				stones[9][6] = new Stone(Stone.Val.MyMa);
-				stones[9][7] = new Stone(Stone.Val.MySang);
+				stones[9, 1] = new Stone(Stone.Val.MySang);
+				stones[9, 2] = new Stone(Stone.Val.MyMa);
+				stones[9, 6] = new Stone(Stone.Val.MyMa);
+				stones[9, 7] = new Stone(Stone.Val.MySang);
 			}
 			else if (myTable == Tables.Left)
 			{
-				stones[9][1] = new Stone(Stone.Val.MySang);
-				stones[9][2] = new Stone(Stone.Val.MyMa);
-				stones[9][6] = new Stone(Stone.Val.MySang);
-				stones[9][7] = new Stone(Stone.Val.MyMa);
+				stones[9, 1] = new Stone(Stone.Val.MySang);
+				stones[9, 2] = new Stone(Stone.Val.MyMa);
+				stones[9, 6] = new Stone(Stone.Val.MySang);
+				stones[9, 7] = new Stone(Stone.Val.MyMa);
 			}
 			else
 			{
-				stones[9][1] = new Stone(Stone.Val.MyMa);
-				stones[9][2] = new Stone(Stone.Val.MySang);
-				stones[9][6] = new Stone(Stone.Val.MyMa);
-				stones[9][7] = new Stone(Stone.Val.MySang);
+				stones[9, 1] = new Stone(Stone.Val.MyMa);
+				stones[9, 2] = new Stone(Stone.Val.MySang);
+				stones[9, 6] = new Stone(Stone.Val.MyMa);
+				stones[9, 7] = new Stone(Stone.Val.MySang);
 			}
 
 			if (yoTable == Tables.Inner)
 			{
-				stones[0][1] = new Stone(Stone.Val.YoMa);
-				stones[0][2] = new Stone(Stone.Val.YoSang);
-				stones[0][6] = new Stone(Stone.Val.YoSang);
-				stones[0][7] = new Stone(Stone.Val.YoMa);
+				stones[0, 1] = new Stone(Stone.Val.YoMa);
+				stones[0, 2] = new Stone(Stone.Val.YoSang);
+				stones[0, 6] = new Stone(Stone.Val.YoSang);
+				stones[0, 7] = new Stone(Stone.Val.YoMa);
 			}
 			else if (yoTable == Tables.Outer)
 			{
-				stones[0][1] = new Stone(Stone.Val.YoSang);
-				stones[0][2] = new Stone(Stone.Val.YoMa);
-				stones[0][6] = new Stone(Stone.Val.YoMa);
-				stones[0][7] = new Stone(Stone.Val.YoSang);
+				stones[0, 1] = new Stone(Stone.Val.YoSang);
+				stones[0, 2] = new Stone(Stone.Val.YoMa);
+				stones[0, 6] = new Stone(Stone.Val.YoMa);
+				stones[0, 7] = new Stone(Stone.Val.YoSang);
 			}
 			else if (yoTable == Tables.Left)
 			{
-				stones[0][1] = new Stone(Stone.Val.YoMa);
-				stones[0][2] = new Stone(Stone.Val.YoSang);
-				stones[0][6] = new Stone(Stone.Val.YoMa);
-				stones[0][7] = new Stone(Stone.Val.YoSang);
+				stones[0, 1] = new Stone(Stone.Val.YoMa);
+				stones[0, 2] = new Stone(Stone.Val.YoSang);
+				stones[0, 6] = new Stone(Stone.Val.YoMa);
+				stones[0, 7] = new Stone(Stone.Val.YoSang);
 			}
 			else
 			{
-				stones[0][1] = new Stone(Stone.Val.YoSang);
-				stones[0][2] = new Stone(Stone.Val.YoMa);
-				stones[0][6] = new Stone(Stone.Val.YoSang);
-				stones[0][7] = new Stone(Stone.Val.YoMa);
+				stones[0, 1] = new Stone(Stone.Val.YoSang);
+				stones[0, 2] = new Stone(Stone.Val.YoMa);
+				stones[0, 6] = new Stone(Stone.Val.YoSang);
+				stones[0, 7] = new Stone(Stone.Val.YoMa);
+			}
+
+			if (myfirst)
+			{
+				Point = -15;
+				isMyTurn = true;
+			}
+			else
+			{
+				Point = 15;
+				isMyTurn = false;
 			}
 		}
 
@@ -146,12 +190,55 @@ namespace Janggi
 					stones[ny, nx] = stones[y, x].Opposite;
 				}
 			}
+
+			Point = -Point;
 		}
 
+		public List<Move> GetAllMoves()
+		{
+			if (IsMyTurn)
+			{
+				return GetAllMyMoves();
+			}
+			else
+			{
+				return GetAllYoMoves();
+			}
+		}
 		public List<Move> GetAllMyMoves()
 		{
 			List<Move> moves = new List<Move>();
 
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					if (stones[y, x].IsMy)
+					{
+						moves.AddRange(GetAllMoves(new Pos(y, x)));
+					}
+				}
+			}
+
+			moves.Add(Move.Rest);
+			return moves;
+		}
+		public List<Move> GetAllYoMoves()
+		{
+			List<Move> moves = new List<Move>();
+
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					if (stones[y, x].IsYo)
+					{
+						moves.AddRange(GetAllMoves(new Pos(y, x)));
+					}
+				}
+			}
+
+			moves.Add(Move.Rest);
 			return moves;
 		}
 
@@ -170,7 +257,6 @@ namespace Janggi
 				,new Tuple<Pos, Pos>(new Pos(1, 2), new Pos(0, 1))
 				,new Tuple<Pos, Pos>(new Pos(-1, 2), new Pos(0, 1))
 						};
-
 		static Tuple<Pos, Pos, Pos>[] wayAndBlockSang = new Tuple<Pos, Pos, Pos>[8]
 					{
 				new Tuple<Pos, Pos, Pos>(new Pos(-3, 2), new Pos(-2, 1), new Pos(-1, 0))
@@ -182,10 +268,7 @@ namespace Janggi
 				,new Tuple<Pos, Pos, Pos>(new Pos(2, 3), new Pos(1, 2), new Pos(0, 1))
 				,new Tuple<Pos, Pos, Pos>(new Pos(-2, 3), new Pos(-1, 2), new Pos(0, 1))
 					};
-
-
-
-		static List<Pos>[,] wayInSung = new List<Pos>[,]
+		static List<Pos>[,] wayInGoong = new List<Pos>[,]
 			{
 				{ new List<Pos>(){ new Pos(1, 0), new Pos(1, 1), new Pos(0, 1) },
 					new List<Pos>(){ new Pos(2, 0), new Pos(1, 1), new Pos(0, 0) },
@@ -202,12 +285,13 @@ namespace Janggi
 					new List<Pos>(){ new Pos(1, 2), new Pos(1, 1), new Pos(2, 1) }
 				}
 			};
-
-		
+		static Pos[] wayJol = {
+			new Pos(-1, 0), new Pos(1, 0), new Pos(0, -1), new Pos(0, 1)
+		};
 
 		public List<Move> GetAllMoves(Pos pos)
 		{
-			
+
 			List<Move> moves = new List<Move>();
 
 			int px = pos.X;
@@ -518,7 +602,7 @@ namespace Janggi
 				}
 
 				Pos relPos = pos - origin;
-				foreach (var e in wayInSung[relPos.Y, relPos.X])
+				foreach (var e in wayInGoong[relPos.Y, relPos.X])
 				{
 					Pos to = origin + e;
 					Stone stoneTo = this[to];
@@ -531,11 +615,134 @@ namespace Janggi
 			//졸
 			else if (valFrom == Stone.Val.MyJol)
 			{
+				if (px - 1 >= 0 && !stoneFrom.IsAlliesWith(stones[py, px - 1]))
+				{
+					moves.Add(new Move(px, py, px - 1, py));
+				}
 
+				if (px + 1 < Width && !stoneFrom.IsAlliesWith(stones[py, px + 1]))
+				{
+					moves.Add(new Move(px, py, px + 1, py));
+				}
+
+				if (py - 1 >= 0 && !stoneFrom.IsAlliesWith(stones[py - 1, px]))
+				{
+					moves.Add(new Move(px, py, px, py - 1));
+				}
+
+				//우상으로 진출
+				if (pos.Equals(3, 2) && !stoneFrom.IsAlliesWith(stones[1, 4]))
+				{
+					moves.Add(new Move(px, py, 4, 1));
+				}
+				else if (pos.Equals(4, 1) && !stoneFrom.IsAlliesWith(stones[0, 5]))
+				{
+					moves.Add(new Move(px, py, 5, 0));
+				}
+				//좌상으로 진출
+				else if (pos.Equals(5, 2) && !stoneFrom.IsAlliesWith(stones[1, 4]))
+				{
+					moves.Add(new Move(px, py, 4, 1));
+				}
+				else if (pos.Equals(4, 1) && !stoneFrom.IsAlliesWith(stones[0, 3]))
+				{
+					moves.Add(new Move(px, py, 3, 0));
+				}
+			}
+			else if (valFrom == Stone.Val.YoJol)
+			{
+				if (px - 1 >= 0 && !stoneFrom.IsAlliesWith(stones[py, px - 1]))
+				{
+					moves.Add(new Move(px, py, px - 1, py));
+				}
+
+				if (px + 1 < Width && !stoneFrom.IsAlliesWith(stones[py, px + 1]))
+				{
+					moves.Add(new Move(px, py, px + 1, py));
+				}
+
+				if (py + 1 >= 0 && !stoneFrom.IsAlliesWith(stones[py + 1, px]))
+				{
+					moves.Add(new Move(px, py, px, py + 1));
+				}
+
+				//우하로 진출
+				if (pos.Equals(3, 7) && !stoneFrom.IsAlliesWith(stones[8, 4]))
+				{
+					moves.Add(new Move(px, py, 4, 8));
+				}
+				else if (pos.Equals(4, 8) && !stoneFrom.IsAlliesWith(stones[9, 5]))
+				{
+					moves.Add(new Move(px, py, 5, 9));
+				}
+				//좌하로 진출
+				else if (pos.Equals(5, 7) && !stoneFrom.IsAlliesWith(stones[8, 4]))
+				{
+					moves.Add(new Move(px, py, 4, 8));
+				}
+				else if (pos.Equals(4, 8) && !stoneFrom.IsAlliesWith(stones[9, 3]))
+				{
+					moves.Add(new Move(px, py, 3, 9));
+				}
+			}
+			else
+			{
+				throw new Exception("ERROR");
 			}
 
 
 			return moves;
 		}
+
+		public void MoveNext(Move move)
+		{
+			if (!move.IsRest)
+			{
+				Point += this[move.To].Point;
+				stones[move.To.Y, move.To.X] = stones[move.From.Y, move.From.X];
+				stones[move.From.Y, move.From.X] = new Stone();
+			}
+			
+			isMyTurn = !isMyTurn;
+		}
+
+		public Board GetNext(Move move)
+		{
+			Board board = new Board(this);
+			board.MoveNext(move);
+			return board;
+		}
+
+		public bool IsMyWin
+		{
+			get => Point > 5000;
+		}
+
+		public bool IsYoWin
+		{
+			get => Point < -5000;
+		}
+
+
+		#region 정책망 관련
+
+		public int ExpectedPoint(Move move)
+		{
+			return Point + this[move.To].Point;
+		}
+
+		//총 잡을 수 있는 점수
+		public int CountTargetPoint(List<Move> moves)
+		{
+			int sum = 0;
+			foreach (var move in moves)
+			{
+				sum += this[move.To].Point;
+			}
+
+			return sum;
+		}
+
+		#endregion
 	}
 }

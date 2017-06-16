@@ -34,6 +34,11 @@ namespace Janggi
 		{
 			return new Pos(p1.X - p2.X, p1.Y - p2.Y);
 		}
+
+		public bool Equals(int x, int y)
+		{
+			return X == x && Y == y;
+		}
 	}
 
 	public struct Move
@@ -51,6 +56,13 @@ namespace Janggi
 		{
 			From = from;
 			To = to;
+		}
+
+		public static Move Rest = new Move(-1, -1, -1, -1);
+
+		public bool IsRest
+		{
+			get => From.X == -1;
 		}
 	}
 }
