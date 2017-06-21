@@ -21,19 +21,7 @@ namespace Janggi
 		public static int Width = 9;
 		public static int Height = 10;
 
-		public Board()
-		{
-			stones = new Stone[Height, Width];
-			for (int i = 0; i < Height; i++)
-			{
-				for (int k = 0; k < Width; k++)
-				{
-					stones[i, k] = new Stone();
-				}
-			}
-
-			Point = 0;
-		}
+		
 
 		public Board(Board board)
 		{
@@ -58,12 +46,12 @@ namespace Janggi
 			Right
 		}
 
-		public Board(Tables myTable, Tables yoTable, bool myFirst)
+		public Board()
 		{
-			SetUp(myTable, yoTable, myFirst);
+			SetUp();
 		}
 
-		public void SetUp(Tables myTable, Tables yoTable, bool myfirst)
+		public void SetUp()
 		{
 			stones = new Stone[Height, Width];
 			for (int i = 0; i < Height; i++)
@@ -72,7 +60,19 @@ namespace Janggi
 				{
 					stones[i, k] = new Stone();
 				}
-			}
+			};
+
+			Point = 0;
+		}
+
+		public Board(Tables myTable, Tables yoTable, bool myFirst)
+		{
+			SetUp(myTable, yoTable, myFirst);
+		}
+
+		public void SetUp(Tables myTable, Tables yoTable, bool myfirst)
+		{
+			SetUp();
 
 			stones[0, 0] = new Stone(Stone.Val.YoCha);
 			stones[0, 3] = new Stone(Stone.Val.YoSa);
@@ -171,12 +171,10 @@ namespace Janggi
 		}
 
 		//상대방 입장에서 보도록 회전시킨다.
-		public void GetOpposite()
+		public Board GetOpposite()
 		{
+			Board nuBoard = new Board();
 			//이전 포석을 보관하고
-			Stone[,] oldStones = stones;
-			//새 포석을 만든다.
-			SetUp();
 
 			for (int y = 0; y < Height; y++)
 			{
@@ -187,11 +185,11 @@ namespace Janggi
 					int ny = Height - y - 1;
 
 					//편을 바꿔서 넣는다.
-					stones[ny, nx] = stones[y, x].Opposite;
+					nuBoard.stones[ny, nx] = stones[y, x].Opposite;
 				}
 			}
 
-			Point = -Point;
+			nuBoard.Point = -Point;
 		}
 
 		public List<Move> GetAllMoves()
