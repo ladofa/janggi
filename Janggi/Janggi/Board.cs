@@ -21,8 +21,6 @@ namespace Janggi
 		public static int Width = 9;
 		public static int Height = 10;
 
-		
-
 		public Board(Board board)
 		{
 			stones = new Stone[Height, Width];
@@ -170,6 +168,23 @@ namespace Janggi
 			}
 		}
 
+		public bool Equals(Board b)
+		{
+			Stone[,] other = b.stones;
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					if (stones[y, x].Equals(other[y, x]))
+					{
+						return false;
+					}
+				}
+			}
+
+			return true;
+		}
+
 		//상대방 입장에서 보도록 회전시킨다.
 		public Board GetOpposite()
 		{
@@ -190,6 +205,8 @@ namespace Janggi
 			}
 
 			nuBoard.Point = -Point;
+
+			return nuBoard;
 		}
 
 		public List<Move> GetAllMoves()
@@ -729,13 +746,16 @@ namespace Janggi
 			return Point + this[move.To].Point;
 		}
 
-		//총 잡을 수 있는 점수
-		public int CountTargetPoint(List<Move> moves)
+		//총 잡을 수 있는 기물
+		public int CountTarget(List<Move> moves)
 		{
 			int sum = 0;
 			foreach (var move in moves)
 			{
-				sum += this[move.To].Point;
+				if (!this[move.To].IsEmpty)
+				{
+					sum++;
+				}
 			}
 
 			return sum;

@@ -8,7 +8,9 @@ namespace Janggi
 {
 	public struct Stone
 	{
+		//기물을 잃었을 때의 점수
 		static int[] points = { 0, -20, -30, -50, -70, -130, -30, -10000, 20, 30, 50, 70, 130, 30, 10000 };
+		public int Point => points[(byte)val];
 
 		public enum Val : byte
 		{
@@ -41,15 +43,9 @@ namespace Janggi
 			val = value;
 		}
 
-		public bool IsMy
-		{
-			get => val != 0 && (byte)val <= 7;
-		}
+		public bool IsMy => val != 0 && (byte)val <= 7;
 
-		public bool IsYo
-		{
-			get => (byte)val > 7;
-		}
+		public bool IsYo => (byte)val > 7;
 
 		public bool IsAlliesWith(Stone stone)
 		{
@@ -61,45 +57,21 @@ namespace Janggi
 			return !((byte)val > 7 ^ (byte)stone.val > 7);
 		}
 
-		public bool IsCha
-		{
-			get => val == Val.MyCha || val == Val.YoCha;
-		}
+		public bool IsCha => val == Val.MyCha || val == Val.YoCha;
 
-		public bool IsPo
-		{
-			get => val == Val.MyPo || val == Val.YoPo;
-		}
+		public bool IsPo => val == Val.MyPo || val == Val.YoPo;
 
-		public bool IsMa
-		{
-			get => val == Val.MyMa || val == Val.YoMa;
-		}
+		public bool IsMa => val == Val.MyMa || val == Val.YoMa;
 
-		public bool IsSang
-		{
-			get => val == Val.MySang || val == Val.YoSang;
-		}
+		public bool IsSang => val == Val.MySang || val == Val.YoSang;
 
-		public bool IsSa
-		{
-			get => val == Val.MySa || val == Val.YoSa;
-		}
+		public bool IsSat => val == Val.MySa || val == Val.YoSa;
 
-		public bool IsJol
-		{
-			get => val == Val.MyJol || val == Val.YoJol;
-		}
+		public bool IsJolt => val == Val.MyJol || val == Val.YoJol;
 
-		public bool IsGoong
-		{
-			get => val == Val.MyGoong || val == Val.YoGoong;
-		}
+		public bool IsGoong => val == Val.MyGoong || val == Val.YoGoong;
 
-		public bool IsEmpty
-		{
-			get => val == Val.Empty;
-		}
+		public bool IsEmpty => val == Val.Empty;
 
 		public Stone Opposite
 		{
@@ -117,14 +89,6 @@ namespace Janggi
 				{
 					return new Stone(val + 7);
 				}
-			}
-		}
-
-		public int Point
-		{
-			get
-			{
-				return points[(byte)val];
 			}
 		}
 	}

@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Janggi
+namespace Janggi.Ai
 {
 	public class Mcts
 	{
 		public interface IPromCalculator
 		{
-			List<double> Calc(Board board, List<Move> moves);
+			List<double> Calc(Node node);
 		}
 
 		public class Node
@@ -20,6 +20,8 @@ namespace Janggi
 			public Board board;
 			//현재 상태로 오게 만드는 무브
 			public Move prevMove;
+			//부모 노드
+			public Node parent;
 			
 			//-->서치 중 동적 생성, 이후 계속 유지
 			//현재로부터 움직일 수 있는 모든 길
@@ -36,8 +38,9 @@ namespace Janggi
 			//방문햇는지 여부
 			public bool isVisited = false;
 
-			public Node(Board board, Move prevMove)
+			public Node(Node parent, Board board, Move prevMove)
 			{
+				this.parent = parent;
 				this.board = board;
 				this.prevMove = prevMove;
 				if (board.IsMyTurn)
@@ -48,7 +51,6 @@ namespace Janggi
 				{
 					point = Int32.MaxValue;
 				}
-
 			}
 
 			public List<Move> GetMoves()
@@ -56,6 +58,25 @@ namespace Janggi
 				if (moves == null)
 				{
 					moves = board.GetAllMoves();
+
+					//반복수 제거
+
+					// my    yo    my   yo     my
+					// p4 -> p3 -> p2-> p1 -> this -> next
+
+					Node p2 = this.parent?.parent;
+					Node p4 = p2?.parent?.parent;
+					//둘 다 제자리로 온 경우
+					if (p2 != null && board.Equals(p2.board))
+					{
+						moves.Remove(this.parent.prevMove);
+					}
+
+					//와리가리 한 경우
+					if (p4 != null && board.Equals(p4.board))
+					{
+						moves.Remove(p2.parent.prevMove);
+					}
 				}
 
 				return moves;
@@ -65,13 +86,14 @@ namespace Janggi
 			{
 				if (cproms == null)
 				{
-					List<double> proms = promCalculator.Calc(board, moves);
+					List<double> proms = promCalculator.Calc(this);
 					cproms = new List<double>();
 
 					cproms.Add(0);
 					for (int i = 0; i < proms.Count - 1; i++)
 					{
-						cproms[i + 1] = cproms[i] + proms[i];
+						//cproms[i + 1] = cproms[i] + proms[i];
+						cproms.Add(cproms[i] + proms[i]);
 					}
 					cproms.Add(1);
 				}
@@ -81,18 +103,15 @@ namespace Janggi
 
 			public List<Node> GetChildren()
 			{
-				if (moves == null)
-				{
-					moves = board.GetAllMoves();
-				}
-
+				GetMoves();
+				
 				if (children == null)
 				{
 					children = new List<Node>();
 					foreach (Move move in moves)
 					{
 						Board nextBoard = board.GetNext(move);
-						Node nextNode = new Node(nextBoard, move);
+						Node nextNode = new Node(this, nextBoard, move);
 						children.Add(nextNode);
 					}
 				}
@@ -102,10 +121,7 @@ namespace Janggi
 
 			public Node GetRandomChild(IPromCalculator promCalculator)
 			{
-				if (cproms != null)
-				{
-					GetCproms(promCalculator);
-				}
+				GetCproms(promCalculator);
 
 				//prob [0, 1)
 				double prob = Global.Rand.NextDouble();
@@ -140,11 +156,32 @@ namespace Janggi
 
 				return children[k];
 			}
+
+			public void Clear()
+			{
+				children = null;
+				cproms = null;
+				moves = null;
+				promNode = null;
+			}
+
+			public void ClearAll()
+			{
+				if (children != null)
+				{
+					foreach (Node node in children)
+					{
+						node.ClearAll();
+					}
+				}
+
+				Clear();
+			}
 		}
 
 
 		//--------------------------------------------------------
-
+		List<Node> history;
 
 		Node start;
 		Node root;
@@ -157,11 +194,13 @@ namespace Janggi
 
 		public void Init(Board board)
 		{
-			start = new Node(board, Move.Rest);
+			start = new Node(null, board, Move.Rest);
 			root = start;
 			
 			currentLevel = 0;
 			myFirst = board.IsMyTurn ? 0 : 1;
+
+			history = new List<Node>();
 		}
 
 		bool isMyTurn(int level)
@@ -169,7 +208,7 @@ namespace Janggi
 			return (level % 2) == myFirst;
 		}
 
-		public Move SearchNext()
+		public Node SearchNext()
 		{
 			Move bestMove = Move.Rest;
 
@@ -177,12 +216,12 @@ namespace Janggi
 			{
 				//랜덤으로 깊이 탐색
 				Node child = root;
-				List<Node> search = new List<Node>();
+				List<Node> nodes = new List<Node>();
 				int maxLevel = currentLevel + 10;//홀수이면 내 차례가 마지막
 				for (int level = currentLevel; level < maxLevel; level++)
 				{
 					child = child.GetRandomChild(promCalculator);
-					search.Add(child);
+					nodes.Add(child);
 					if (child.board.IsMyWin)
 					{
 						break;
@@ -197,10 +236,10 @@ namespace Janggi
 				//마지막 노드의 점수 넣기
 				child.point = child.board.Point;
 				
-				for (int i = search.Count - 2; i >= 0; i--)
+				for (int i = nodes.Count - 2; i >= 0; i--)
 				{
-					Node p1 = search[i];//parent
-					Node p2 = search[i + 1];//child
+					Node p1 = nodes[i];//parent
+					Node p2 = nodes[i + 1];//child
 
 					//내 차례라면 높은 포인트를 선택
 					if (p1.board.IsMyTurn)
@@ -226,18 +265,18 @@ namespace Janggi
 				//마지막 업데이트
 				if (root.board.IsMyTurn)
 				{
-					if (search[0].point > root.point)
+					if (nodes[0].point > root.point)
 					{
-						root.point = search[0].point;
-						root.promNode = search[0];
+						root.point = nodes[0].point;
+						root.promNode = nodes[0];
 					}
 				}
 				else
 				{
-					if (search[0].point < root.point)
+					if (nodes[0].point < root.point)
 					{
-						root.point = search[0].point;
-						root.promNode = search[0];
+						root.point = nodes[0].point;
+						root.promNode = nodes[0];
 					}
 				}
 			}
@@ -247,7 +286,7 @@ namespace Janggi
 				throw new Exception("unexpected");
 			}
 
-			return root.promNode.prevMove;
+			return root.promNode;
 		}
 
 		public void ForceStopSearch()
@@ -257,7 +296,28 @@ namespace Janggi
 
 		public void SetMove(Move move)
 		{
+			bool moved = false;
+			foreach (Node node in root.children)
+			{
+				if (node.prevMove.Equals(move))
+				{
+					SetMove(node);
+					moved = true;
+					break;
+				}
+			}
 
+			if (!moved)
+			{
+				throw new Exception("bad move");
+			}
+		}
+
+		public void SetMove(Node node)
+		{
+			root.Clear();
+			history.Add(root);
+			root = node;
 		}
 	}
 }

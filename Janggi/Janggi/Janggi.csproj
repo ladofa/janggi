@@ -41,7 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ai\Mcts.cs" />
-    <Compile Include="Ai\PromCalculator.cs" />
+    <Compile Include="Ai\PointPromCalculator.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Move.cs" />
