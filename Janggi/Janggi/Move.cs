@@ -64,5 +64,10 @@ namespace Janggi
 		{
 			get => From.X == -1;
 		}
+
+		public override string ToString()
+		{
+			return $"({From.X},  {From.Y}) -> ({To.X}, {To.Y})";
+		}
 	}
 }

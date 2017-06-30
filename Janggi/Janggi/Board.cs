@@ -12,6 +12,11 @@ namespace Janggi
 		bool isMyTurn;
 		public int Point;
 
+		Move prevMove  = Move.Rest;
+		public Move PrevMove
+		{
+			get => prevMove;
+		}
 
 		public bool IsMyTurn
 		{
@@ -66,6 +71,11 @@ namespace Janggi
 		public Board(Tables myTable, Tables yoTable, bool myFirst)
 		{
 			SetUp(myTable, yoTable, myFirst);
+		}
+
+		public bool IsMyFirst
+		{
+			get;set;
 		}
 
 		public void SetUp(Tables myTable, Tables yoTable, bool myfirst)
@@ -166,6 +176,8 @@ namespace Janggi
 				Point = 15;
 				isMyTurn = false;
 			}
+
+			IsMyFirst = myfirst;
 		}
 
 		public bool Equals(Board b)
@@ -436,7 +448,7 @@ namespace Janggi
 						{
 							return true;
 						}
-						else if (stoneTo.IsAlliesWith(stoneFrom))
+						else if (!stoneTo.IsPo)
 						{
 							dari = true;
 							return true;
@@ -446,7 +458,7 @@ namespace Janggi
 							return false;
 						}
 					}
-					//다리를 발견한 뒤로는 차와 같다.
+					//다리를 발견한 뒤로는 차와 같은데 포만 못 먹는다.
 					else
 					{
 						if (stones[y, x].IsEmpty)
@@ -456,7 +468,7 @@ namespace Janggi
 						}
 						else
 						{
-							if (!stoneTo.IsAlliesWith(stoneFrom))
+							if (!stoneTo.IsAlliesWith(stoneFrom) && !stoneTo.IsPo)
 							{
 								moves.Add(new Move(px, py, x, y));
 							}
@@ -484,7 +496,7 @@ namespace Janggi
 				}
 
 				dari = false;
-				for (int x = px - 1; px >= 0; px--)
+				for (int x = px - 1; x >= 0; x--)
 				{
 					if (!confirmAndAdd(x, py))
 					{
@@ -493,7 +505,7 @@ namespace Janggi
 				}
 
 				dari = false;
-				for (int x = px + 1; px < Width; x++)
+				for (int x = px + 1; x < Width; x++)
 				{
 					if (!confirmAndAdd(x, py))
 					{
@@ -598,7 +610,7 @@ namespace Janggi
 						continue;
 					}
 
-					Pos block2 = pos + wayAndBlockSang[i].Item2;
+					Pos block2 = pos + wayAndBlockSang[i].Item3;
 					if (!this[block2].IsEmpty)
 					{
 						continue;
@@ -681,7 +693,7 @@ namespace Janggi
 					moves.Add(new Move(px, py, px + 1, py));
 				}
 
-				if (py + 1 >= 0 && !stoneFrom.IsAlliesWith(stones[py + 1, px]))
+				if (py + 1 < Height && !stoneFrom.IsAlliesWith(stones[py + 1, px]))
 				{
 					moves.Add(new Move(px, py, px, py + 1));
 				}
@@ -716,6 +728,7 @@ namespace Janggi
 
 		public void MoveNext(Move move)
 		{
+			prevMove = move;
 			if (!move.IsRest)
 			{
 				Point += this[move.To].Point;
@@ -814,7 +827,7 @@ namespace Janggi
 		{
 			string[] letters;
 			bool colorInverse;
-			if (IsMyTurn)
+			if (IsMyFirst)
 			{
 				letters = lettersCho;
 				colorInverse = false;
@@ -830,6 +843,15 @@ namespace Janggi
 				for (int x = 0; x < Width; x++)
 				{
 					Stone stone = this[y, x];
+
+					if (prevMove.To.Equals(x, y))
+					{
+						Console.BackgroundColor = ConsoleColor.DarkYellow;
+					}
+					else
+					{
+						Console.BackgroundColor = ConsoleColor.Black;
+					}
 					if (stone.IsEmpty)
 					{
 						Console.ForegroundColor = ConsoleColor.Gray;
@@ -842,12 +864,15 @@ namespace Janggi
 					{
 						Console.ForegroundColor = ConsoleColor.Magenta;
 					}
-					Console.Write(letters[(int)this[y, x]] + " ");
+					Console.Write(letters[(int)this[y, x]]);
+					Console.BackgroundColor = ConsoleColor.Black;
+					Console.Write(" ");
 				}
 				Console.WriteLine();
 			}
 
 			Console.ForegroundColor = ConsoleColor.Gray;
+			Console.BackgroundColor = ConsoleColor.Black;
 		}
 
 		#endregion

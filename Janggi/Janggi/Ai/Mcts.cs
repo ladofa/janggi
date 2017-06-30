@@ -138,6 +138,7 @@ namespace Janggi.Ai
 
 				while (true)
 				{
+					//cproms[k] <= prob < cproms[k + 1]
 					if (prob < cproms[k])
 					{
 						top = k - 1;
@@ -214,25 +215,30 @@ namespace Janggi.Ai
 		{
 			Move bestMove = Move.Rest;
 
-			for (int turn = 0; turn < 400; turn++)
+			int maxDepth = 0;
+
+			for (int turn = 0; turn < 30000; turn++)
 			{
 				//랜덤으로 깊이 탐색
 				Node child = root;
 				List<Node> nodes = new List<Node>();
-				int maxLevel = currentLevel + 10;//홀수이면 내 차례가 마지막
-				for (int level = currentLevel; level < maxLevel; level++)
+				nodes.Add(root);
+
+				int depth = 0;
+				do
 				{
 					child = child.GetRandomChild(promCalculator);
 					nodes.Add(child);
-					if (child.board.IsMyWin)
-					{
-						break;
-					}
-					else if (child.board.IsYoWin)
-					{
-						break;
-					}
+					depth++;
 				}
+				while (child.isVisited);
+				child.isVisited = true;
+
+				if (depth > maxDepth)
+				{
+					maxDepth = depth;
+				}
+				
 
 				//상향식 점수 업데이트
 				//마지막 노드의 점수 넣기
@@ -263,30 +269,16 @@ namespace Janggi.Ai
 						
 					}
 				}
-
-				//마지막 업데이트
-				if (root.board.IsMyTurn)
-				{
-					if (nodes[0].point > root.point)
-					{
-						root.point = nodes[0].point;
-						root.promNode = nodes[0];
-					}
-				}
-				else
-				{
-					if (nodes[0].point < root.point)
-					{
-						root.point = nodes[0].point;
-						root.promNode = nodes[0];
-					}
-				}
 			}
 
+
+			Console.WriteLine($"Max depth : {maxDepth}");
 			if (root.promNode == null)
 			{
-				throw new Exception("unexpected");
+				Console.WriteLine("== NO PROMISSING");
+				root.promNode = root.GetRandomChild(promCalculator);
 			}
+
 
 			return root.promNode;
 		}
@@ -304,6 +296,7 @@ namespace Janggi.Ai
 				if (node.prevMove.Equals(move))
 				{
 					SetMove(node);
+					currentLevel++;
 					moved = true;
 					break;
 				}

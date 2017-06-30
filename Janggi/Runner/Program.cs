@@ -25,7 +25,8 @@ namespace Runner
 				mcts.SetMove(node.prevMove);
 				board.PrintStones();
 
-				Console.ReadKey();
+				
+				Console.WriteLine("\n");
 			}
 
 			

@@ -28,29 +28,42 @@ namespace Janggi.Ai
 
 			//최소 점수
 			int min = int.MaxValue;
-			int sum = 0;
+			
 			foreach (Node e in children)
 			{
-				//내 점술르 더한다.
+				//내 점수를 더한다.
 				int p = Filter(e.board.Point);
-				//상대 움직임
-				List<Move> yoMoves = e.GetMoves();
-				//상대가 잡을 수 있는 기물수를 뺀다.
-				p -= e.board.CountTarget(yoMoves);
 
-				proms.Add((double)p);
+				
+				
+				//상대 움직임
+				List<Move> opMoves = e.GetMoves();
+				////상대가 잡을 수 있는 기물수를 뺀다.
+				p -= e.board.CountTarget(opMoves);
+
+
 				if (min > p)
 				{
 					min = p;
 				}
-				sum += p;
+
+				proms.Add((double)p);
 			}
 
+			double sum = 0;
+			for (int i = 0; i < proms.Count; i++)
+			{
+				proms[i] = proms[i] - min + 30;
+				sum += proms[i];
+			}
 
-			double normFactor = (sum) / proms.Count - min;
+			for (int i = 0; i < proms.Count; i++)
+			{
+				proms[i] = proms[i] / sum;
+			}
 
-
-			throw new NotImplementedException();
+			return proms;
+			//throw new NotImplementedException();
 		}
 	}
 }
