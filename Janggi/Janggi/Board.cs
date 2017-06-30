@@ -230,7 +230,7 @@ namespace Janggi
 				{
 					if (stones[y, x].IsMy)
 					{
-						moves.AddRange(GetAllMoves(new Pos(y, x)));
+						moves.AddRange(GetAllMoves(new Pos(x, y)));
 					}
 				}
 			}
@@ -248,7 +248,7 @@ namespace Janggi
 				{
 					if (stones[y, x].IsYo)
 					{
-						moves.AddRange(GetAllMoves(new Pos(y, x)));
+						moves.AddRange(GetAllMoves(new Pos(x, y)));
 					}
 				}
 			}
@@ -260,6 +260,11 @@ namespace Janggi
 		public Stone this[Pos pos]
 		{
 			get => stones[pos.Y, pos.X];
+		}
+
+		public Stone this[int y, int x]
+		{
+			get => stones[y, x];
 		}
 
 		static Tuple<Pos, Pos>[] wayAndBlockMa = new Tuple<Pos, Pos>[8]
@@ -353,7 +358,7 @@ namespace Janggi
 					}
 				}
 
-				for (int x = px - 1; px >= 0; px--)
+				for (int x = px - 1; x >= 0; x--)
 				{
 					if (!confirmAndAdd(x, py))
 					{
@@ -361,7 +366,7 @@ namespace Janggi
 					}
 				}
 
-				for (int x = px + 1; px < Width; x++)
+				for (int x = px + 1; x < Width; x++)
 				{
 					if (!confirmAndAdd(x, py))
 					{
@@ -752,13 +757,97 @@ namespace Janggi
 			int sum = 0;
 			foreach (var move in moves)
 			{
-				if (!this[move.To].IsEmpty)
+				if (!move.IsRest)
 				{
-					sum++;
+					if (!this[move.To].IsEmpty)
+					{
+						sum++;
+					}
 				}
 			}
 
 			return sum;
+		}
+
+		#endregion
+
+
+		#region 텍스트 출력
+
+		static string[] lettersCho = {
+			"┼",
+			"卒", "象", "馬", "包", "車", "士", "楚",
+			"兵", "象", "馬", "包", "車", "士", "漢",
+		};
+
+		static string[] lettersHan = {
+			"┼",
+			"兵", "象", "馬", "包", "車", "士", "漢",
+			"卒", "象", "馬", "包", "車", "士", "楚",
+		};
+
+		public string ToStringStones()
+		{
+			string[] letters;
+			if (IsMyTurn)
+			{
+				letters = lettersCho;
+			}
+			else
+			{
+				letters = lettersHan;
+			}
+			string result = "";
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					result += (letters[(int)this[y, x]] + " ");
+				}
+				result += '\n';
+			}
+
+			return result;
+		}
+
+		public void PrintStones()
+		{
+			string[] letters;
+			bool colorInverse;
+			if (IsMyTurn)
+			{
+				letters = lettersCho;
+				colorInverse = false;
+			}
+			else
+			{
+				letters = lettersHan;
+				colorInverse = true;
+			}
+			string result = "";
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					Stone stone = this[y, x];
+					if (stone.IsEmpty)
+					{
+						Console.ForegroundColor = ConsoleColor.Gray;
+					}
+					else if (stone.IsMy ^ colorInverse)
+					{
+						Console.ForegroundColor = ConsoleColor.Cyan;
+					}
+					else
+					{
+						Console.ForegroundColor = ConsoleColor.Magenta;
+					}
+					Console.Write(letters[(int)this[y, x]] + " ");
+				}
+				Console.WriteLine();
+			}
+
+			Console.ForegroundColor = ConsoleColor.Gray;
 		}
 
 		#endregion

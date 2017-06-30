@@ -43,6 +43,11 @@ namespace Janggi
 			val = value;
 		}
 
+		static public explicit operator int(Stone stone)
+		{
+			return (int)stone.val;
+		}
+
 		public bool IsMy => val != 0 && (byte)val <= 7;
 
 		public bool IsYo => (byte)val > 7;
@@ -65,7 +70,7 @@ namespace Janggi
 
 		public bool IsSang => val == Val.MySang || val == Val.YoSang;
 
-		public bool IsSat => val == Val.MySa || val == Val.YoSa;
+		public bool IsSa => val == Val.MySa || val == Val.YoSa;
 
 		public bool IsJolt => val == Val.MyJol || val == Val.YoJol;
 

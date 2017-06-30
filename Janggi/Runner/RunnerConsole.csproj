@@ -48,5 +48,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Janggi\Janggi.csproj">
+      <Project>{8e961dba-7716-49c2-b14d-15b2d1b9ca65}</Project>
+      <Name>Janggi</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

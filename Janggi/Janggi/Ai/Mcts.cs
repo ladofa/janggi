@@ -201,6 +201,8 @@ namespace Janggi.Ai
 			myFirst = board.IsMyTurn ? 0 : 1;
 
 			history = new List<Node>();
+
+			promCalculator = new PointPromCalculator();
 		}
 
 		bool isMyTurn(int level)
