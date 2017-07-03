@@ -13,7 +13,6 @@ namespace Runner
 	{
 		static void Main(string[] args)
 		{
-
 			Board board = new Board(Board.Tables.Outer, Board.Tables.Left, true);
 
 			Mcts mcts = new Mcts();

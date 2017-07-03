@@ -31,16 +31,7 @@ namespace Janggi.Ai
 			
 			foreach (Node e in children)
 			{
-				//내 점수를 더한다.
-				int p = Filter(e.board.Point);
-
-				
-				
-				//상대 움직임
-				List<Move> opMoves = e.GetMoves();
-				////상대가 잡을 수 있는 기물수를 뺀다.
-				p -= e.board.CountTarget(opMoves);
-
+				int p = Filter(e.board.Judge());
 
 				if (min > p)
 				{
@@ -53,7 +44,7 @@ namespace Janggi.Ai
 			double sum = 0;
 			for (int i = 0; i < proms.Count; i++)
 			{
-				proms[i] = proms[i] - min + 30;
+				proms[i] = proms[i] - min + 10;
 				sum += proms[i];
 			}
 

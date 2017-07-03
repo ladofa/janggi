@@ -225,14 +225,37 @@ namespace Janggi.Ai
 				nodes.Add(root);
 
 				int depth = 0;
-				do
+
+				Node next = child;
+				while (true)
 				{
-					child = child.GetRandomChild(promCalculator);
-					nodes.Add(child);
-					depth++;
+					next = child.GetRandomChild(promCalculator);
+					if (next.isVisited)
+					{
+						if (next.board.IsFinished)
+						{
+							//다시 넥스트를 고른다.
+						}
+						else
+						{
+							//넥스트를 
+							child = next;
+							nodes.Add(child);
+							depth++;
+							//다시 넥스트를 고른다.
+						}
+					}
+					else
+					{
+						child = next;
+						break;
+					}
 				}
-				while (child.isVisited);
+				
+				
 				child.isVisited = true;
+
+				
 
 				if (depth > maxDepth)
 				{
@@ -242,7 +265,7 @@ namespace Janggi.Ai
 
 				//상향식 점수 업데이트
 				//마지막 노드의 점수 넣기
-				child.point = child.board.Point;
+				child.point = child.board.Judge();
 				
 				for (int i = nodes.Count - 2; i >= 0; i--)
 				{
@@ -269,6 +292,12 @@ namespace Janggi.Ai
 						
 					}
 				}
+
+				////마지막이라면 promise를 낮춰서 다시 탐색하지 않도록 한다.
+				//if (child.board.IsFinished)
+				//{
+					
+				//}
 			}
 
 

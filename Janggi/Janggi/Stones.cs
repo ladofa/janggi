@@ -44,13 +44,13 @@ namespace Janggi
 			YoSa2 = 0x40_00_00_00,
 			YoKing = 0x80_00_00_00,
 
-			Jol = 0x00_1F_00_1F,
+			Jol =  0x00_1F_00_1F,
 			Sang = 0x00_60_00_60,
-			Ma = 0x01_80_01_80,
-			Po = 0x06_00_06_80,
-			Cha = 0x18_00_18_80,
-			Sa = 0x60_00_60_80,
-			King = 0x80_00_80_80,
+			Ma =   0x01_80_01_80,
+			Po =   0x06_00_06_00,
+			Cha =  0x18_00_18_00,
+			Sa =   0x60_00_60_00,
+			King = 0x80_00_80_00,
 			Mine = 0x00_00_FF_Ff,
 			Yours = 0xFF_FF_00_00
 		}
@@ -66,7 +66,8 @@ namespace Janggi
 		public static bool IsMine(uint s) => (s & (uint)Stones.Mine) > 0;
 		public static bool IsYours(uint s) => (s & (uint)Stones.Yours) > 0;
 
-		public static bool IsAllied(uint s1, uint s2) => ((s1 > 0x80_00) ^ (s2 < 0x01_00_00));
+		public static bool IsAllied(uint s1, uint s2) => (s1 != 0 && s2 != 0 && (s1 > 0x80_00) ^ (s2 < 0x01_00_00));
+		public static bool IsEnemy(uint s1, uint s2) => (s1 != 0 && s2 != 0 && (s1 > 0x80_00) ^ (s2 > 0x80_00));
 		public static uint Opposite(uint s)
 		{
 			if (s == 0)
@@ -193,7 +194,7 @@ namespace Janggi
 			lookupPoint[0x2000] = 30;
 			lookupPoint[0x4000] = 30;
 
-			lookupPoint[0x8000] = 10000;
+			lookupPoint[0x8000] = 10_000;
 		}
 	}
 }
