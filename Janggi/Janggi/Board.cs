@@ -13,11 +13,9 @@ namespace Janggi
 		uint[,] stones;
 		uint[,] targets;
 		uint[,] blocks;
-		
 
 		Pos[] positions;
 
-		
 		bool isMyTurn;
 		public int Point;
 
@@ -322,34 +320,35 @@ namespace Janggi
 			new Pos(-1, 0), new Pos(1, 0), new Pos(0, -1), new Pos(0, 1)
 		};
 
-		public List<Move> GetAllMoves(Pos pos)
+		public void SetMoves(Pos pos)
 		{
-
-			List<Move> moves = new List<Move>();
-
 			int px = pos.X;
 			int py = pos.Y;
 
 			uint stoneFrom = this[pos];
 			if (stoneFrom == 0)
 			{
-				return moves;
+				return;
 			}
 			else if (IsCha(stoneFrom))
 			{
 				bool confirmAndAdd(int x, int y)
 				{
 					uint stoneTo = stones[y, x];
-					if (IsEmpty(stones[y, x]))
+					if (stones[y, x] == 0)
 					{
-						moves.Add(new Move(px, py, x, y));
+						targets[y, x] |= stoneFrom;
 						return true;
 					}
 					else
 					{
 						if (!IsAllied(stoneFrom, stoneTo))
 						{
-							moves.Add(new Move(px, py, x, y));
+							targets[y, x] |= stoneFrom;
+						}
+						else
+						{
+							blocks[y, x] |= stoneFrom;
 						}
 						return false;
 					}
@@ -400,7 +399,7 @@ namespace Janggi
 				}
 
 				//좌하
-				if (px == 3 && (py == 2 || py == 9))
+				else if (px == 3 && (py == 2 || py == 9))
 				{
 					for (int x = px + 1, y = py - 1; x < 6; x++, y--)
 					{
@@ -412,7 +411,7 @@ namespace Janggi
 				}
 
 				//우상
-				if (px == 5 && (py == 0 || py == 7))
+				else if (px == 5 && (py == 0 || py == 7))
 				{
 					for (int x = px - 1, y = py + 1; x >= 3; x--, y++)
 					{
@@ -424,7 +423,7 @@ namespace Janggi
 				}
 
 				//우하
-				if (px == 5 && (py == 2 || py == 9))
+				else if (px == 5 && (py == 2 || py == 9))
 				{
 					for (int x = px - 1, y = py - 1; x >= 3; x--, y--)
 					{
@@ -434,6 +433,8 @@ namespace Janggi
 						}
 					}
 				}
+
+				//TODO : 궁 가운데 있을 경우
 			}
 			else if (IsPo(stoneFrom))
 			{
@@ -444,12 +445,13 @@ namespace Janggi
 					//다리가 없으면 다리를 발견한다.
 					if (dari == false)
 					{
+						blocks[y, x] |= stoneFrom;
 						if (stoneTo == 0)
 						{
 							return true;
 						}
 						else if (!IsPo(stoneTo))
-						{
+						{	
 							dari = true;
 							return true;
 						}
@@ -463,14 +465,18 @@ namespace Janggi
 					{
 						if (stones[y, x] == 0)
 						{
-							moves.Add(new Move(px, py, x, y));
+							targets[y, x] |= stoneFrom;
 							return true;
 						}
 						else
 						{
 							if (!IsAllied(stoneFrom, stoneTo) && !IsPo(stoneTo))
 							{
-								moves.Add(new Move(px, py, x, y));
+								targets[y, x] |= stoneFrom;
+							}
+							else
+							{
+								blocks[y, x] |= stoneFrom;
 							}
 							return false;
 						}
@@ -528,7 +534,7 @@ namespace Janggi
 				}
 
 				//좌하
-				if (px == 3 && (py == 2 || py == 9))
+				else if (px == 3 && (py == 2 || py == 9))
 				{
 					dari = false;
 					for (int x = px + 1, y = py - 1; x < 6; x++, y--)
@@ -541,7 +547,7 @@ namespace Janggi
 				}
 
 				//우상
-				if (px == 5 && (py == 0 || py == 7))
+				else if (px == 5 && (py == 0 || py == 7))
 				{
 					dari = false;
 					for (int x = px - 1, y = py + 1; x >= 3; x--, y++)
@@ -554,7 +560,7 @@ namespace Janggi
 				}
 
 				//우하
-				if (px == 5 && (py == 2 || py == 9))
+				else if (px == 5 && (py == 2 || py == 9))
 				{
 					dari = false;
 					for (int x = px - 1, y = py - 1; x >= 3; x--, y--)
@@ -565,6 +571,8 @@ namespace Janggi
 						}
 					}
 				}
+
+				//TODO : 궁 가운데 있을 경우
 			}
 			else if (IsMa(stoneFrom))
 			{
@@ -572,8 +580,6 @@ namespace Janggi
 				//좌-하부터 시계방향으로
 
 				//길과 멱의 상대적 위치
-
-
 				for (int i = 0; i < 8; i++)
 				{
 					Pos nu = pos + wayAndBlockMa[i].Item1;
@@ -586,10 +592,11 @@ namespace Janggi
 					Pos block = pos + wayAndBlockMa[i].Item2;
 					if (this[block] != 0)
 					{
+						blocks[block.Y, block.X] |= stoneFrom;
 						continue;
 					}
 
-					moves.Add(new Move(pos, nu));
+					targets[nu.Y, nu.X] |= stoneFrom;
 				}
 			}
 			else if (IsSang(stoneFrom))
@@ -605,18 +612,24 @@ namespace Janggi
 					}
 
 					Pos block1 = pos + wayAndBlockSang[i].Item2;
+					bool blocked = false;
 					if (this[block1] != 0)
 					{
-						continue;
+						blocks[block1.Y, block1.X] |= stoneFrom;
+						blocked = true;
 					}
 
 					Pos block2 = pos + wayAndBlockSang[i].Item3;
 					if (this[block2] != 0)
 					{
-						continue;
+						blocks[block2.Y, block2.X] |= stoneFrom;
+						blocked = true;
 					}
 
-					moves.Add(new Move(pos, to));
+					if (!blocked)
+					{
+						targets[to.Y, to.X] |= stoneFrom;
+					}
 				}
 			}
 			//궁/사
@@ -640,90 +653,92 @@ namespace Janggi
 					uint stoneTo = this[to];
 					if (stoneTo == 0 || !IsAllied(stoneFrom, stoneTo))
 					{
-						moves.Add(new Move(pos, to));
+						targets[to.Y, to.X] |= stoneFrom;
+					}
+					else
+					{
+						blocks[to.Y, to.X] |= stoneFrom;
 					}
 				}
 			}
 			//졸
 			else if (IsJol(stoneFrom) && IsMine(stoneFrom))
 			{
+				//TODO : else를 만들어야 하는데...
 				if (px - 1 >= 0 && !IsAllied(stoneFrom, stones[py, px - 1]))
 				{
-					moves.Add(new Move(px, py, px - 1, py));
+					targets[px - 1, py] |= stoneFrom;
 				}
 
 				if (px + 1 < Width && !IsAllied(stoneFrom, stones[py, px + 1]))
 				{
-					moves.Add(new Move(px, py, px + 1, py));
+					targets[px + 1, py] |= stoneFrom;
 				}
 
 				if (py - 1 >= 0 && !IsAllied(stoneFrom, stones[py - 1, px]))
 				{
-					moves.Add(new Move(px, py, px, py - 1));
+					targets[px, py - 1] |= stoneFrom;
 				}
 
 				//우상으로 진출
 				if (pos.Equals(3, 2) && !IsAllied(stoneFrom, stones[1, 4]))
 				{
-					moves.Add(new Move(px, py, 4, 1));
+					targets[4, 1] |= stoneFrom;
 				}
 				else if (pos.Equals(4, 1) && !IsAllied(stoneFrom, stones[0, 5]))
 				{
-					moves.Add(new Move(px, py, 5, 0));
+					targets[5, 0] |= stoneFrom;
 				}
 				//좌상으로 진출
 				else if (pos.Equals(5, 2) && !IsAllied(stoneFrom, stones[1, 4]))
 				{
-					moves.Add(new Move(px, py, 4, 1));
+					targets[4, 1] |= stoneFrom;
 				}
 				else if (pos.Equals(4, 1) && !IsAllied(stoneFrom, stones[0, 3]))
 				{
-					moves.Add(new Move(px, py, 3, 0));
+					targets[3, 0] |= stoneFrom;
 				}
 			}
 			else if (IsJol(stoneFrom) && IsYours(stoneFrom))
 			{
 				if (px - 1 >= 0 && !IsAllied(stoneFrom, stones[py, px - 1]))
 				{
-					moves.Add(new Move(px, py, px - 1, py));
+					targets[px - 1, py] |= stoneFrom;
 				}
 
 				if (px + 1 < Width && !IsAllied(stoneFrom, stones[py, px + 1]))
 				{
-					moves.Add(new Move(px, py, px + 1, py));
+					targets[px + 1, py] |= stoneFrom;
 				}
 
 				if (py + 1 < Height && !IsAllied(stoneFrom, stones[py + 1, px]))
 				{
-					moves.Add(new Move(px, py, px, py + 1));
+					targets[px, py + 1] |= stoneFrom;
 				}
 
 				//우하로 진출
 				if (pos.Equals(3, 7) && !IsAllied(stoneFrom, stones[8, 4]))
 				{
-					moves.Add(new Move(px, py, 4, 8));
+					targets[4, 8] |= stoneFrom;
 				}
 				else if (pos.Equals(4, 8) && !IsAllied(stoneFrom, stones[9, 5]))
 				{
-					moves.Add(new Move(px, py, 5, 9));
+					targets[5, 9] |= stoneFrom;
 				}
 				//좌하로 진출
 				else if (pos.Equals(5, 7) && !IsAllied(stoneFrom, stones[8, 4]))
 				{
-					moves.Add(new Move(px, py, 4, 8));
+					targets[4, 8] |= stoneFrom;
 				}
 				else if (pos.Equals(4, 8) && !IsAllied(stoneFrom, stones[9, 3]))
 				{
-					moves.Add(new Move(px, py, 3, 9));
+					targets[3, 9] |= stoneFrom;
 				}
 			}
 			else
 			{
 				throw new Exception("ERROR");
 			}
-
-
-			return moves;
 		}
 
 		public void MoveNext(Move move)
