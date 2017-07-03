@@ -8,15 +8,6 @@ namespace Janggi
 {
 	public static class StoneHelper
 	{
-		/* 0 = empty
-		 * 1 = 궁
-		 * 2, 3 = 사
-		 * 4, 5 = 차
-		 * 6, 7 = 마
-		 * 8, 9 = 상
-		 * 10, 11 = 포
-		 * 12, 13, 14, 15, 16 = 졸
-		 */
 		public enum Stones : uint
 		{
 			Empty = 0,
@@ -91,98 +82,118 @@ namespace Janggi
 				return s << 16;
 			}
 		}
-		
-	}
 
-	public struct Stone
-	{
-		//기물을 잃었을 때의 점수
-		static int[] points = { 0, -20, -30, -50, -70, -130, -30, -10000, 20, 30, 50, 70, 130, 30, 10000 };
-		public int Point => points[(byte)val];
-
-		public enum Val : byte
+		public static uint Index2Stone(int index)
 		{
-			Empty = 0,
-			MyJol = 1,
-			MySang = 2,
-			MyMa = 3,
-			MyPo = 4,
-			MyCha = 5,
-			MySa = 6,
-			MyGoong = 7,
-			YoJol = 1 + 7,
-			YoSang = 2 + 7,
-			YoMa = 3 + 7,
-			YoPo = 4 + 7,
-			YoCha = 5 + 7,
-			YoSa = 6 + 7,
-			YoGoong = 7 + 7
+			return (uint)1 << index;
 		}
 
-		Val val;
+		private static int[] lookupStone2Index = new int[0x8001];
 
-		public Val Value
+		public static int Stone2Index(uint stone)
 		{
-			get => val;
-		}
-
-		public Stone(Val value)
-		{
-			val = value;
-		}
-
-		static public explicit operator int(Stone stone)
-		{
-			return (int)stone.val;
-		}
-
-		public bool IsMy => val != 0 && (byte)val <= 7;
-
-		public bool IsYo => (byte)val > 7;
-
-		public bool IsAlliesWith(Stone stone)
-		{
-			if (val == 0 || stone.val == 0)
+			if (stone > 0x8000)
 			{
-				return false;
+				return lookupStone2Index[stone >> 16] + 16;
 			}
-
-			return !((byte)val > 7 ^ (byte)stone.val > 7);
+			else
+			{
+				return lookupStone2Index[stone];
+			}
 		}
 
-		public bool IsCha => val == Val.MyCha || val == Val.YoCha;
 
-		public bool IsPo => val == Val.MyPo || val == Val.YoPo;
+		private static int[] lookupPoint = new int[0x8001];
 
-		public bool IsMa => val == Val.MyMa || val == Val.YoMa;
-
-		public bool IsSang => val == Val.MySang || val == Val.YoSang;
-
-		public bool IsSa => val == Val.MySa || val == Val.YoSa;
-
-		public bool IsJolt => val == Val.MyJol || val == Val.YoJol;
-
-		public bool IsGoong => val == Val.MyGoong || val == Val.YoGoong;
-
-		public bool IsEmpty => val == Val.Empty;
-
-		public Stone Opposite
+		public static int GetPoint(uint stone)
 		{
-			get
+			if (stone > 0x8000)
 			{
-				if (val == 0)
+				return lookupPoint[stone >> 16];
+			}
+			else
+			{
+				return -lookupPoint[stone];
+			}
+		}
+
+		public static string GetLetter(uint stone, bool myFirst)
+		{
+			return GetLetter(Stone2Index(stone), myFirst);
+		}
+
+		private static string[] lookupLetter = {
+			"┼",
+			"卒","卒","卒","卒","卒",
+			"象","象","馬", "馬","包","包",  "車", "車","士","士", "楚",
+			"兵","兵","兵","兵","兵",
+			"象","象","馬", "馬","包","包",  "車", "車","士","士", "漢",
+		};
+	
+
+		public static string GetLetter(int index, bool myFirst)
+		{
+			if (myFirst)
+			{
+				return lookupLetter[index];
+			}
+			else
+			{
+				if (index > 16)
 				{
-					return new Stone();
-				}
-				else if ((byte)val > 7)
-				{
-					return new Stone(val - 7);
+					return lookupLetter[index - 16];
 				}
 				else
 				{
-					return new Stone(val + 7);
+					return lookupLetter[index + 16];
 				}
 			}
+		}
+
+
+		static StoneHelper()
+		{
+			lookupStone2Index[0] = 0;
+			lookupStone2Index[0x01] = 1;
+			lookupStone2Index[0x02] = 2;
+			lookupStone2Index[0x04] = 3;
+			lookupStone2Index[0x08] = 4;
+			lookupStone2Index[0x10] = 5;
+			lookupStone2Index[0x20] = 6;
+			lookupStone2Index[0x40] = 7;
+			lookupStone2Index[0x80] = 8;
+			lookupStone2Index[0x0100] = 9;
+			lookupStone2Index[0x0200] = 10;
+			lookupStone2Index[0x0400] = 11;
+			lookupStone2Index[0x0800] = 12;
+			lookupStone2Index[0x1000] = 13;
+			lookupStone2Index[0x2000] = 14;
+			lookupStone2Index[0x4000] = 15;
+			lookupStone2Index[0x8000] = 16;
+
+			lookupPoint[0] = 0;
+			lookupPoint[0x01] = 20;
+			lookupPoint[0x02] = 20;
+			lookupPoint[0x04] = 20;
+			lookupPoint[0x08] = 20;
+			lookupPoint[0x10] = 20;
+
+			lookupPoint[0x20] = 30;
+			lookupPoint[0x40] = 30;
+
+			lookupPoint[0x80] = 50;
+			lookupPoint[0x0100] = 50;
+
+			lookupPoint[0x0200] = 70;
+			lookupPoint[0x0400] = 70;
+
+			lookupPoint[0x0800] = 130;
+			lookupPoint[0x1000] = 130;
+
+			lookupPoint[0x2000] = 30;
+			lookupPoint[0x4000] = 30;
+
+			lookupPoint[0x8000] = 10000;
 		}
 	}
 }
