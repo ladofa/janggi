@@ -8,6 +8,9 @@ namespace Janggi
 {
 	public class Board
 	{
+		uint[,] targets;
+		uint[,] blocks;
+
 		Stone[,] stones;
 		bool isMyTurn;
 		public int Point;
