@@ -45,10 +45,16 @@ namespace Janggi
 			YoKing = 0x80_00_00_00,
 
 			Jol =  0x00_1F_00_1F,
+			MyJol = 0x00_00_00_1F,
+			YoJol = 0x00_1F_00_00,
 			Sang = 0x00_60_00_60,
 			Ma =   0x01_80_01_80,
 			Po =   0x06_00_06_00,
+			MyPo = 0x00_00_06_00,
+			YoPo = 0x06_00_00_00,
 			Cha =  0x18_00_18_00,
+			MyCha = 0x00_00_18_00,
+			YoCha = 0x18_00_00_00,
 			Sa =   0x60_00_60_00,
 			King = 0x80_00_80_00,
 			Mine = 0x00_00_FF_Ff,
@@ -57,10 +63,16 @@ namespace Janggi
 
 		public static bool IsEmpty(uint s) => s == (uint)Stones.Empty;
 		public static bool IsJol(uint s) => (s & (uint)Stones.Jol) > 0;
+		public static bool IsMyJol(uint s) => (s & (uint)Stones.MyJol) > 0;
+		public static bool IsYoJol(uint s) => (s & (uint)Stones.YoJol) > 0;
 		public static bool IsSang(uint s) => (s & (uint)Stones.Sang) > 0;
 		public static bool IsMa(uint s) => (s & (uint)Stones.Ma) > 0;
 		public static bool IsPo(uint s) => (s & (uint)Stones.Po) > 0;
+		public static bool IsMyPo(uint s) => (s & (uint)Stones.MyPo) > 0;
+		public static bool IsYoPo(uint s) => (s & (uint)Stones.YoPo) > 0;
 		public static bool IsCha(uint s) => (s & (uint)Stones.Cha) > 0;
+		public static bool IsMyCha(uint s) => (s & (uint)Stones.MyCha) > 0;
+		public static bool IsYoCha(uint s) => (s & (uint)Stones.YoCha) > 0;
 		public static bool IsSa(uint s) => (s & (uint)Stones.Sa) > 0;
 		public static bool IsKing(uint s) => (s & (uint)Stones.King) > 0;
 		public static bool IsMine(uint s) => (s & (uint)Stones.Mine) > 0;
@@ -108,7 +120,11 @@ namespace Janggi
 
 		public static int GetPoint(uint stone)
 		{
-			if (stone > 0x8000)
+			if (stone == 0)
+			{
+				return 0;
+			}
+			else if (stone > 0x8000)
 			{
 				return lookupPoint[stone >> 16];
 			}
