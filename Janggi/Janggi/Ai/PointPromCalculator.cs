@@ -39,14 +39,10 @@ namespace Janggi.Ai
 			int max = int.MinValue;
 			int min = int.MaxValue;
 			
-			foreach (Move move in moves)
+			//마지막 rest빼고.
+			for (int i = 0; i < moves.Count - 1; i++)
 			{
-				if (move.Equals(Move.Rest))
-				{
-					proms.Add(0);
-					continue;
-				}
-
+				Move move = moves[i];
 				uint stoneFrom = board[move.From];
 				uint stoneTo = board[move.To];
 				uint target = board.targets[move.To.Y, move.To.X];
@@ -66,7 +62,7 @@ namespace Janggi.Ai
 			}
 
 			double sum = 0;
-			int diff = Math.Min(max - min, 100);
+			int diff = Math.Min(max - min, 200);
 			int diff0 = diff / 5;
 			for (int i = 0; i < proms.Count; i++)
 			{
@@ -74,6 +70,10 @@ namespace Janggi.Ai
 				if (proms[i] < diff0) proms[i] = diff0;
 				sum += proms[i];
 			}
+
+			//rest에 대한 추가
+			proms.Add(diff0);
+
 
 			for (int i = 0; i < proms.Count; i++)
 			{
