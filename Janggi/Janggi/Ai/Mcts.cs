@@ -55,7 +55,7 @@ namespace Janggi.Ai
 						point = Int32.MaxValue;
 					}
 
-					moves = board.GetAllMoves();
+					moves = GetMoves();
 					children = new List<Node>();
 					for (int i = 0; i < moves.Count; i++)
 					{
@@ -178,7 +178,6 @@ namespace Janggi.Ai
 			{
 				lock (this)
 				{
-					parent = null;
 					children = null;
 					cproms = null;
 					moves = null;
@@ -332,7 +331,7 @@ namespace Janggi.Ai
 
 			bool isMyTurn = root.board.IsMyTurn;
 
-			const int numSearchNodes = 100000;
+			const int numSearchNodes = 10000;
 
 			object maxDepthObject = new object();
 
@@ -397,15 +396,11 @@ namespace Janggi.Ai
 					}
 				}
 
-
-
-				lock (maxDepthObject)
+				
+				depthSum += depth;
+				if (depth > maxDepth)
 				{
-					depthSum += depth;
-					if (depth > maxDepth)
-					{
-						maxDepth = depth;
-					}
+					maxDepth = depth;
 				}
 			});
 
