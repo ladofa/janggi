@@ -68,11 +68,13 @@ namespace Janggi.Ai
 			{
 				proms[i] = proms[i] - max + diff;
 				if (proms[i] < diff0) proms[i] = diff0;
+				proms[i] += 2;
 				sum += proms[i];
 			}
 
 			//rest에 대한 추가
 			proms.Add(diff0);
+			sum += diff0;
 
 
 			for (int i = 0; i < proms.Count; i++)
