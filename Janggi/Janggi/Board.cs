@@ -260,22 +260,18 @@ namespace Janggi
 		{
 			List<Move> moves = new List<Move>();
 
-			for (int i = 0; i < 16; i++)
+			for (int y = 0; y < Height; y++)
 			{
-				uint stone = (uint)1 << i;
-				Pos p = GetPos(i + 1);
-				if (p.X != -1)
+				for (int x = 0; x < Width; x++)
 				{
-					for (int y = 0; y < Height; y++)
+					if (IsMine(targets[y, x]) && !IsMine(stones[y, x]))
 					{
-						for (int x = 0; x < Width; x++)
+						for (int i = 0; i < 16; i++)
 						{
+							uint stone = (uint)1 << i;
 							if ((targets[y, x] & stone) > 0)
 							{
-								if (!(IsPo(stones[y, x]) && IsPo(stone)) && !IsMine(stones[y, x]))
-								{
-									moves.Add(new Move(p, new Pos(x, y)));
-								}
+								moves.Add(new Move(GetPos(i + 1), new Pos(x, y)));
 							}
 						}
 					}
@@ -289,22 +285,18 @@ namespace Janggi
 		{
 			List<Move> moves = new List<Move>();
 
-			for (int i = 0; i < 16; i++)
+			for (int y = 0; y < Height; y++)
 			{
-				uint stone = (uint)0x0001_0000 << i;
-				Pos p = GetPos(i + 17);
-				if (p.X != -1)
+				for (int x = 0; x < Width; x++)
 				{
-					for (int y = 0; y < Height; y++)
+					if (IsYours(targets[y, x]) && !IsYours(stones[y, x]))
 					{
-						for (int x = 0; x < Width; x++)
+						for (int i = 0; i < 16; i++)
 						{
+							uint stone = (uint)0x0001_0000 << i;
 							if ((targets[y, x] & stone) > 0)
 							{
-								if (!(IsPo(stones[y, x]) && IsPo(stone)) && !IsYours(stones[y, x]))
-								{
-									moves.Add(new Move(p, new Pos(x, y)));
-								}
+								moves.Add(new Move(GetPos(i + 17), new Pos(x, y)));
 							}
 						}
 					}
@@ -509,7 +501,14 @@ namespace Janggi
 						}
 						else
 						{
-							targets[y, x] |= stoneFrom;
+							if (IsPo(stones[y, x]))
+							{
+								blocks[y, x] |= stoneFrom;
+							}
+							else
+							{
+								targets[y, x] |= stoneFrom;
+							}
 							return false;
 						}
 					}

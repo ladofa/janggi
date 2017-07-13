@@ -62,8 +62,8 @@ namespace Janggi.Ai
 			}
 
 			double sum = 0;
-			int diff = Math.Min(max - min, 200);
-			int diff0 = diff / 5;
+			int diff = Math.Min(max - min, 130);
+			int diff0 = diff / 10;
 			for (int i = 0; i < proms.Count; i++)
 			{
 				proms[i] = proms[i] - max + diff;

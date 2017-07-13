@@ -29,6 +29,11 @@ namespace Janggi.Ai
 			//각 길에 대한 가능성 누적
 			public List<double> cproms;
 
+
+
+			public int visited = 0;
+			public int win = 0;
+
 			//각 길에 대한 다음 노드
 			public List<Node> children;
 
@@ -331,7 +336,7 @@ namespace Janggi.Ai
 
 			bool isMyTurn = root.board.IsMyTurn;
 
-			const int numSearchNodes = 100000;
+			const int numSearchNodes = 30000;
 
 			object maxDepthObject = new object();
 
@@ -392,11 +397,11 @@ namespace Janggi.Ai
 							break;
 						}
 
-						
+
 					}
 				}
 
-				
+
 				depthSum += depth;
 				if (depth > maxDepth)
 				{

@@ -8,36 +8,48 @@ namespace Janggi
 {
 	public struct Pos
 	{
-		public int X;
-		public int Y;
+		public sbyte X;
+		public sbyte Y;
 
-		public Pos(int x, int y)
+		public Pos(sbyte x, sbyte y)
 		{
 			X = x;
 			Y = y;
 		}
 
+		public Pos(int x, int y)
+		{
+			X = (sbyte)x;
+			Y = (sbyte)y;
+		}
+
+
 		public Pos(System.Collections.IEnumerable arr)
 		{
 			var e = arr.GetEnumerator();
-			X = (int)e.Current;
+			X = (sbyte)e.Current;
 			e.MoveNext();
-			Y = (int)e.Current;
+			Y = (sbyte)e.Current;
 		}
 
 		static public Pos operator +(Pos p1, Pos p2)
 		{
-			return new Pos(p1.X + p2.X, p1.Y + p2.Y);
+			return new Pos((sbyte)(p1.X + p2.X), (sbyte)(p1.Y + p2.Y));
 		}
 
 		static public Pos operator -(Pos p1, Pos p2)
 		{
-			return new Pos(p1.X - p2.X, p1.Y - p2.Y);
+			return new Pos((sbyte)(p1.X - p2.X), (sbyte)(p1.Y - p2.Y));
+		}
+
+		public bool Equals(sbyte x, sbyte y)
+		{
+			return X == x && Y == y;
 		}
 
 		public bool Equals(int x, int y)
 		{
-			return X == x && Y == y;
+			return X == (sbyte)x && Y == (sbyte)y;
 		}
 	}
 
@@ -46,7 +58,7 @@ namespace Janggi
 		public Pos From;
 		public Pos To;
 
-		public Move(int fromX, int fromY, int toX, int toY)
+		public Move(sbyte fromX, sbyte fromY, sbyte toX, sbyte toY)
 		{
 			From = new Pos(fromX, fromY);
 			To = new Pos(toX, toY);
