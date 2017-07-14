@@ -43,6 +43,7 @@ namespace Janggi
 
 			Point = board.Point;
 			isMyTurn = board.isMyTurn;
+			IsMyFirst = board.IsMyFirst;
 		}
 
 		public enum Tables
@@ -1135,6 +1136,10 @@ namespace Janggi
 		{
 			List<Move> moves = GetAllMoves();
 
+			int k = Global.Rand.Next(moves.Count);
+			MoveNext(moves[k]);
+			return;
+
 			int[] proms = new int[moves.Count];
 
 			Func<uint, uint, uint, int> Judge;
@@ -1249,18 +1254,75 @@ namespace Janggi
 
 		public void PrintStones()
 		{
+			lock (Global.Rand)
+			{
+				bool colorInverse;
+				if (IsMyFirst)
+				{
+					colorInverse = false;
+				}
+				else
+				{
+					colorInverse = true;
+				}
+
+				string result = "";
+				for (int y = 0; y < Height; y++)
+				{
+					for (int x = 0; x < Width; x++)
+					{
+						uint stone = this[y, x];
+
+						if (prevMove.To.Equals(x, y) || prevMove.From.Equals(x, y))
+						{
+							Console.BackgroundColor = ConsoleColor.DarkYellow;
+						}
+						else
+						{
+							Console.BackgroundColor = ConsoleColor.Black;
+						}
+
+						if (stone == 0)
+						{
+							Console.ForegroundColor = ConsoleColor.Gray;
+
+						}
+						else if (IsMine(stone) ^ colorInverse)
+						{
+							Console.ForegroundColor = ConsoleColor.Cyan;
+						}
+						else
+						{
+							Console.ForegroundColor = ConsoleColor.Magenta;
+						}
+
+						Console.Write(GetLetter(stone, IsMyFirst));
+
+						Console.BackgroundColor = ConsoleColor.Black;
+						Console.Write(" ");
+					}
+					Console.WriteLine();
+				}
+				Console.ForegroundColor = ConsoleColor.Gray;
+				Console.BackgroundColor = ConsoleColor.Black;
+			}
+		}
+
+		public override string ToString()
+		{
 			string[] letters;
-			bool colorInverse;
+			
 			if (IsMyFirst)
 			{
 				letters = lettersCho;
-				colorInverse = false;
+			
 			}
 			else
 			{
 				letters = lettersHan;
-				colorInverse = true;
+			
 			}
+
 			string result = "";
 			for (int y = 0; y < Height; y++)
 			{
@@ -1268,39 +1330,13 @@ namespace Janggi
 				{
 					uint stone = this[y, x];
 
-					if (prevMove.To.Equals(x, y) || prevMove.From.Equals(x, y))
-					{
-						Console.BackgroundColor = ConsoleColor.DarkYellow;
-					}
-					else
-					{
-						Console.BackgroundColor = ConsoleColor.Black;
-					}
-
-					if (stone == 0)
-					{
-						Console.ForegroundColor = ConsoleColor.Gray;
-						
-					}
-					else if (IsMine(stone) ^ colorInverse)
-					{
-						Console.ForegroundColor = ConsoleColor.Cyan;
-					}
-					else
-					{
-						Console.ForegroundColor = ConsoleColor.Magenta;
-					}
-
-					Console.Write(GetLetter(stone, IsMyFirst));
-					
-					Console.BackgroundColor = ConsoleColor.Black;
-					Console.Write(" ");
+					result += Stone2Index(stone);
+					result += " ";
 				}
-				Console.WriteLine();
+				result += "||";
 			}
 
-			Console.ForegroundColor = ConsoleColor.Gray;
-			Console.BackgroundColor = ConsoleColor.Black;
+			return result;
 		}
 
 		#endregion

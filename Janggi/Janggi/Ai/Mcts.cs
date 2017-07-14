@@ -126,15 +126,19 @@ namespace Janggi.Ai
 			public Node GetUnvisitedChild()
 			{
 				//비어있는 노드가 있으면 expend
-				for (int i = 0; i < children.Length; i++)
+				lock (this)
 				{
-					if (children[i] == null)
+					for (int i = 0; i < children.Length; i++)
 					{
-						return GetChild(i);
+						if (children[i] == null)
+						{
+							return GetChild(i);
+						}
 					}
-				}
 
-				return null;
+
+					return null;
+				}
 			}
 
 			public static readonly double rate = 0.7;
@@ -142,22 +146,35 @@ namespace Janggi.Ai
 			public Node GetBestUcbChild()
 			{
 				//베스트 스코어를 찾는다
-				double maxScore = double.MinValue;
-				int maxIndex = -1;
-				double k = 2 * Math.Log(visited);
-				for (int i = 0; i < children.Length; i++)
+				lock (this)
 				{
-					Node node = children[i];
-					double score = (double)node.win / node.visited + rate * Math.Sqrt(k / node.visited);
-
-					if (score > maxScore)
+					double maxScore = double.MinValue;
+					int maxIndex = -1;
+					double k = 2 * Math.Log(visited);
+					for (int i = 0; i < children.Length; i++)
 					{
-						maxScore = score;
-						maxIndex = i;
-					}
-				}
+						Node node = children[i];
 
-				return children[maxIndex];
+						if (node.visited == 0)
+						{
+							continue;
+						}
+
+						double score = (double)node.win / node.visited + rate * Math.Sqrt(k / node.visited);
+
+						if (score > maxScore)
+						{
+							maxScore = score;
+							maxIndex = i;
+						}
+					}
+
+					if (maxIndex == -1)
+					{
+						throw new Exception("???");
+					}
+					return children[maxIndex];
+				}
 			}
 
 			public double UcbScore()
@@ -243,31 +260,34 @@ namespace Janggi.Ai
 				bool myWin = false;
 				bool finished = false;
 
-				while (true)
+				lock (root)
 				{
-					//비어있는 노드가 있으면 expend
-					Node unvisited = parent.GetUnvisitedChild();
-					if (unvisited != null)
+					while (true)
 					{
-						next = unvisited;
-						nodes.Add(next);
-						break;
-					}
-					else
-					{
-						//베스트 스코어를 찾는다
-						parent = parent.GetBestUcbChild();
-						//if (parent.board.IsMyWin)
-						//{
-						//	finished = true;
-						//	myWin = true;
-						//}
-						//else if (parent.board.IsYoWin)
-						//{
-						//	finished = true;
-						//	myWin = false;
-						//}
-						nodes.Add(parent);
+						//비어있는 노드가 있으면 expend
+						Node unvisited = parent.GetUnvisitedChild();
+						if (unvisited != null)
+						{
+							next = unvisited;
+							nodes.Add(next);
+							break;
+						}
+						else
+						{
+							//베스트 스코어를 찾는다
+							parent = parent.GetBestUcbChild();
+							//if (parent.board.IsMyWin)
+							//{
+							//	finished = true;
+							//	myWin = true;
+							//}
+							//else if (parent.board.IsYoWin)
+							//{
+							//	finished = true;
+							//	myWin = false;
+							//}
+							nodes.Add(parent);
+						}
 					}
 				}
 
@@ -281,9 +301,8 @@ namespace Janggi.Ai
 				//rollout
 				Board rollout = new Board(next.board);
 
-
 				//100수까지만 하자 혹시나.
-				for (int i = 0; i < 150; i++)
+				for (int i = 0; i < 100; i++)
 				{
 					if (rollout.IsMyWin)
 					{
@@ -310,16 +329,18 @@ namespace Janggi.Ai
 				//update
 				lock (root)
 				{
+					//rollout.PrintStones();
 					for (int i = 0; i < nodes.Count; i++)
 					{
 						Node node = nodes[i];
-						if (node.board.IsMyTurn != myWin)//상대턴인 노드를 고를 때, 내 턴이다.
+						if (node.board.IsMyTurn ^ myWin)//상대턴인 노드를 고를 때, 내 턴이다.
 						{
 							node.win++;
 						}
 						node.visited++;
 					}
 				}
+
 
 				//for (int i = 0; i < root.children.Length; i++)
 				//{
