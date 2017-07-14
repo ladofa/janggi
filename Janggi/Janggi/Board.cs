@@ -1179,14 +1179,28 @@ namespace Janggi
 				sum += judge;
 			}
 
+			sum += (-min + 10) * proms.Length;
+
+			int prob = Global.Rand.Next(sum);
+
+			bool oldMyTurn = isMyTurn;
+			int cumm = 0;
 			for (int i = 0; i < proms.Length; i++)
 			{
-				proms[i] = proms[i] - min;
+				proms[i] = proms[i] - min + 10;
+				cumm += proms[i];
+
+				if (prob < cumm)
+				{
+					MoveNext(moves[i]);
+					break;
+				}
 			}
 
-			
-
-			return proms;
+			if (oldMyTurn == isMyTurn)
+			{
+				throw new Exception("??");
+			}
 		}
 
 
