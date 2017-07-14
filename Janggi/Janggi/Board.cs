@@ -868,17 +868,9 @@ namespace Janggi
 			return positions[index];
 		}
 
-		private void movePos(Move move, uint stone)
-		{
-			//아무것도 안 함 일단은.
-		}
-
 		#endregion
 
-
-
-
-		#region 정책망 관련
+		#region MCTS 관련
 
 		public int ExpectedPoint(Move move)
 		{
@@ -1137,7 +1129,70 @@ namespace Janggi
 			return min;
 		}
 
+
+
+		public void MoveRandomNext()
+		{
+			List<Move> moves = GetAllMoves();
+
+			int[] proms = new int[moves.Count];
+
+			Func<uint, uint, uint, int> Judge;
+			if (IsMyTurn)
+			{
+				Judge = (stoneFrom, stoneTo, target) =>
+				{
+					//일단 상대를 따먹으면 10점
+					int takingPoint = GetPoint(stoneTo);
+					return takingPoint + ((IsYours(target) ? GetPoint(stoneFrom) : 0) + (takingPoint != 0 ? 10 : 0));
+				};
+			}
+			else
+			{
+				Judge = (stoneFrom, stoneTo, target) =>
+				{
+					int takingPoint = -GetPoint(stoneTo);
+					return takingPoint + ((IsMine(target) ? -GetPoint(stoneFrom) : 0) + (takingPoint != 0 ? 10 : 0));
+				};
+			}
+
+			//최소 점수
+			int min = int.MaxValue;
+			int sum = 0;
+
+			//마지막 rest빼고.
+			for (int i = 0; i < moves.Count - 1; i++)
+			{
+				Move move = moves[i];
+				uint stoneFrom = this[move.From];
+				uint stoneTo = this[move.To];
+				uint target = targets[move.To.Y, move.To.X];
+
+				int judge = Judge(stoneFrom, stoneTo, target);
+				proms[i] = judge;
+
+				if (judge < min)
+				{
+					min = judge;
+				}
+
+				sum += judge;
+			}
+
+			for (int i = 0; i < proms.Length; i++)
+			{
+				proms[i] = proms[i] - min;
+			}
+
+			
+
+			return proms;
+		}
+
+
+
 		#endregion
+
 
 
 		#region 텍스트 출력

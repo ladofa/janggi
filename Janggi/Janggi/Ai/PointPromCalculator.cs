@@ -62,6 +62,9 @@ namespace Janggi.Ai
 				}
 			}
 
+			//rest에 대한 추가
+			proms.Add(0);
+
 			double sum = 0;
 			int diff = Math.Min(max - min, 130);
 			int diff0 = diff / 10;
