@@ -140,6 +140,37 @@ namespace Janggi.Ai
 				return children[index];
 			}
 
+			public Node GetUcbChild()
+			{
+				//비어있는 노드가 있으면 expend
+				for (int i = 0; i < children.Count; i++)
+				{
+					if (children[i] == null)
+					{
+						return GetChild(i);
+					}
+				}
+
+				//베스트 스코어를 찾는다
+				const double rate = 0.7;
+				double maxScore = double.MinValue;
+				int maxIndex = -1;
+				double k = 2 * Math.Log(visited);
+				for (int i = 0; i < children.Count; i++)
+				{
+					Node node = children[i];
+					double score = node.win / node.visited + rate * Math.Sqrt(k / node.visited);
+
+					if (score > maxScore)
+					{
+						maxScore = score;
+						maxIndex = i;
+					}
+				}
+
+				return children[maxIndex].GetUcbChild();
+			}
+
 			public Node GetRandomChild(IPromCalculator promCalculator)
 			{
 				GetCproms(promCalculator);
