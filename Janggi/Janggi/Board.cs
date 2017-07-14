@@ -375,6 +375,7 @@ namespace Janggi
 				{
 					uint stoneTo = stones[y, x];
 					targets[y, x] |= stoneFrom;
+					blocks[y, x] |= stoneFrom;
 					if (stones[y, x] == 0)
 					{
 						return true;
@@ -497,15 +498,13 @@ namespace Janggi
 						if (stones[y, x] == 0)
 						{
 							targets[y, x] |= stoneFrom;
+							blocks[y, x] |= stoneFrom;
 							return true;
 						}
 						else
 						{
-							if (IsPo(stones[y, x]))
-							{
-								blocks[y, x] |= stoneFrom;
-							}
-							else
+							blocks[y, x] |= stoneFrom;
+							if (!IsPo(stones[y, x]))
 							{
 								targets[y, x] |= stoneFrom;
 							}
@@ -603,7 +602,7 @@ namespace Janggi
 					}
 				}
 
-				//TODO : 궁 가운데 있을 경우
+				//궁 가운데 있을 경우 포는 대각선 움직임이 없다.
 			}
 			else if (IsMa(stoneFrom))
 			{
@@ -786,7 +785,7 @@ namespace Janggi
 			for (int i = 0; i < 32; i++)
 			{
 				uint stone = (uint)1 << i;
-				if ((target & stone) > 0 || (block & stone) > 0)
+				if ((block & stone) > 0)
 				{
 					removeTargets(stone);
 					Pos from = GetPos(i + 1);

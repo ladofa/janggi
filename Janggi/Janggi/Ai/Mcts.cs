@@ -336,7 +336,7 @@ namespace Janggi.Ai
 
 			bool isMyTurn = root.board.IsMyTurn;
 
-			const int numSearchNodes = 30000;
+			const int numSearchNodes = 10000;
 
 			object maxDepthObject = new object();
 

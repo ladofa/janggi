@@ -18,20 +18,21 @@ namespace Janggi.Ai
 			List<double> proms = new List<double>(moves.Count);
 
 			Func<uint, uint, uint, int> Judge;
-			if (node.board.IsMyTurn)
+			if (board.IsMyTurn)
 			{
 				Judge = (stoneFrom, stoneTo, target) =>
 				{
-					//잃으면 점수 마이너스..인데 그래도 뭘 해봤으니 +10.
-					return GetPoint(stoneTo) + (IsYours(target) ? GetPoint(stoneFrom) + 10 : 0);
+					//일단 상대를 따먹으면 10점
+					int takingPoint = GetPoint(stoneTo);
+					return takingPoint + ((IsYours(target) ? GetPoint(stoneFrom) : 0) + (takingPoint != 0 ? 10 : 0));
 				};
 			}
 			else
 			{
 				Judge = (stoneFrom, stoneTo, target) =>
 				{
-					//잃으면 점수 마이너스..인데 그래도 뭘 해봤으니 +10.
-					return -GetPoint(stoneTo) + (IsYours(target) ? -GetPoint(stoneFrom) + 10 : 0);
+					int takingPoint = -GetPoint(stoneTo);
+					return takingPoint + ((IsMine(target) ? -GetPoint(stoneFrom) : 0) + (takingPoint != 0 ? 10 : 0));
 				};
 			}
 
