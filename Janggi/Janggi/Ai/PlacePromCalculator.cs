@@ -10,9 +10,10 @@ namespace Janggi.Ai
 {
 	class PlacePromCalculator : IPromCalculator
 	{
-		public List<double> Calc(Node node)
+		public double[] Calc(Node node)
 		{
-			List<Move> moves = node.GetMoves();
+			node.GetMoves();
+			List<Move> moves = node.moves;
 			Board board = node.board;
 
 			foreach (var move in moves)

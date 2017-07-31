@@ -11,11 +11,12 @@ namespace Janggi.Ai
 {
 	class PointPromCalculator : IPromCalculator
 	{
-		public List<double> Calc(Node node)
+		public double[] Calc(Node node)
 		{
-			var moves = node.GetMoves();
+			node.GetMoves();
+			var moves = node.moves;
 			Board board = node.board;
-			List<double> proms = new List<double>(moves.Count);
+			double[] proms = new double[moves.Count];
 
 			Func<uint, uint, uint, int> Judge;
 			if (board.IsMyTurn)
@@ -49,7 +50,7 @@ namespace Janggi.Ai
 				uint target = board.targets[move.To.Y, move.To.X];
 
 				int judge = Judge(stoneFrom, stoneTo, target);
-				proms.Add((double)judge);
+				proms[i] = (double)judge;
 
 				if (judge > max)
 				{
@@ -63,9 +64,9 @@ namespace Janggi.Ai
 			}
 
 			double sum = 0;
-			int diff = Math.Min(max - min, 130);
-			int diff0 = diff / 10;
-			for (int i = 0; i < proms.Count; i++)
+			int diff = Math.Min(max - min, 90);
+			int diff0 = diff / 20;
+			for (int i = 0; i < proms.Length - 1; i++)
 			{
 				proms[i] = proms[i] - max + diff;
 				if (proms[i] < diff0) proms[i] = diff0;
@@ -74,11 +75,11 @@ namespace Janggi.Ai
 			}
 
 			//rest에 대한 추가
-			proms.Add(diff0);
+			proms[proms.Length - 1] = diff0;
 			sum += diff0;
 
 
-			for (int i = 0; i < proms.Count; i++)
+			for (int i = 0; i < proms.Length; i++)
 			{
 				proms[i] = proms[i] / sum;
 			}
