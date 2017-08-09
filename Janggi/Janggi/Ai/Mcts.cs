@@ -399,8 +399,8 @@ namespace Janggi.Ai
 			const int limitDepth = 30;
 
 
-			//Parallel.For(0, numSearchNodes, turn =>
-			for (int turn = 0; turn < numSearchNodes; turn++)
+			Parallel.For(0, numSearchNodes, turn =>
+			//for (int turn = 0; turn < numSearchNodes; turn++)
 			{
 				//랜덤으로 깊이 탐색
 				Node child = root;
@@ -443,7 +443,7 @@ namespace Janggi.Ai
 						depth++;
 
 						child.GetChildren();
-						
+
 						lock (root)
 						{
 							updatePoint(nodes);
@@ -459,7 +459,7 @@ namespace Janggi.Ai
 				{
 					maxDepth = depth;
 				}
-			}
+			});
 
 			lock (root)
 			{
