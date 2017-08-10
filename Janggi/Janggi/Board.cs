@@ -889,69 +889,75 @@ namespace Janggi
 			//잡힐 점수
 			int p3 = CountTaken();
 
-			//잡을 수 있는 가장 비싼 것
-			//int p4 = MaxTake();
+			//궁의 위치가 위에 있으면 불안
+			int p4 = 0;
 
-			//잡힐 수 있는 가장 비싼 것
-			//int p5 = MinTaken();
+			if (GetPos(16).Y == 7)
+			{
+				p4 -= 5;
+			}
+			else if (GetPos(32).Y == 2)
+			{
+				p4 += 5;
+			}
 
+			//포의 안형
+			int p5 = 0;
+
+			if (GetPos(10).Y >= 7)
+			{
+				p5 += 5;
+			}
+			if (GetPos(11).Y >= 7)
+			{
+				p5 += 5;
+			}
+
+			if (GetPos(27).Y <= 2)
+			{
+				p5 -= 5;
+			}
+
+			if (GetPos(26).Y <= 2)
+			{
+				p5 -= 5;
+			}
+
+			//p6
+			//마상은 일단 중앙이 좋다.
 			int p6 = 0;
-
-			const int addPo = 3;
-			//포 타깃이 있는지 살펴봄
-			for (int y = 0; y < Height; y++)
+			const int outMa = 3;
+			for (int x = 0; x < Width; x++)
 			{
-				for (int x = 0; x < Width; x++)
+				uint stone = stones[0, x];
+				if (IsMa(stone) || IsSang(stone))
 				{
-					uint target = targets[y, x];
-					if ((target & (uint)Stones.MyPo1) > 0)
-					{
-						p6 += addPo;
-						break;
-					}
+					p6 += IsMine(stone) ? -outMa : outMa;
+				}
+
+				stone = stones[Height - 1, x];
+				if (IsMa(stone) || IsSang(stone))
+				{
+					p6 += IsMine(stone) ? -outMa : outMa;
 				}
 			}
 
 			for (int y = 0; y < Height; y++)
 			{
-				for (int x = 0; x < Width; x++)
+				uint stone = stones[y, 0];
+				if (IsMa(stone) || IsSang(stone))
 				{
-					uint target = targets[y, x];
-					if ((target & (uint)Stones.MyPo2) > 0)
-					{
-						p6 += addPo;
-						break;
-					}
+					p6 += IsMine(stone) ? -outMa : outMa;
+				}
+
+				stone = stones[y, Width - 1];
+				if (IsMa(stone) || IsSang(stone))
+				{
+					p6 += IsMine(stone) ? -outMa : outMa;
 				}
 			}
 
-			for (int y = 0; y < Height; y++)
-			{
-				for (int x = 0; x < Width; x++)
-				{
-					uint target = targets[y, x];
-					if ((target & (uint)Stones.YoPo1) > 0)
-					{
-						p6 -= addPo;
-						break;
-					}
-				}
-			}
-
-			for (int y = 0; y < Height; y++)
-			{
-				for (int x = 0; x < Width; x++)
-				{
-					uint target = targets[y, x];
-					if ((target & (uint)Stones.YoPo2) > 0)
-					{
-						p6 -= addPo;
-						break;
-					}
-				}
-			}
-
-			//차길은 무조건 +2
+			//차길, 포길은 무조건 +2
 			int p7 = 0;
 
 			const int addCha = 1;
@@ -965,6 +971,15 @@ namespace Janggi
 						p7 += addCha;
 					}
 					else if (IsYoCha(target))
+					{
+						p7 -= addCha;
+					}
+
+					if (IsMyPo(target))
+					{
+						p7 += addCha;
+					}
+					else if (IsYoPo(target))
 					{
 						p7 -= addCha;
 					}
@@ -998,16 +1013,16 @@ namespace Janggi
 			
 			if (IsMyTurn)
 			{
-				p2 /= 3;
-				p3 /= 5;
+				p2 /= 6;
+				p3 /= 12;
 			}
 			else
 			{
-				p2 /= 5;
-				p3 /= 3;
+				p2 /= 12;
+				p3 /= 6;
 			}
 
-			return p1 + p2 + p3 + p6 + p7;
+			return p1 + p2 + p3 + p4 + p5 + p6 + p7;
 		}
 
 		//총 잡을 수 있는 기물
@@ -1024,7 +1039,7 @@ namespace Janggi
 						{
 							if (IsKing(stones[y, x]))
 							{
-								sum += 200;
+								sum += 150;
 							}
 							else
 							{

@@ -10,7 +10,7 @@ namespace Janggi.Ai
 	{
 		public interface IPromCalculator
 		{
-			List<double> Calc(Node node);
+			double[] Calc(Node node);
 		}
 
 		public class Node
@@ -26,12 +26,26 @@ namespace Janggi.Ai
 			//-->서치 중 동적 생성, 이후 계속 유지
 			//현재로부터 움직일 수 있는 모든 길
 			public List<Move> moves;
+			//각 길에 대한 가능성 누적
+			public double[] cproms;
 
 			public int visited = 0;
 			public int win = 0;
 
 			//각 길에 대한 다음 노드
 			public Node[] children;
+
+			//차일드로부터 업데이트된 가치
+			public int myPoint;
+			public int yoPoint;
+
+			//딱 현재 노드의 가치
+			public int judge;
+
+			//가장 유망한 노드
+			public Node promNode = null;
+			//방문햇는지 여부
+			public bool isVisited = false;
 
 			public Node(Node parent, Board board, Move prevMove)
 			{
@@ -41,12 +55,22 @@ namespace Janggi.Ai
 					this.board = board;
 					this.prevMove = prevMove;
 
-					moves = GetMoves();
-					children = new Node[moves.Count];
+					judge = board.Judge();
+
+					if (board.IsMyTurn)
+					{
+						yoPoint = judge;
+						myPoint = Int32.MaxValue;
+					}
+					else
+					{
+						myPoint = judge;
+						yoPoint = Int32.MinValue;
+					}
 				}
 			}
 
-			public List<Move> GetMoves()
+			public void GetMoves()
 			{
 				lock (this)
 				{
@@ -74,121 +98,95 @@ namespace Janggi.Ai
 						}
 					}
 				}
-
-				return moves;
 			}
 
-			public Node GetChild(int index)
+			public void GetCproms(IPromCalculator promCalculator)
 			{
 				lock (this)
 				{
-					if (children[index] == null)
+					if (cproms == null)
 					{
-					
-						Move move = moves[index];
-						Board nextBoard = board.GetNext(move);
-						Node nextNode = new Node(this, nextBoard, move);
-						children[index] = nextNode;
+						double[] proms = promCalculator.Calc(this);
+						cproms = new double[proms.Length + 1];
+
+						cproms[0] = 0;
+						for (int i = 0; i < proms.Length - 1; i++)
+						{
+							//cproms[i + 1] = cproms[i] + proms[i];
+							cproms[i + 1] = cproms[i] + proms[i];
+						}
+						cproms[cproms.Length - 1] = 1;
 					}
 				}
-
-				return children[index];
 			}
 
-			public Node GetUcbChild()
+			public void GetChildren()
 			{
-				Node unvisitedChild = GetUnvisitedChild();
-				if (unvisitedChild != null)
-				{
-					return unvisitedChild;
-				}
-
-				//베스트 스코어를 찾는다
-				const double rate = 0.5;
-				double maxScore = double.MinValue;
-				int maxIndex = -1;
-				double k = 2 * Math.Log(visited);
-				for (int i = 0; i < children.Length; i++)
-				{
-					Node node = children[i];
-					double score = node.win / node.visited + rate * Math.Sqrt(k / node.visited);
-
-					if (score > maxScore)
-					{
-						maxScore = score;
-						maxIndex = i;
-					}
-				}
-
-				return children[maxIndex].GetUcbChild();
-			}
-
-			public Node GetUnvisitedChild()
-			{
-				//비어있는 노드가 있으면 expend
 				lock (this)
 				{
-					for (int i = 0; i < children.Length; i++)
+					if (children == null)
 					{
-						if (children[i] == null)
+						GetMoves();
+						children = new Node[moves.Count];
+						for (int i = 0; i < children.Length; i++)
 						{
-							return GetChild(i);
+							Move move = moves[i];
+							Board nextBoard = board.GetNext(move);
+							Node nextNode = new Node(this, nextBoard, move);
+							children[i] = nextNode;
 						}
 					}
-
-
-					return null;
 				}
 			}
 
-			public static readonly double rate = 0.7;
-
-			public Node GetBestUcbChild()
+			public Node GetRandomChild(IPromCalculator promCalculator)
 			{
-				//베스트 스코어를 찾는다
-				lock (this)
+				GetCproms(promCalculator);
+
+				//prob [0, 1)
+				double prob = Global.Rand.NextDouble();
+				if (prob == 1)
 				{
-					double maxScore = double.MinValue;
-					int maxIndex = -1;
-					double k = 2 * Math.Log(visited);
-					for (int i = 0; i < children.Length; i++)
-					{
-						Node node = children[i];
-
-						if (node.visited == 0)
-						{
-							continue;
-						}
-
-						double score = (double)node.win / node.visited + rate * Math.Sqrt(k / node.visited);
-
-						if (score > maxScore)
-						{
-							maxScore = score;
-							maxIndex = i;
-						}
-					}
-
-					if (maxIndex == -1)
-					{
-						throw new Exception("???");
-					}
-					return children[maxIndex];
+					return children[children.Length - 1];
 				}
-			}
 
-			public double UcbScore()
-			{
-				return (double)win / visited + rate * Math.Sqrt(2 * Math.Log(parent.visited) / visited);
+				int N = cproms.Length;
+
+				int bottom = 0;
+				int top = N - 1;
+				int k = (bottom + top) / 2;
+
+				while (true)
+				{
+					//cproms[k] <= prob < cproms[k + 1]
+					if (prob < cproms[k])
+					{
+						top = k - 1;
+					}
+					else if (prob >= cproms[k + 1])
+					{
+						bottom = k + 1;
+					}
+					else
+					{
+						break;
+					}
+
+					k = (bottom + top) / 2;
+				}
+
+				GetChildren();
+				return children[k];
 			}
-			
 
 			public void Clear()
 			{
 				lock (this)
 				{
 					children = null;
+					cproms = null;
 					moves = null;
+					promNode = null;
 				}
 			}
 
@@ -205,6 +203,49 @@ namespace Janggi.Ai
 					}
 
 					Clear();
+				}
+			}
+
+			public void RegatherPoint()
+			{
+				lock (this)
+				{
+					GetChildren();
+					if (board.IsMyTurn)
+					{
+						yoPoint = int.MinValue;
+						foreach (Node child in children)
+						{
+							if (child.yoPoint > yoPoint)
+							{
+								yoPoint = child.yoPoint;
+								promNode = child;
+							}
+						}
+
+						if (promNode.myPoint != Int32.MaxValue)
+						{
+							myPoint = promNode.myPoint;
+						}
+
+					}
+					else
+					{
+						myPoint = int.MaxValue;
+						foreach (Node child in children)
+						{
+							if (child.myPoint < myPoint)
+							{
+								myPoint = child.myPoint;
+								promNode = child;
+							}
+						}
+
+						if (promNode.yoPoint != Int32.MinValue)
+						{
+							yoPoint = promNode.yoPoint;
+						}
+					}
 				}
 			}
 		}
@@ -235,7 +276,114 @@ namespace Janggi.Ai
 			promCalculator = new PointPromCalculator();
 		}
 
-		
+		private void updatePoint(List<Node> nodes)
+		{
+			Node last = nodes[nodes.Count - 1];
+
+			//last에서 선택하기
+
+			if (last.board.IsMyTurn)
+			{
+				Node[] children = last.children;
+				int maxPoint = Int32.MinValue;
+				for (int i = 0; i < children.Length; i++)
+				{
+					Node child = children[i];
+					if (child.myPoint > maxPoint)
+					{
+						maxPoint = child.myPoint;
+						last.promNode = child;
+					}
+				}
+				last.myPoint = maxPoint;
+			}
+			else
+			{
+				Node[] children = last.children;
+				int minPoint = Int32.MaxValue;
+				for (int i = 0; i < children.Length; i++)
+				{
+					Node child = children[i];
+					if (child.yoPoint < minPoint)
+					{
+						minPoint = child.yoPoint;
+						last.promNode = child;
+					}
+				}
+				last.yoPoint = minPoint;
+			}
+
+			for (int i = nodes.Count - 2; i >= 0; i--)
+			{
+				Node p1 = nodes[i];//parent
+				Node p2 = nodes[i + 1];//child
+
+				//원래 선택했던 노드
+				if (p1.promNode == p2)
+				{
+					//내 차례라면 높은 포인트를 선택
+					if (p1.board.IsMyTurn)
+					{
+						if (p2.yoPoint > p1.yoPoint)
+						{
+							p1.yoPoint = p2.yoPoint;
+							if (p2.myPoint != Int32.MaxValue)
+							{
+								p1.myPoint = p2.myPoint;
+							}
+						}
+						else
+						{
+							p1.RegatherPoint();
+						}
+					}
+					//상대방 차례면 낮은 포인틀르 선택
+					else
+					{
+						if (p2.myPoint < p1.myPoint)
+						{
+							p1.myPoint = p2.myPoint;
+							if (p2.yoPoint != Int32.MinValue)
+							{
+								p1.yoPoint = p2.yoPoint;
+							}
+						}
+						else
+						{
+							p1.RegatherPoint();
+						}
+					}
+				}
+				else
+				{
+					if (p1.board.IsMyTurn)
+					{
+						if (p2.yoPoint > p1.yoPoint)
+						{
+							p1.yoPoint = p2.yoPoint;
+							p1.promNode = p2;
+							if (p2.myPoint != Int32.MaxValue)
+							{
+								p1.myPoint = p2.myPoint;
+							}
+						}
+					}
+					//상대방 차례면 낮은 포인틀르 선택
+					else
+					{
+						if (p2.myPoint < p1.myPoint)
+						{
+							p1.myPoint = p2.myPoint;
+							p1.promNode = p2;
+							if (p2.yoPoint != Int32.MinValue)
+							{
+								p1.yoPoint = p2.yoPoint;
+							}
+						}
+					}
+				}
+			}
+		}
 
 		public Node SearchNext()
 		{
@@ -244,140 +392,134 @@ namespace Janggi.Ai
 
 			bool isMyTurn = root.board.IsMyTurn;
 
-			const int numSearchNodes = 10000;
+			const int numSearchNodes = 50000;
 
-			int countFinish = 0;
+			object maxDepthObject = new object();
+
+			const int limitDepth = 30;
+
 
 			Parallel.For(0, numSearchNodes, turn =>
 			//for (int turn = 0; turn < numSearchNodes; turn++)
 			{
 				//랜덤으로 깊이 탐색
-				Node parent = root;
+				Node child = root;
 				List<Node> nodes = new List<Node>();
-				nodes.Add(root);
-				Node next;
+				//nodes.Add(root);
 
-				bool myWin = false;
-				bool finished = false;
+				int depth = 0;
 
-				lock (root)
+				Node next = child;
+				while (true)
 				{
-					while (true)
+					//다음 노드를 랜덤하게 선택
+					next = child.GetRandomChild(promCalculator);
+
+					if (next.children != null)
 					{
-						//비어있는 노드가 있으면 expend
-						Node unvisited = parent.GetUnvisitedChild();
-						if (unvisited != null)
+						if (next.board.IsFinished)
 						{
-							next = unvisited;
-							nodes.Add(next);
+							//끝낸다.
+							//child = root;
 							break;
 						}
 						else
 						{
-							//베스트 스코어를 찾는다
-							parent = parent.GetBestUcbChild();
-							//if (parent.board.IsMyWin)
-							//{
-							//	finished = true;
-							//	myWin = true;
-							//}
-							//else if (parent.board.IsYoWin)
-							//{
-							//	finished = true;
-							//	myWin = false;
-							//}
-							nodes.Add(parent);
+							//넥스트를 차일드로 선택하고,
+							child = next;
+							nodes.Add(child);
+							depth++;
+							if (depth > limitDepth)
+							{
+								break;
+							}
+							//다시 넥스트를 고른다.
 						}
+					}
+					else
+					{
+						child = next;
+						nodes.Add(child);
+						depth++;
+
+						child.GetChildren();
+
+						lock (root)
+						{
+							updatePoint(nodes);
+						}
+
+						break;
 					}
 				}
 
-				int depth = nodes.Count;
+
 				depthSum += depth;
 				if (depth > maxDepth)
 				{
 					maxDepth = depth;
 				}
-
-				//rollout
-				Board rollout = new Board(next.board);
-
-				//100수까지만 하자 혹시나.
-				for (int i = 0; i < 100; i++)
-				{
-					if (rollout.IsMyWin)
-					{
-						finished = true;
-						myWin = true;
-						break;
-					}
-					else if (rollout.IsYoWin)
-					{
-						finished = true;
-						myWin = false;
-						break;
-					}
-
-					rollout.MoveRandomNext();
-				}
-
-				if (!finished)
-				{
-					myWin = rollout.Point > 0;
-					countFinish++;
-				}
-
-				//update
-				lock (root)
-				{
-					//rollout.PrintStones();
-					for (int i = 0; i < nodes.Count; i++)
-					{
-						Node node = nodes[i];
-						if (node.board.IsMyTurn ^ myWin)//상대턴인 노드를 고를 때, 내 턴이다.
-						{
-							node.win++;
-						}
-						node.visited++;
-					}
-				}
-
-
-				//for (int i = 0; i < root.children.Length; i++)
-				//{
-				//	Node child = root.children[i];
-				//	if (child == null) Console.WriteLine(i + "not visited");
-				//	else
-				//	Console.WriteLine($"{i} : {child.win} / {child.visited} ... {child.UcbScore()}");
-				//}
 			});
 
+			lock (root)
+			{
+				root.RegatherPoint();
+			}
+
 			Console.WriteLine($"Max depth : {maxDepth}, Average : {depthSum / (double)numSearchNodes}");
-			Console.WriteLine("Count Not Finish : " + countFinish);
+			if (root.promNode == null)
+			{
+				Console.WriteLine("== NO PROMISSING");
+				root.promNode = root.GetRandomChild(promCalculator);
+			}
+
+			Console.WriteLine("My Current Point : " + root.myPoint);
+			Console.WriteLine("Yo Current Point : " + root.yoPoint);
+			Console.WriteLine("My Expected Point : " + root.promNode.myPoint);
+			Console.WriteLine("Yo Expected Point : " + root.promNode.yoPoint);
+
+			int otherMin = int.MaxValue;
+			int otherMax = int.MinValue;
 			for (int i = 0; i < root.children.Length; i++)
 			{
 				Node child = root.children[i];
-				Console.WriteLine($"{i} : {child.win} / {child.visited} ... {root.moves[i]} ... {child.UcbScore()}");
+				
+					Console.WriteLine($"Other[{i}] : " + root.moves[i].ToString() + " : " + child.myPoint + " : " + child.yoPoint);
+					if (child.yoPoint < otherMin)
+					{
+						otherMin = child.yoPoint;
+					}
+					if (child.myPoint > otherMax)
+					{
+						otherMax = child.myPoint;
+					}
+				
 			}
 
-			//if (root.promNode == null)
-			//{
-			//	Console.WriteLine("== NO PROMISSING");
-			//	root.promNode = root.GetRandomChild(promCalculator);
-			//}
+			if (isMyTurn)
+			{
+				if (otherMax > root.promNode.myPoint)
+				{
+					Console.WriteLine("?????????? : " + otherMax);
+				}
+			}
+			else
+			{
+				if (otherMin < root.promNode.yoPoint)
+				{
+					Console.WriteLine("?????????? : " + otherMin);
+				}
+			}
 
-			//Console.WriteLine("Current Point : " + root.point);
-			//Console.WriteLine("Expected Point : " + root.promNode.point);
+			Node temp = root.promNode;
+			while (temp.promNode != null)
+			{
+				Console.WriteLine(temp.promNode.prevMove.ToString() + " : " + temp.promNode.myPoint + " : " + temp.promNode.yoPoint);
+				temp = temp.promNode;
+			}
 
 
-			//Node temp = root.promNode;
-			//while (temp.promNode != null)
-			//{
-			//	Console.WriteLine(temp.promNode.prevMove.ToString() + " : " + temp.promNode.point.ToString());
-			//	temp = temp.promNode;
-			//}
-
-
-			return root.GetBestUcbChild();
+			return root.promNode;
 		}
 
 		public void ForceStopSearch()
@@ -392,7 +534,8 @@ namespace Janggi.Ai
 			{
 				if (move.Equals(root.moves[i]))
 				{
-					SetMove(root.GetChild(i));
+					root.GetChildren();
+					SetMove(root.children[i]);
 					currentLevel++;
 					moved = true;
 					break;
