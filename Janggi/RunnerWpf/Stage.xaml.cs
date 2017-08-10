@@ -13,6 +13,10 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+
+using Janggi;
+using static Janggi.StoneHelper;
+
 namespace RunnerWpf
 {
 	/// <summary>
@@ -20,11 +24,46 @@ namespace RunnerWpf
 	/// </summary>
 	public partial class Stage : UserControl
 	{
+		public Unit[,] units = new Unit[Board.Height, Board.Width];
+
 		public Stage()
 		{
 			InitializeComponent();
+
+			//유닛 배치
+			for (int y = 0; y < Board.Height; y++)
+			{
+				for (int x = 0; x < Board.Width; x++)
+				{
+					Unit unit = new Unit();
+					unit.SetValue(Grid.RowProperty, x);
+					unit.SetValue(Grid.ColumnProperty, y);
+					units[y, x] = unit;
+					GridStage.Children.Add(unit);
+				}
+			}
+
 			SizeChanged += Stage_SizeChanged;
 		}
+
+		static List<Tuple<double, double, double, double>> castlePoints = new List<Tuple<double, double, double, double>>
+			{
+				new Tuple<double, double, double, double>(3, 0, 5, 2),
+				new Tuple<double, double, double, double>(3, 2, 5, 0),
+				new Tuple<double, double, double, double>(3, 7, 5, 9),
+				new Tuple<double, double, double, double>(3, 9, 5, 7),
+			};
+
+		static List<Tuple<double, double>> makrPoints = new List<Tuple<double, double>>
+			{
+				new Tuple<double, double>(0, 3), new Tuple<double, double>(0, 6),
+				new Tuple<double, double>(2, 3), new Tuple<double, double>(2, 6),
+				new Tuple<double, double>(4, 3), new Tuple<double, double>(4, 6),
+				new Tuple<double, double>(6, 3), new Tuple<double, double>(6, 6),
+				new Tuple<double, double>(8, 3), new Tuple<double, double>(8, 6),
+				new Tuple<double, double>(1, 2), new Tuple<double, double>(1, 7),
+				new Tuple<double, double>(7, 2), new Tuple<double, double>(7, 7),
+			};
 
 		private void Stage_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
@@ -83,13 +122,6 @@ namespace RunnerWpf
 			}
 
 			//궁라인
-			List<Tuple<double, double, double, double>> castlePoints = new List<Tuple<double, double, double, double>>
-			{
-				new Tuple<double, double, double, double>(3, 0, 5, 2),
-				new Tuple<double, double, double, double>(3, 2, 5, 0),
-				new Tuple<double, double, double, double>(3, 7, 5, 9),
-				new Tuple<double, double, double, double>(3, 9, 5, 7),
-			};
 
 			foreach (var castlePoint in castlePoints)
 			{
@@ -102,21 +134,12 @@ namespace RunnerWpf
 			}
 
 			//마커
-			List<Tuple<double, double>> makrPoints = new List<Tuple<double, double>>
-			{
-				new Tuple<double, double>(0, 3), new Tuple<double, double>(0, 6),
-				new Tuple<double, double>(2, 3), new Tuple<double, double>(2, 6),
-				new Tuple<double, double>(4, 3), new Tuple<double, double>(4, 6),
-				new Tuple<double, double>(6, 3), new Tuple<double, double>(6, 6),
-				new Tuple<double, double>(8, 3), new Tuple<double, double>(8, 6),
-				new Tuple<double, double>(1, 2), new Tuple<double, double>(1, 7),
-				new Tuple<double, double>(7, 2), new Tuple<double, double>(7, 7),
-			};
+
 
 			foreach (var point in makrPoints)
 			{
 				double x = woodWidth * (point.Item1 * 2 + 1) / 18;
-				double y = woodHeight * (point.Item2 *2 + 1) / 20;
+				double y = woodHeight * (point.Item2 * 2 + 1) / 20;
 
 				Line line1 = new Line();
 				line1.X1 = x - markLength;
@@ -139,6 +162,21 @@ namespace RunnerWpf
 				line.StrokeThickness = 0.5;
 				GridLine.Children.Add(line);
 			});
+		}
+
+		public Board Board
+		{
+			set
+			{
+				for (int y = 0; y < Board.Height; y++)
+				{
+					for (int x = 0; x < Board.Width; x++)
+					{
+						var stone = value[y, x];
+						units[y, x].Stone = stone;
+					}
+				}
+			}
 		}
 	}
 }
