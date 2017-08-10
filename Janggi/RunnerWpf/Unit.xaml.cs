@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-
+using static Janggi.StoneHelper;
 
 namespace RunnerWpf
 {
@@ -59,11 +59,51 @@ namespace RunnerWpf
 			}
 		}
 
-		public uint Stone
+		static Dictionary<uint, int> imageIndex = new Dictionary<uint, int>
 		{
-			set
+			{(uint)Stones.Empty, 0 },
+			{(uint)Stones.MyJol1, 0 },
+			{(uint)Stones.MyJol2, 0 },
+			{(uint)Stones.MyJol3, 0 },
+			{(uint)Stones.MyJol4, 0 },
+			{(uint)Stones.MyJol5, 0 },
+			{(uint)Stones.MySang1, 0 },
+			{(uint)Stones.MySang2, 0 },
+			{(uint)Stones.MyMa1, 0 },
+			{(uint)Stones.MyMa2, 0 },
+			{(uint)Stones.MyPo1, 0 },
+			{(uint)Stones.MyPo2, 0 },
+			{(uint)Stones.MyCha1, 0 },
+			{(uint)Stones.MyCha2, 0 },
+			{(uint)Stones.MySa1, 0 },
+			{(uint)Stones.MySa2, 0 },
+			{(uint)Stones.MyKing, 0 },
+			{(uint)Stones.YoJol1, 0 },
+			{(uint)Stones.YoJol2, 0 },
+			{(uint)Stones.YoJol3, 0 },
+			{(uint)Stones.YoJol4, 0 },
+			{(uint)Stones.YoJol5, 0 },
+			{(uint)Stones.YoSang1, 0 },
+			{(uint)Stones.YoSang2, 0 },
+			{(uint)Stones.YoMa1, 0 },
+			{(uint)Stones.YoMa2, 0 },
+			{(uint)Stones.YoPo1, 0 },
+			{(uint)Stones.YoPo2, 0 },
+			{(uint)Stones.YoCha1, 0 },
+			{(uint)Stones.YoCha2, 0 },
+			{(uint)Stones.YoSa1, 0 },
+			{(uint)Stones.YoSa2, 0 },
+			{(uint)Stones.YoKing, 0 },
+		};
+
+		public void SetImage(uint stone, bool isMyFirst)
+		{
+			if (IsEmpty(stone))
 			{
-				//이미지 변경
+			}
+			else if (IsCha(stone))
+			{
+
 			}
 		}
 

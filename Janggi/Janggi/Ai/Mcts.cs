@@ -29,9 +29,6 @@ namespace Janggi.Ai
 			//각 길에 대한 가능성 누적
 			public double[] cproms;
 
-			public int visited = 0;
-			public int win = 0;
-
 			//각 길에 대한 다음 노드
 			public Node[] children;
 
@@ -44,8 +41,7 @@ namespace Janggi.Ai
 
 			//가장 유망한 노드
 			public Node promNode = null;
-			//방문햇는지 여부
-			public bool isVisited = false;
+			
 
 			public Node(Node parent, Board board, Move prevMove)
 			{
