@@ -127,6 +127,7 @@ namespace RunnerWpf
 				foreach (Polygon polygon in GridMarker.Children)
 				{
 					polygon.Fill = value;
+					//커밋용 대충
 				}
 			}
 
