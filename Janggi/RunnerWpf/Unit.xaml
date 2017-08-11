@@ -8,13 +8,16 @@
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
 		<Grid x:Name="GridMarker" Visibility="Collapsed">
-			<Polygon Points="0,0 0,10, 10,0" Fill="Black" />
-			<Polygon Points="0,0 10,0, 0,10" Fill="Black" />
-			<Polygon Points="0,0 10,0, 0,10" Fill="Black" />
-			<Polygon Points="0,0 10,0, 0,10" Fill="Black" />
+			<Polygon Points="0,0 0,10, 10,0" Fill="Red" />
+			<Polygon Points="0,0 10,0, 0,10" Fill="Red" />
+			<Polygon Points="0,0 10,0, 0,10" Fill="Red" />
+			<Polygon Points="0,0 10,0, 0,10" Fill="Red" />
+
 		</Grid>
-		<Grid x:Name="GridStone">
-			
-		</Grid>
+		<Image Source="Images\HanCha.png" Visibility="Collapsed"/>
+		<Image x:Name="ImageUnit"/>
+		<Ellipse x:Name="EllipseMarker" Stroke="Red" StrokeThickness="2" Opacity="0.4" Visibility="Collapsed"/>
+
+
 	</Grid>
 </UserControl>

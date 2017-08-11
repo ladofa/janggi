@@ -10,9 +10,9 @@ namespace Janggi
 {
 	public class Board
 	{
-		public uint[,] stones;
-		public uint[,] targets;
-		public uint[,] blocks;
+		public uint[,] stones;//돌이 놓여진 상태
+		public uint[,] targets;//해당 위치를 노리고 있는 돌
+		public uint[,] blocks;//해당 위치때문에 못 움직이는 돌
 
 		Pos[] positions;
 
@@ -265,12 +265,14 @@ namespace Janggi
 			{
 				for (int x = 0; x < Width; x++)
 				{
+					//내 돌이 이 자리를 노리고 있으면서 이 자리가 내 돌이 아니라면
 					if (IsMine(targets[y, x]) && !IsMine(stones[y, x]))
 					{
+						//어떤 돌이 이 자리를 노리고 있는지 검색한다.
 						for (int i = 0; i < 16; i++)
 						{
 							uint stone = (uint)1 << i;
-							if ((targets[y, x] & stone) > 0)
+							if ((targets[y, x] & stone) != 0)
 							{
 								moves.Add(new Move(GetPos(i + 1), new Pos(x, y)));
 							}
@@ -295,7 +297,7 @@ namespace Janggi
 						for (int i = 0; i < 16; i++)
 						{
 							uint stone = (uint)0x0001_0000 << i;
-							if ((targets[y, x] & stone) > 0)
+							if ((targets[y, x] & stone) != 0)
 							{
 								moves.Add(new Move(GetPos(i + 17), new Pos(x, y)));
 							}
@@ -305,6 +307,32 @@ namespace Janggi
 			}
 
 			moves.Add(Move.Rest);
+			return moves;
+		}
+
+		public List<Pos> GetAllMoves(Pos from)
+		{
+			if (IsEmpty(stones[from.Y, from.X]))
+			{
+				return new List<Pos>();
+			}
+
+			List<Pos> moves = new List<Pos>();
+			uint stone = stones[from.Y, from.X];
+
+			bool isMine = IsMine(stones[from.Y, from.X]);
+
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					//타겟이면서 내 돌이 아닐 때,
+					if ((targets[y, x] & stone) != 0 && (IsEmpty(stones[y, x]) || isMine == IsYours(stones[y, x])))
+					{
+						moves.Add(new Pos(x, y));
+					}
+				}
+			}
 			return moves;
 		}
 

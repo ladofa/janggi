@@ -36,14 +36,117 @@ namespace RunnerWpf
 				for (int x = 0; x < Board.Width; x++)
 				{
 					Unit unit = new Unit();
-					unit.SetValue(Grid.RowProperty, x);
-					unit.SetValue(Grid.ColumnProperty, y);
+					unit.SetValue(Grid.RowProperty, y);
+					unit.SetValue(Grid.ColumnProperty, x);
+					unit.Pos = new Pos(x, y);
+					unit.MouseLeftButtonDown += Unit_MouseLeftButtonDown;
+					unit.MouseLeftButtonUp += Unit_MouseLeftButtonUp;
+
 					units[y, x] = unit;
 					GridStage.Children.Add(unit);
 				}
 			}
 
 			SizeChanged += Stage_SizeChanged;
+			MouseLeave += Stage_MouseLeave;
+			MouseMove += Stage_MouseMove;
+			MouseLeftButtonUp += Stage_MouseLeftButtonUp;
+		}
+
+		
+
+		public delegate void UnitMovedHandler(Move move);
+		public event UnitMovedHandler UnitMoved;
+
+		bool isUnitMoving;
+		Pos moveFrom;
+		Pos moveTo;
+
+		void showPossibleMove(Pos pos)
+		{
+			List<Pos> moves = board.GetAllMoves(pos);
+			Brush brush;
+
+			if (board.IsMyFirst == IsMine(board[pos]))
+			{
+				brush = Brushes.Blue;
+			}
+			else
+			{
+				brush = Brushes.Red;
+			}
+
+			foreach (Pos t in moves)
+			{
+				units[t.Y, t.X].IsCircled = true;
+				units[t.Y, t.X].CircleBrush = brush;
+			}
+		}
+
+		void hideAllPossibleMove()
+		{
+			foreach (Unit unit in units)
+			{
+				unit.IsCircled = false;
+			}
+		}
+
+		private void Unit_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			Unit unit = sender as Unit;
+			moveFrom = unit.Pos;
+
+			UnitMoving.Visibility = Visibility.Visible;
+			showPossibleMove(moveFrom);
+			isUnitMoving = true;
+
+			//오버레이 UI 설정
+			UnitMoving.SetStone(unit.Stone, board.IsMyFirst);
+			UnitMoving.Width = unit.ActualWidth;
+			UnitMoving.Height = unit.ActualHeight;
+
+			//오버레이 초기 위치
+			Point pos = e.GetPosition(GridOverlay);
+			UnitMoving.Margin = new Thickness(pos.X - UnitMoving.Width / 2, pos.Y - UnitMoving.Height / 2, 0, 0);
+		}
+
+		private void Unit_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		{
+			Unit unit = sender as Unit;
+			moveTo = unit.Pos;
+			UnitMoving.SetStone(unit.Stone, board.IsMyFirst);
+			UnitMoving.Width = unit.ActualWidth;
+			UnitMoving.Height = unit.ActualHeight;
+
+			UnitMoving.Visibility = Visibility.Collapsed;
+			hideAllPossibleMove();
+			isUnitMoving = false;
+
+			UnitMoved?.Invoke(new Move(moveFrom, moveTo));
+		}		
+
+		private void Stage_MouseLeave(object sender, MouseEventArgs e)
+		{
+			UnitMoving.Visibility = Visibility.Collapsed;
+			hideAllPossibleMove();
+			isUnitMoving = false;
+		}
+
+		private void Stage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		{
+			UnitMoving.Visibility = Visibility.Collapsed;
+			hideAllPossibleMove();
+			isUnitMoving = false;
+		}
+
+		private void Stage_MouseMove(object sender, MouseEventArgs e)
+		{
+			if (isUnitMoving)
+			{
+				//오버레이 위치 변경
+				Point pos = e.GetPosition(GridOverlay);
+				UnitMoving.Margin = new Thickness(pos.X - UnitMoving.Width / 2, pos.Y - UnitMoving.Height / 2, 0, 0);
+			}
 		}
 
 		static List<Tuple<double, double, double, double>> castlePoints = new List<Tuple<double, double, double, double>>
@@ -164,16 +267,19 @@ namespace RunnerWpf
 			});
 		}
 
+		Board board;
 		public Board Board
 		{
 			set
 			{
+				board = value;
+
 				for (int y = 0; y < Board.Height; y++)
 				{
 					for (int x = 0; x < Board.Width; x++)
 					{
 						var stone = value[y, x];
-						units[y, x].Stone = stone;
+						units[y, x].SetStone(stone, board.IsMyFirst);
 					}
 				}
 			}

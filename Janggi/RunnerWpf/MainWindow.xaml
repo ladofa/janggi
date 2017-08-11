@@ -5,8 +5,42 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RunnerWpf"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="850" Width="1000">
     <Grid>
-		<local:Stage/>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="150"/>
+			<ColumnDefinition/>
+		</Grid.ColumnDefinitions>
+		<StackPanel Orientation="Vertical" Margin="2">
+			<Button x:Name="ButtonNewGame" Height="30" Margin="2" Content="새 게임" Click="ButtonNewGame_Click"/>
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="2">
+				<RadioButton x:Name="RadioButtonMyFirst" Content="선수" GroupName="MyFirst" IsChecked="True"/>
+				<RadioButton x:Name="RadioButtonYoFirst" Content="후수" GroupName="MyFirst"/>
+			</StackPanel>
+			<Grid Margin="2">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition/>
+					<ColumnDefinition/>
+				</Grid.ColumnDefinitions>
+				
+				<StackPanel Orientation="Vertical">
+					
+					<TextBlock Text="상대방" HorizontalAlignment="Center"/>
+					<RadioButton x:Name="RadioButtonYoLeft" Content="마상마상" GroupName="YoInit" IsChecked="True"/>
+					<RadioButton x:Name="RadioButtonYoRight" Content="상마상마" GroupName="YoInit"/>
+					<RadioButton x:Name="RadioButtonYoInner" Content="마상상마" GroupName="YoInit"/>
+					<RadioButton x:Name="RadioButtonYoOuter" Content="상마마상" GroupName="YoInit"/>
+				</StackPanel>
+				<StackPanel Orientation="Vertical" Grid.Column="1">
+					<TextBlock Text="나" HorizontalAlignment="Center"/>
+					<RadioButton x:Name="RadioButtonMyRight" Content="마상마상" GroupName="MyInit" IsChecked="True"/>
+					<RadioButton x:Name="RadioButtonMyLeft" Content="상마상마" GroupName="MyInit"/>
+					<RadioButton x:Name="RadioButtonMyInner" Content="마상상마" GroupName="MyInit"/>
+					<RadioButton x:Name="RadioButtonMyOuter" Content="상마마상" GroupName="MyInit"/>
+				</StackPanel>
+			</Grid>
+			<Button Height="30" Margin="2"/>
+		</StackPanel>
+		<local:Stage x:Name="StageMain" Grid.Column="1" UnitMoved="StageMain_UnitMoved" />
 	</Grid>
 </Window>

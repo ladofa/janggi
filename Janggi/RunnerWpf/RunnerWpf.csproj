@@ -118,5 +118,39 @@
       <Name>Janggi</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\HanCha.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ChoCha - Copy.png" />
+    <Resource Include="Images\ChoCha.png" />
+    <Resource Include="Images\ChoJol - Copy.png" />
+    <Resource Include="Images\ChoJol.png" />
+    <Resource Include="Images\ChoKing - Copy.png" />
+    <Resource Include="Images\ChoKing.png" />
+    <Resource Include="Images\ChoMa - Copy.png" />
+    <Resource Include="Images\ChoMa.png" />
+    <Resource Include="Images\ChoPo - Copy.png" />
+    <Resource Include="Images\ChoPo.png" />
+    <Resource Include="Images\ChoSa - Copy.png" />
+    <Resource Include="Images\ChoSa.png" />
+    <Resource Include="Images\ChoSang - Copy.png" />
+    <Resource Include="Images\ChoSang.png" />
+    <Resource Include="Images\Empty - Copy.png" />
+    <Resource Include="Images\Empty.png" />
+    <Resource Include="Images\HanCha - Copy.png" />
+    <Resource Include="Images\HanJol - Copy.png" />
+    <Resource Include="Images\HanJol.png" />
+    <Resource Include="Images\HanKing - Copy.png" />
+    <Resource Include="Images\HanKing.png" />
+    <Resource Include="Images\HanMa - Copy.png" />
+    <Resource Include="Images\HanMa.png" />
+    <Resource Include="Images\HanPo - Copy.png" />
+    <Resource Include="Images\HanPo.png" />
+    <Resource Include="Images\HanSa - Copy.png" />
+    <Resource Include="Images\HanSa.png" />
+    <Resource Include="Images\HanSang - Copy.png" />
+    <Resource Include="Images\HanSang.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

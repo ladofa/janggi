@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="324">
 	<Grid>
-		<Grid x:Name="GridWood" Background="LightGray">
+		<Grid x:Name="GridWood" Background="DarkGray">
 			<Grid x:Name="GridLine">
 			</Grid>
 			<Grid x:Name="GridStage">
@@ -36,7 +36,9 @@
 				</Grid.ColumnDefinitions>
 			</Grid>
 
-
+			<Grid x:Name="GridOverlay">
+				<local:Unit x:Name="UnitMoving" Opacity="0.4" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+			</Grid>
 
 		</Grid>
 	</Grid>
