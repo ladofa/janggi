@@ -62,6 +62,11 @@ namespace RunnerWpf
 		Pos moveFrom;
 		Pos moveTo;
 
+		public bool IsMovable
+		{
+			get; set;
+		}
+
 		void showPossibleMove(Pos pos)
 		{
 			List<Pos> moves = board.GetAllMoves(pos);
@@ -94,6 +99,12 @@ namespace RunnerWpf
 		private void Unit_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
 			Unit unit = sender as Unit;
+
+			if (IsEmpty(unit.Stone) || !IsMovable)
+			{
+				return;
+			}
+
 			moveFrom = unit.Pos;
 
 			UnitMoving.Visibility = Visibility.Visible;
@@ -112,17 +123,20 @@ namespace RunnerWpf
 
 		private void Unit_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			Unit unit = sender as Unit;
-			moveTo = unit.Pos;
-			UnitMoving.SetStone(unit.Stone, board.IsMyFirst);
-			UnitMoving.Width = unit.ActualWidth;
-			UnitMoving.Height = unit.ActualHeight;
+			if (isUnitMoving)
+			{
+				Unit unit = sender as Unit;
+				moveTo = unit.Pos;
+				//UnitMoving.SetStone(unit.Stone, board.IsMyFirst);
+				UnitMoving.Width = unit.ActualWidth;
+				UnitMoving.Height = unit.ActualHeight;
 
-			UnitMoving.Visibility = Visibility.Collapsed;
-			hideAllPossibleMove();
-			isUnitMoving = false;
+				UnitMoving.Visibility = Visibility.Collapsed;
+				hideAllPossibleMove();
+				isUnitMoving = false;
 
-			UnitMoved?.Invoke(new Move(moveFrom, moveTo));
+				UnitMoved?.Invoke(new Move(moveFrom, moveTo));
+			}
 		}		
 
 		private void Stage_MouseLeave(object sender, MouseEventArgs e)
@@ -274,14 +288,25 @@ namespace RunnerWpf
 			{
 				board = value;
 
-				for (int y = 0; y < Board.Height; y++)
+				this.Dispatcher.Invoke(() =>
 				{
-					for (int x = 0; x < Board.Width; x++)
+					for (int y = 0; y < Board.Height; y++)
 					{
-						var stone = value[y, x];
-						units[y, x].SetStone(stone, board.IsMyFirst);
+						for (int x = 0; x < Board.Width; x++)
+						{
+							var stone = value[y, x];
+							units[y, x].SetStone(stone, board.IsMyFirst);
+							units[y, x].IsMarked = false;
+						}
 					}
-				}
+
+					
+					Pos from = board.PrevMove.From;
+					if (from.X != -1)
+					{
+						units[from.Y, from.X].IsMarked = true;
+					}
+				});
 			}
 		}
 	}

@@ -72,7 +72,7 @@ namespace Janggi.Ai
 				{
 					if (moves == null)
 					{
-						moves = board.GetAllMoves();
+						moves = board.GetAllPossibleMoves();
 
 						//반복수 제거
 
@@ -526,6 +526,7 @@ namespace Janggi.Ai
 		public void SetMove(Move move)
 		{
 			bool moved = false;
+			root.GetMoves();
 			for (int i = 0; i < root.moves.Count; i++)
 			{
 				if (move.Equals(root.moves[i]))

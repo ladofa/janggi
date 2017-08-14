@@ -25,7 +25,7 @@
 				
 				<StackPanel Orientation="Vertical">
 					
-					<TextBlock Text="상대방" HorizontalAlignment="Center"/>
+					<TextBlock Text="상대방" HorizontalAlignment="Center" Margin="2"/>
 					<RadioButton x:Name="RadioButtonYoLeft" Content="마상마상" GroupName="YoInit" IsChecked="True"/>
 					<RadioButton x:Name="RadioButtonYoRight" Content="상마상마" GroupName="YoInit"/>
 					<RadioButton x:Name="RadioButtonYoInner" Content="마상상마" GroupName="YoInit"/>
@@ -39,8 +39,26 @@
 					<RadioButton x:Name="RadioButtonMyOuter" Content="상마마상" GroupName="MyInit"/>
 				</StackPanel>
 			</Grid>
-			<Button Height="30" Margin="2"/>
+
+			<Grid Margin="2">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition/>
+					<ColumnDefinition/>
+				</Grid.ColumnDefinitions>
+
+				<StackPanel Orientation="Vertical">
+
+					<TextBlock Text="상대방" HorizontalAlignment="Center" Margin="2"/>
+					<RadioButton x:Name="RadioButtonYoControllerAI" Content="AI" GroupName="YoController" IsChecked="True"/>
+					<RadioButton x:Name="RadioButtonYoControllerHuman" Content="Human" GroupName="YoController"/>
+				</StackPanel>
+				<StackPanel Orientation="Vertical" Grid.Column="1">
+					<TextBlock Text="나" HorizontalAlignment="Center"/>
+					<RadioButton x:Name="RadioButtonMyControllerAI" Content="AI" GroupName="MyController"/>
+					<RadioButton x:Name="RadioButtonMyControllerHuman" Content="Human" GroupName="MyController" IsChecked="True"/>
+				</StackPanel>
+			</Grid>
 		</StackPanel>
-		<local:Stage x:Name="StageMain" Grid.Column="1" UnitMoved="StageMain_UnitMoved" />
+		<local:Stage x:Name="StageMain" Grid.Column="1"/>
 	</Grid>
 </Window>

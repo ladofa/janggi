@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using System.Threading;
+
 using Janggi;
 
 namespace RunnerWpf
@@ -25,9 +27,19 @@ namespace RunnerWpf
 		public MainWindow()
 		{
 			InitializeComponent();
+			StageMain.UnitMoved += StageMain_UnitMoved;
 		}
 
-		Board board;
+		Board mainBoard;
+
+		public enum Controllers
+		{
+			AI,
+			Human,
+		}
+
+		Controllers myController;
+		Controllers yoController;
 
 		private void ButtonNewGame_Click(object sender, RoutedEventArgs e)
 		{
@@ -80,15 +92,117 @@ namespace RunnerWpf
 				isMyFirst = false;
 			}
 
-			board = new Board(myTable, yoTable, isMyFirst);
+			mainBoard = new Board(myTable, yoTable, isMyFirst);
 
+			StageMain.Board = mainBoard;
+			mainBoard.Changed += MainBoard_Changed;
+
+			if (RadioButtonMyControllerAI.IsChecked.Value)
+			{
+				myController = Controllers.AI;
+			}
+			else if (RadioButtonMyControllerHuman.IsChecked.Value)
+			{
+				myController = Controllers.Human;
+			}
+
+			if (RadioButtonYoControllerAI.IsChecked.Value)
+			{
+				yoController = Controllers.AI;
+			}
+			else if (RadioButtonYoControllerHuman.IsChecked.Value)
+			{
+				yoController = Controllers.Human;
+			}
+
+			thread = new Thread(runner);
+			thread.Start();
+		}
+
+		private void MainBoard_Changed(Board board)
+		{
 			StageMain.Board = board;
 		}
 
 		private void StageMain_UnitMoved(Move move)
 		{
-			board.MoveNext(move);
-			StageMain.Board = board;
+			List<Move> moves = mainBoard.GetAllPossibleMoves();
+			if (moves.Contains(move))
+			{
+				userMove = move;
+				//사용자 입력이 완료되었음을 알린다.
+				userWaiter?.Set();
+			}
+		}
+
+		Thread thread;
+		AutoResetEvent userWaiter;
+		Move userMove;
+		Janggi.Ai.Mcts mcts;
+
+		void runner()
+		{
+			mcts = new Janggi.Ai.Mcts();
+			mcts.Init(mainBoard);
+
+			userWaiter = new AutoResetEvent(false);
+			Move move = new Move();
+
+			while (true)
+			{
+				if (mainBoard.IsMyTurn)
+				{
+					if (myController == Controllers.AI)
+					{
+						move = mcts.SearchNext().prevMove;
+					}
+					else if (myController == Controllers.Human)
+					{
+						StageMain.IsMovable = true;
+						//사용자 입력을 기다린다.
+						userWaiter.WaitOne();
+						move = userMove;
+
+						StageMain.IsMovable = false;
+					}
+				}
+				else
+				{
+					if (yoController == Controllers.AI)
+					{
+						move = mcts.SearchNext().prevMove;
+					}
+					else if (yoController == Controllers.Human)
+					{
+						StageMain.IsMovable = true;
+						//wait human controller
+						userWaiter.WaitOne();
+						move = userMove;
+
+						StageMain.IsMovable = false;
+					}
+				}
+
+				//mcts의 상태를 변경해준다. board와는 따로 동작한다.
+				//반드시 보드보다 먼저 실행해야 한다. 좀 복잡하네 ㅋㅋ
+				mcts.SetMove(move);
+				//현재 게임의 상태를 변경.
+				mainBoard.MoveNext(move);
+				
+				
+				
+
+				if (mainBoard.IsMyWin)
+				{
+					MessageBox.Show("내가 이겼다.");
+					break;
+				}
+				else if (mainBoard.IsYoWin)
+				{
+					MessageBox.Show("상대가 이겼다.");
+					break;
+				}
+			}
 		}
 	}
 }

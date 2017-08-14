@@ -62,21 +62,21 @@ namespace Janggi
 		}
 
 		public static bool IsEmpty(uint s) => s == (uint)Stones.Empty;
-		public static bool IsJol(uint s) => (s & (uint)Stones.Jol) > 0;
-		public static bool IsMyJol(uint s) => (s & (uint)Stones.MyJol) > 0;
-		public static bool IsYoJol(uint s) => (s & (uint)Stones.YoJol) > 0;
-		public static bool IsSang(uint s) => (s & (uint)Stones.Sang) > 0;
-		public static bool IsMa(uint s) => (s & (uint)Stones.Ma) > 0;
-		public static bool IsPo(uint s) => (s & (uint)Stones.Po) > 0;
-		public static bool IsMyPo(uint s) => (s & (uint)Stones.MyPo) > 0;
-		public static bool IsYoPo(uint s) => (s & (uint)Stones.YoPo) > 0;
-		public static bool IsCha(uint s) => (s & (uint)Stones.Cha) > 0;
-		public static bool IsMyCha(uint s) => (s & (uint)Stones.MyCha) > 0;
-		public static bool IsYoCha(uint s) => (s & (uint)Stones.YoCha) > 0;
-		public static bool IsSa(uint s) => (s & (uint)Stones.Sa) > 0;
-		public static bool IsKing(uint s) => (s & (uint)Stones.King) > 0;
-		public static bool IsMine(uint s) => (s & (uint)Stones.Mine) > 0;
-		public static bool IsYours(uint s) => (s & (uint)Stones.Yours) > 0;
+		public static bool IsJol(uint s) => (s & (uint)Stones.Jol) != 0;
+		public static bool IsMyJol(uint s) => (s & (uint)Stones.MyJol) != 0;
+		public static bool IsYoJol(uint s) => (s & (uint)Stones.YoJol) != 0;
+		public static bool IsSang(uint s) => (s & (uint)Stones.Sang) != 0;
+		public static bool IsMa(uint s) => (s & (uint)Stones.Ma) != 0;
+		public static bool IsPo(uint s) => (s & (uint)Stones.Po) != 0;
+		public static bool IsMyPo(uint s) => (s & (uint)Stones.MyPo) != 0;
+		public static bool IsYoPo(uint s) => (s & (uint)Stones.YoPo) != 0;
+		public static bool IsCha(uint s) => (s & (uint)Stones.Cha) != 0;
+		public static bool IsMyCha(uint s) => (s & (uint)Stones.MyCha) != 0;
+		public static bool IsYoCha(uint s) => (s & (uint)Stones.YoCha) != 0;
+		public static bool IsSa(uint s) => (s & (uint)Stones.Sa) != 0;
+		public static bool IsKing(uint s) => (s & (uint)Stones.King) != 0;
+		public static bool IsMine(uint s) => (s & (uint)Stones.Mine) != 0;
+		public static bool IsYours(uint s) => (s & (uint)Stones.Yours) != 0;
 
 		public static bool IsAllied(uint s1, uint s2) => (s1 != 0 && s2 != 0 && (s1 > 0x80_00) ^ (s2 < 0x01_00_00));
 		public static bool IsEnemy(uint s1, uint s2) => (s1 != 0 && s2 != 0 && (s1 > 0x80_00) ^ (s2 > 0x80_00));

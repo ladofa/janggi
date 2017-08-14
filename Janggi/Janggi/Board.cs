@@ -19,7 +19,7 @@ namespace Janggi
 		bool isMyTurn;
 		public int Point;
 
-		Move prevMove  = Move.Rest;
+		Move prevMove = Move.Rest;
 		public Move PrevMove
 		{
 			get => prevMove;
@@ -43,7 +43,7 @@ namespace Janggi
 
 			Point = board.Point;
 			isMyTurn = board.isMyTurn;
-			IsMyFirst = board.IsMyFirst;
+			isMyFirst = board.IsMyFirst;
 		}
 
 		public enum Tables
@@ -67,6 +67,8 @@ namespace Janggi
 			positions = new Pos[StoneCount];
 
 			Point = 0;
+
+			Changed?.Invoke(this);
 		}
 
 		public Board(Tables myTable, Tables yoTable, bool myFirst)
@@ -74,9 +76,10 @@ namespace Janggi
 			SetUp(myTable, yoTable, myFirst);
 		}
 
+		bool isMyFirst;
 		public bool IsMyFirst
 		{
-			get;set;
+			get => isMyFirst;
 		}
 
 		public void SetUp(Tables myTable, Tables yoTable, bool myfirst)
@@ -178,7 +181,7 @@ namespace Janggi
 				isMyTurn = false;
 			}
 
-			IsMyFirst = myfirst;
+			isMyFirst = myfirst;
 
 
 			for (int i = 0; i < 32; i++)
@@ -204,6 +207,7 @@ namespace Janggi
 				Pos p = GetPos(i + 1);
 				setTargets(p);
 			}
+			Changed?.Invoke(this);
 		}
 
 		public bool Equals(Board b)
@@ -246,7 +250,7 @@ namespace Janggi
 			return nuBoard;
 		}
 
-		public List<Move> GetAllMoves()
+		public List<Move> GetAllPossibleMoves()
 		{
 			if (IsMyTurn)
 			{
@@ -338,7 +342,7 @@ namespace Janggi
 
 		public ref uint this[Pos pos]
 		{
-			get =>  ref stones[pos.Y, pos.X];
+			get => ref stones[pos.Y, pos.X];
 		}
 
 		public ref uint this[int y, int x]
@@ -512,7 +516,7 @@ namespace Janggi
 							return true;
 						}
 						else if (!IsPo(stoneTo))
-						{	
+						{
 							dari = true;
 							return true;
 						}
@@ -679,7 +683,7 @@ namespace Janggi
 
 					Pos block1 = pos + wayAndBlockSang[i].Item2;
 					blocks[block1.Y, block1.X] |= stoneFrom;
-					
+
 					if (this[block1] != 0)
 					{
 						continue;
@@ -707,7 +711,7 @@ namespace Janggi
 				{
 					Pos to = origin + e;
 					uint stoneTo = this[to];
-					
+
 					targets[to.Y, to.X] |= stoneFrom;
 				}
 			}
@@ -722,17 +726,17 @@ namespace Janggi
 
 				if (px + 1 < Width)
 				{
-					
+
 					targets[py, px + 1] |= stoneFrom;
 				}
 
 				if (py - 1 >= 0)
-				{					
+				{
 					targets[py - 1, px] |= stoneFrom;
 				}
 
 				//우상으로 진출
-				if (pos.Equals(3, 2) )
+				if (pos.Equals(3, 2))
 				{
 					targets[1, 4] |= stoneFrom;
 				}
@@ -754,7 +758,7 @@ namespace Janggi
 			{
 				if (px - 1 >= 0)
 				{
-					targets[py , px - 1] |= stoneFrom;
+					targets[py, px - 1] |= stoneFrom;
 				}
 
 				if (px + 1 < Width)
@@ -809,8 +813,8 @@ namespace Janggi
 		{
 			uint target = targets[pos.Y, pos.X];
 			uint block = blocks[pos.Y, pos.X];
-			
-			
+
+
 			for (int i = 0; i < 32; i++)
 			{
 				uint stone = (uint)1 << i;
@@ -826,12 +830,38 @@ namespace Janggi
 			}
 		}
 
+		public delegate void ChangedHandler(Board board);
+		public event ChangedHandler Changed;
+
 		public void MoveNext(Move move)
 		{
 			prevMove = move;
 			if (!move.IsRest)
 			{
 				uint stone = this[move.From];
+
+				if (IsSa(stone) || IsKing(stone))
+				{
+					if (move.To.X < 3 || move.To.X > 5)
+					{
+						return;
+					}
+					else if (IsMine(stone))
+					{
+						if (move.To.Y < 7)
+						{
+							return;
+						}
+					}
+					else if (IsYours(stone))
+					{
+						if (move.To.Y > 2)
+						{
+							return;
+						}
+					}
+				}
+
 				//도착 위치에 물체가 있으면
 				uint stoneTo = this[move.To];
 				if (stoneTo != 0)
@@ -859,6 +889,8 @@ namespace Janggi
 			}
 			
 			isMyTurn = !isMyTurn;
+
+			Changed?.Invoke(this);
 		}
 
 		public Board GetNext(Move move)
@@ -1177,7 +1209,7 @@ namespace Janggi
 
 		public void MoveRandomNext()
 		{
-			List<Move> moves = GetAllMoves();
+			List<Move> moves = GetAllPossibleMoves();
 
 			int k = Global.Rand.Next(moves.Count);
 			MoveNext(moves[k]);
