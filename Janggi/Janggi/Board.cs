@@ -840,6 +840,7 @@ namespace Janggi
 			{
 				uint stone = this[move.From];
 
+				//궁내의 이상한 움직임 방지
 				if (IsSa(stone) || IsKing(stone))
 				{
 					if (move.To.X < 3 || move.To.X > 5)
@@ -1074,11 +1075,11 @@ namespace Janggi
 			if (IsMyTurn)
 			{
 				p2 /= 6;
-				p3 /= 12;
+				p3 /= 6;
 			}
 			else
 			{
-				p2 /= 12;
+				p2 /= 6;
 				p3 /= 6;
 			}
 
@@ -1206,6 +1207,8 @@ namespace Janggi
 		}
 
 
+
+		
 
 		public void MoveRandomNext()
 		{

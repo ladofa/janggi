@@ -7,12 +7,20 @@ using System.Threading.Tasks;
 using Janggi;
 using Janggi.Ai;
 
+using static Janggi.StoneHelper;
+
 namespace Runner
 {
 	class Program
 	{
 		static void Main(string[] args)
 		{
+			for (int i = 0; i < 32; i++)
+			{
+				uint stone = (uint)1 << i;
+				Console.WriteLine(((Stones)stone).ToString() + ", " + GetPoint(stone));
+			}
+
 			Board board = new Board(Board.Tables.Outer, Board.Tables.Left, true);
 
 			Mcts mcts = new Mcts();

@@ -12,7 +12,7 @@ namespace Janggi.Ai
 	{
 		public double[] Calc(Node node)
 		{
-			node.GetMoves();
+			node.CalcMoves();
 			List<Move> moves = node.moves;
 			Board board = node.board;
 
