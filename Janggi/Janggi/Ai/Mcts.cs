@@ -245,6 +245,25 @@ namespace Janggi.Ai
 				}
 			}
 
+			public Node GetMostVisitedChild()
+			{
+				lock (this)
+				{
+					Node node = children[0];
+					int max = children[0].visited;
+					for (int i = 0; i < children.Length; i++)
+					{
+						if (max < children[i].visited)
+						{
+							max = children[i].visited;
+							node = children[i];
+						}
+					}
+
+					return node;
+				}
+			}
+
 			public Node GetBestScoreChild()
 			{
 				CalcScores();
@@ -283,41 +302,13 @@ namespace Janggi.Ai
 				}
 			}
 
-			public static float rate = 0.1f;
+			public static float rate = 0.7f;
 			public float UcbScore()
 			{
 				return (float)win / visited + (float)(rate * Math.Sqrt(2 * Math.Log(parent.visited) / visited));
 			}
 
 			static Random random = new Random();
-
-			public bool RolloutGetMyWin()
-			{
-				//return board.Judge() > 0;
-
-				//rollout
-				Board rollout = new Board(board);
-
-				//100수까지만 하자 혹시나.
-				for (int i = 0; i < 200; i++)
-				{
-					if (rollout.IsMyWin)
-					{
-						return true;
-					}
-					else if (rollout.IsYoWin)
-					{
-						return false;
-					}
-
-					rollout.MoveRandomNext();
-				}
-
-				return rollout.Point > 0;
-			}
-
-
-
 
 			public void Clear()
 			{
@@ -450,7 +441,7 @@ namespace Janggi.Ai
 
 				if (!finished)
 				{
-					myWin = next.RolloutGetMyWin();
+					myWin = RolloutGetMyWin(next);
 				}
 
 				//update
@@ -512,7 +503,32 @@ namespace Janggi.Ai
 			//}
 
 
-			return root.GetBestScoreChild();
+			return root.GetMostVisitedChild();
+		}
+
+		public bool RolloutGetMyWin(Node node)
+		{
+			//return board.Judge() > 0;
+
+			//rollout
+			Board rollout = new Board(node.board);
+
+			//100수까지만 하자 혹시나.
+			for (int i = 0; i < 200; i++)
+			{
+				if (rollout.IsMyWin)
+				{
+					return true;
+				}
+				else if (rollout.IsYoWin)
+				{
+					return false;
+				}
+
+				rollout.MoveRandomNext();
+			}
+
+			return rollout.Point > 0;
 		}
 
 		public void ForceStopSearch()
