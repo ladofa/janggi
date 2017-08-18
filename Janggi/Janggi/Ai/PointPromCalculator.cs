@@ -9,7 +9,7 @@ using static Janggi.StoneHelper;
 
 namespace Janggi.Ai
 {
-	class PointPromCalculator : IPromCalculator
+	class PointPromCalculator
 	{
 		public double[] Calc(Node node)
 		{

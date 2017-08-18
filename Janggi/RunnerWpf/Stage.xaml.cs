@@ -119,6 +119,37 @@ namespace RunnerWpf
 			//오버레이 초기 위치
 			Point pos = e.GetPosition(GridOverlay);
 			UnitMoving.Margin = new Thickness(pos.X - UnitMoving.Width / 2, pos.Y - UnitMoving.Height / 2, 0, 0);
+
+			//디버그용
+			DrawEtcMarkers();
+		}
+
+		void DrawEtcMarkers()
+		{
+			var movingStone = UnitMoving.Stone;
+			for (int y = 0; y < Board.Height; y++)
+			{
+				for (int x = 0; x < Board.Width; x++)
+				{
+					if ((board.targets[y, x] & movingStone) != 0)
+					{
+						units[y, x].IsMarkedTarget = true;
+					}
+					else
+					{
+						units[y, x].IsMarkedTarget = false;
+					}
+
+					if ((board.blocks[y, x] & movingStone) != 0)
+					{
+						units[y, x].IsMarkedBlock = true;
+					}
+					else
+					{
+						units[y, x].IsMarkedBlock = false;
+					}
+				}
+			}
 		}
 
 		private void Unit_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -299,6 +330,8 @@ namespace RunnerWpf
 							units[y, x].IsMarked = false;
 						}
 					}
+
+					TextBlockInfo.Text = "Point : " + board.Point.ToString();
 
 					
 					Pos from = board.PrevMove.From;

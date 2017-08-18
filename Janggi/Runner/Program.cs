@@ -24,11 +24,14 @@ namespace Runner
 			Board board = new Board(Board.Tables.Outer, Board.Tables.Left, true);
 
 			Mcts mcts = new Mcts();
+			PrimaryUcb primaryUcb = new PrimaryUcb();
+
+			mcts.Init(primaryUcb);
 			mcts.Init(board);
 
 			while (!board.IsMyWin && !board.IsYoWin)
 			{
-				Mcts.Node node = mcts.SearchNext();
+				Node node = mcts.SearchNext();
 				board.MoveNext(node.prevMove);
 				mcts.SetMove(node.prevMove);
 				board.PrintStones();

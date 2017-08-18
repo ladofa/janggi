@@ -8,7 +8,7 @@ using static Janggi.StoneHelper;
 
 namespace Janggi.Ai
 {
-	class PlacePromCalculator : IPromCalculator
+	class PlacePromCalculator 
 	{
 		public double[] Calc(Node node)
 		{

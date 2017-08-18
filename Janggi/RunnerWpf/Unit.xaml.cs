@@ -97,6 +97,10 @@ namespace RunnerWpf
 			//--써클 사이즈
 			EllipseMarker.Width = width * 0.7;
 			EllipseMarker.Height = width * 0.7;
+			EllipseMarkerTarget.Width = width * 0.6;
+			EllipseMarkerTarget.Height = width * 0.6;
+			EllipseMarkerBlock.Width = width * 0.5;
+			EllipseMarkerBlock.Height = width * 0.5;
 
 			//--마커 사이즈
 			List<Tuple<double, double, double, double, double, double>> markerPositions;
@@ -282,6 +286,32 @@ namespace RunnerWpf
 			get
 			{
 				return EllipseMarker.Visibility == Visibility.Visible;
+			}
+		}
+
+		public bool IsMarkedTarget
+		{
+			set
+			{
+				EllipseMarkerTarget.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+			}
+
+			get
+			{
+				return EllipseMarkerTarget.Visibility == Visibility.Visible;
+			}
+		}
+
+		public bool IsMarkedBlock
+		{
+			set
+			{
+				EllipseMarkerBlock.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+			}
+
+			get
+			{
+				return EllipseMarkerBlock.Visibility == Visibility.Visible;
 			}
 		}
 

@@ -16,6 +16,7 @@ using System.Windows.Shapes;
 using System.Threading;
 
 using Janggi;
+using Janggi.Ai;
 
 namespace RunnerWpf
 {
@@ -138,11 +139,14 @@ namespace RunnerWpf
 		Thread thread;
 		AutoResetEvent userWaiter;
 		Move userMove;
-		Janggi.Ai.Mcts mcts;
+		Mcts mcts;
 
 		void runner()
 		{
-			mcts = new Janggi.Ai.Mcts();
+			mcts = new Mcts();
+			PrimaryUcb primaryUcb = new PrimaryUcb();
+
+			mcts.Init(primaryUcb);
 			mcts.Init(mainBoard);
 
 			userWaiter = new AutoResetEvent(false);

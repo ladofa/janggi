@@ -16,7 +16,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -62,8 +62,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ai\Mcts.cs" />
+    <Compile Include="Ai\Node.cs" />
     <Compile Include="Ai\PlacePromCalculator.cs" />
     <Compile Include="Ai\PointPromCalculator.cs" />
+    <Compile Include="Ai\PrimaryUcb.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Move.cs" />

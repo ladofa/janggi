@@ -18,6 +18,9 @@
 		<Image x:Name="ImageUnit"/>
 		<Ellipse x:Name="EllipseMarker" Stroke="Red" StrokeThickness="2" Opacity="0.4" Visibility="Collapsed"/>
 
+		<Ellipse x:Name="EllipseMarkerTarget" Stroke="Green" StrokeThickness="2" Opacity="0.4" Visibility="Collapsed"/>
+		<Ellipse x:Name="EllipseMarkerBlock" Stroke="Yellow" StrokeThickness="2" Opacity="0.4" Visibility="Collapsed"/>
+
 
 	</Grid>
 </UserControl>
