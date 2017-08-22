@@ -29,6 +29,8 @@ namespace RunnerWpf
 		{
 			InitializeComponent();
 			StageMain.UnitMoved += StageMain_UnitMoved;
+
+			
 		}
 
 		Board mainBoard;
@@ -116,8 +118,35 @@ namespace RunnerWpf
 				yoController = Controllers.Human;
 			}
 
+
+			//종료 절차
+			if (mcts != null)
+			{
+				isRunning = false;
+				userWaiter.Set();
+				mcts.ProgressUpdated -= Mcts_ProgressUpdated;
+				ResumeSearching();
+				mcts.ForceStopSearch();
+				thread?.Join();
+			}
+
+			PrimaryUcb primaryUcb = new PrimaryUcb();
+			mcts = new Mcts(primaryUcb);
+			TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
+			mcts.Init(mainBoard);
+			mcts.ProgressUpdated += Mcts_ProgressUpdated;
+			ResumeSearching();
+
 			thread = new Thread(runner);
 			thread.Start();
+		}
+
+		private void Mcts_ProgressUpdated(Mcts mcts, int visit, double rate)
+		{
+			Dispatcher.Invoke(() =>
+			{
+				ProgressBarVisitCount.Value = rate * 100;
+			});
 		}
 
 		private void MainBoard_Changed(Board board)
@@ -136,55 +165,96 @@ namespace RunnerWpf
 			}
 		}
 
+
+		Move waitInput(Controllers controller)
+		{
+			if (controller == Controllers.AI)
+			{
+				//타이머
+				System.Timers.Timer timer = null;
+				if (isCheckedTimer)
+				{
+					timer = new System.Timers.Timer();
+					timer.Elapsed += Timer_Elapsed;
+					timer.Interval = maxGivenTime * 1000;
+					timer.Start();
+				}
+
+				//최대 탐색 노드 설정
+				mcts.MaxVisitCount = maxVisitCount;
+
+				//탐색 시작
+				var task = mcts.SearchNextAsync();
+
+				if (stepByStep)
+				{
+					PauseSearching();
+				}
+
+				task.Wait();		
+
+				timer?.Stop();
+				timer = null;
+				return task.Result.prevMove;
+			}
+			else if (myController == Controllers.Human)
+			{
+				Task<Node> task = null;
+				if (thinkAlways)
+				{
+					mcts.MaxVisitCount = int.MaxValue;
+					task = mcts.SearchNextAsync();
+				}
+				
+				StageMain.IsMovable = true;
+				//사용자 입력을 기다린다.
+				userWaiter.WaitOne();
+				StageMain.IsMovable = false;
+
+				mcts.ForceStopSearch();
+				task?.Wait();
+
+				return userMove;
+			}
+			else
+			{
+				throw new Exception("undefined controller");
+			}
+		}
+
+		private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+		{
+			mcts.ForceStopSearch();
+		}
+
 		Thread thread;
 		AutoResetEvent userWaiter;
 		Move userMove;
 		Mcts mcts;
 
+		bool isRunning;
+
 		void runner()
 		{
-			mcts = new Mcts();
-			PrimaryUcb primaryUcb = new PrimaryUcb();
-
-			mcts.Init(primaryUcb);
-			mcts.Init(mainBoard);
-
 			userWaiter = new AutoResetEvent(false);
 			Move move = new Move();
 
-			while (true)
+			isRunning = true;
+
+			while (isRunning)
 			{
 				if (mainBoard.IsMyTurn)
 				{
-					if (myController == Controllers.AI)
-					{
-						move = mcts.SearchNext().prevMove;
-					}
-					else if (myController == Controllers.Human)
-					{
-						StageMain.IsMovable = true;
-						//사용자 입력을 기다린다.
-						userWaiter.WaitOne();
-						move = userMove;
-
-						StageMain.IsMovable = false;
-					}
+					move = waitInput(myController);
 				}
 				else
 				{
-					if (yoController == Controllers.AI)
-					{
-						move = mcts.SearchNext().prevMove;
-					}
-					else if (yoController == Controllers.Human)
-					{
-						StageMain.IsMovable = true;
-						//wait human controller
-						userWaiter.WaitOne();
-						move = userMove;
+					move = waitInput(yoController);
+				}
 
-						StageMain.IsMovable = false;
-					}
+				if (!isRunning)
+				{
+					break;
 				}
 
 				//mcts의 상태를 변경해준다. board와는 따로 동작한다.
@@ -192,9 +262,6 @@ namespace RunnerWpf
 				mcts.SetMove(move);
 				//현재 게임의 상태를 변경.
 				mainBoard.MoveNext(move);
-				
-				
-				
 
 				if (mainBoard.IsMyWin)
 				{
@@ -207,6 +274,101 @@ namespace RunnerWpf
 					break;
 				}
 			}
+		}
+
+		private void ButtonForceAI_Click(object sender, RoutedEventArgs e)
+		{
+			mcts.ForceStopSearch();
+		}
+
+		int maxVisitCount;
+		private void TextBoxMaxVisitCount_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			TextBox textBox = sender as TextBox;
+			int.TryParse(textBox.Text, out maxVisitCount);
+		}
+
+		bool isCheckedTimer;
+		int maxGivenTime;
+
+		private void CheckBoxTimer_Checked(object sender, RoutedEventArgs e)
+		{
+			isCheckedTimer = true;
+			TextBoxTimer.Text = "5";
+		}
+
+		private void CheckBoxTimer_Unchecked(object sender, RoutedEventArgs e)
+		{
+			isCheckedTimer = false;
+		}
+
+		private void TextBoxTimer_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			int.TryParse(TextBoxTimer.Text, out maxGivenTime);
+		}
+
+		bool thinkAlways;
+		private void CheckBoxThinkAlways_Checked(object sender, RoutedEventArgs e)
+		{
+			thinkAlways = true;
+		}
+
+		private void CheckBoxThinkAlways_Unchecked(object sender, RoutedEventArgs e)
+		{
+			thinkAlways = false;
+		}
+
+		bool stepByStep;
+		private void CheckBoxStepByStep_Checked(object sender, RoutedEventArgs e)
+		{
+			stepByStep = false;
+		}
+
+		private void CheckBoxStepByStep_Unchecked(object sender, RoutedEventArgs e)
+		{
+			stepByStep = true;
+		}
+
+		private void ButtonStartAI_Click(object sender, RoutedEventArgs e)
+		{
+			if (mcts != null)
+			{
+				if (mcts.IsPaused)
+				{
+					ResumeSearching();
+					
+				}
+				else
+				{
+					PauseSearching();
+				}
+			}
+		}
+
+		void PauseSearching()
+		{
+			if (mcts != null)
+			{
+				mcts.PauseSearching();
+			}
+
+			Dispatcher.Invoke(() =>
+			{
+				ButtonStartAI.Content = "AI 생각 시작";
+			});
+		}
+
+		void ResumeSearching()
+		{
+			if (mcts != null)
+			{
+				mcts.ResumeSearching();
+			}
+
+			Dispatcher.Invoke(() =>
+			{
+				ButtonStartAI.Content = "AI 잠시 멈춤";
+			});
 		}
 	}
 }

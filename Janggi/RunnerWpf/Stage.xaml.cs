@@ -338,6 +338,8 @@ namespace RunnerWpf
 					if (from.X != -1)
 					{
 						units[from.Y, from.X].IsMarked = true;
+						Pos to = board.PrevMove.To;
+						units[to.Y, to.X].IsMarked = true;
 					}
 				});
 			}

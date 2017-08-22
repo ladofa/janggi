@@ -13,7 +13,7 @@ namespace Janggi.Ai
 	{
 		public double[] Calc(Node node)
 		{
-			node.CalcMoves();
+			node.PrepareMoves();
 			var moves = node.moves;
 			Board board = node.board;
 			double[] proms = new double[moves.Count];

@@ -11,23 +11,25 @@ namespace Janggi.Ai
 	public class Mcts
 	{
 		//--각종 델리게이트
-		public delegate bool RolloutHandler(Node node);
-		public delegate void CalcScoresHandler(Node node);
-		public delegate float CalcValueHandler(Node node);
-		public delegate float[] CalcPolicyHandler(Node node);
+		public delegate float[] CalcScoresHandler(Node node);
+		public delegate float CalcLeafEvaluationHandler(Node node);
+		public delegate void CalcPolicyWeightsHandler(Node node);
 
-		public interface IHandlers
+		public abstract class Handlers
 		{
-			bool Rollout(Node node);
-			void CalcScores(Node node);
-			float CalcValue(Node node);
-			float[] CalcPolicy(Node node);
+			public abstract float[] CalcScores(Node node);
+			public abstract float CalcLeafEvaluation(Node node);
+			public abstract void CalcPolicyWeights(Node node);
 		}
 
-		public RolloutHandler Rollout;
 		public CalcScoresHandler CalcScores;
-		public CalcValueHandler CalcValue;
-		public CalcPolicyHandler CalcPolicy;
+		public CalcLeafEvaluationHandler CalcLeafEvaluation;
+		public CalcPolicyWeightsHandler CalcPolicyWeights;
+
+		//--이벤트
+
+		public delegate void ProgressUpdatedHandler(Mcts mcts, int visit, double rate);
+		public event ProgressUpdatedHandler ProgressUpdated;
 
 		//--------------------------------------------------------
 		List<Node> history;
@@ -39,6 +41,16 @@ namespace Janggi.Ai
 
 		int myFirst;//나부터 시작했으면 0
 
+		public Mcts(Handlers handlers)
+		{
+			CalcScores = handlers.CalcScores;
+			CalcLeafEvaluation = handlers.CalcLeafEvaluation;
+			CalcPolicyWeights = handlers.CalcPolicyWeights;
+
+			maxVisitCount = 50000;
+		}
+
+		
 		public void Init(Board board)
 		{
 			start = new Node(null, board, Move.Rest);
@@ -50,159 +62,212 @@ namespace Janggi.Ai
 			history = new List<Node>();
 		}
 
-		public void Init(IHandlers handlers)
+		int maxVisitCount;
+		public int MaxVisitCount
 		{
-			Rollout = handlers.Rollout;
-			CalcScores = handlers.CalcScores;
-			CalcValue = handlers.CalcValue;
-			CalcPolicy = handlers.CalcPolicy;
+			set => maxVisitCount = value;
+			get => maxVisitCount;
 		}
 
-		public Node SearchNext()
+		//searchNext함수가 끝날때까지 기다린다.
+		public void WaitSearching()
 		{
-			if (Rollout == null)
+			signalSearch.WaitOne();
+		}
+
+		public void PauseSearching()
+		{
+			signalPause.Reset();
+		}
+
+		public void ResumeSearching()
+		{
+			signalPause.Set();
+		}
+
+		public bool IsSearching
+		{
+			//reset이면 누군가 들어있는(서치하고 있는) 상황
+			get => !signalSearch.WaitOne(0);
+		}
+
+		public bool IsPaused
+		{
+			//reset이면 걸려서 멈춘 상황
+			get => !signalPause.WaitOne(0);
+		}
+
+		// 두 번 이상 SearchNext를 수행하지 않도록 막는 시그널
+		System.Threading.ManualResetEvent signalSearch = new System.Threading.ManualResetEvent(true);
+		//잠시멈춤 시그널
+		System.Threading.ManualResetEvent signalPause = new System.Threading.ManualResetEvent(true);
+
+		public async Task<Node> SearchNextAsync()
+		{
+			if (IsSearching)
 			{
-				throw new Exception("Rollout must not be null.");
+				return null;
 			}
+			
+			signalSearch.Reset();
 
-			if (CalcScores == null)
+			await Task.Run(() =>
 			{
-				throw new Exception("CalcScore must not be null.");
-			}
+				if (CalcScores == null)
+				{
+					throw new Exception("CalcScore must not be null.");
+				}
 
-			if (CalcValue == null)
-			{
-				throw new Exception("CalcValue must not be null.");
-			}
+				if (CalcLeafEvaluation == null)
+				{
+					throw new Exception("CalcValue must not be null.");
+				}
 
-			if (CalcPolicy == null)
-			{
-				throw new Exception("CalcPolicy must not be null.");
-			}
+				if (CalcPolicyWeights == null)
+				{
+					throw new Exception("CalcPolicy must not be null.");
+				}
 
-			int maxDepth = 0;
-			int depthSum = 0;
+				int maxDepth = 0;
+				int depthSum = 0;
 
-			bool isMyTurn = root.board.IsMyTurn;
+				bool isMyTurn = root.board.IsMyTurn;
 
-			const int numSearchNodes = 10000;
+				ParallelOptions option = new ParallelOptions();
+				option.MaxDegreeOfParallelism = 10;
 
-			int countFinish = 0;
-
-			ParallelOptions option = new ParallelOptions();
-			option.MaxDegreeOfParallelism = 10;
-
-			Parallel.For(0, numSearchNodes, option, turn =>
-			//for (int turn = 0; turn < numSearchNodes; turn++)
-			{
-				//랜덤으로 깊이 탐색
-				Node parent = root;
-				List<Node> nodes = new List<Node>();
-				Node next;
-
-				bool myWin = false;
-				bool finished = false;
-
+				signalPause.Set();
 
 				while (true)
 				{
-					//비어있는 노드가 있으면 expend
-					next = GetBestScoreChild(parent);
-
-					if (next == null)
+					//이미 셋으로 돌아섰다면 그냥 리턴
+					if (signalSearch.WaitOne(0))
 					{
+						return;
+					}
+
+					//조건을 만족한다면 셋으로 변경하고 리턴
+					if (root.visited > maxVisitCount)
+					{
+						signalSearch.Set();
 						break;
 					}
 
-					nodes.Add(next);
-					if (next.visited != 0)
+					//500단위로 끊자.
+					Parallel.For(0, 500, option, turn =>
+					//for (int turn = 0; turn < numSearchNodes; turn++)
 					{
-						//그리고 다음 와일~
-						parent = next;
-					}
-					else
-					{
-						if (next.board.IsMyWin)
+						//랜덤으로 깊이 탐색
+						List<Node> visitedNodes = new List<Node>();
+						Node next = root;
+
+						float leafEvaluation = 0;
+						bool finished = false;
+
+						while (true)
 						{
-							finished = true;
-							myWin = true;
-						}
-						else if (next.board.IsYoWin)
-						{
-							finished = true;
-							myWin = false;
-						}
+							//새로운 노드를 탐색하여 방문
+							next = GetBestScoreChild(next);
+							visitedNodes.Add(next);
 
-						break;
-					}
-				}
+							//겜이 끝났는지 확인 (익스펜드된 거라도 상관없음)
+							if (next.board.IsMyWin)
+							{
+								finished = true;
+								leafEvaluation = 1;
+								break;
+							}
+							else if (next.board.IsYoWin)
+							{
+								finished = true;
+								leafEvaluation = 0;
+								break;
+							}
+							//첫 방문 노드라면 (익스펜드된 노드라면)
+							else if (next.visited == 0)
+							{
+								break;
+							}
 
-				int depth = nodes.Count;
-				depthSum += depth;
-				if (depth > maxDepth)
-				{
-					maxDepth = depth;
-				}
-
-				if (next == null)
-				{
-					throw new Exception("???");
-					//return;
-				}
-
-				if (!finished)
-				{
-					myWin = Rollout(next);
-				}
-
-				if (finished)
-				{
-					countFinish++;
-				}
-
-				//update
-				lock (root)
-				{
-					for (int i = nodes.Count - 1; i >= 0; i--)
-					{
-						Node node = nodes[i];
-						//부모노드의 승리를 각 child에 나눠서 저장
-						if (node.board.IsMyTurn != myWin)
-						{
-							node.win++;
+							//이도 저도 아니면 다음 while로~
 						}
 
-						node.visited++;
-					}
-					root.visited++;
+						//얼마나 깊이 들어가는지 보기 위해 재미로 통계를 낸다. 
+						int depth = visitedNodes.Count;
+						depthSum += depth;
+						if (depth > maxDepth)
+						{
+							maxDepth = depth;
+						}
+
+						//마지막 노드에서 게임이 끝나지 않았다면
+						if (!finished)
+						{
+							//첫 방문 때, 정책망 계산을 한다.
+							CalcPolicyWeights(next);
+
+							//끝 노드를 평가한다.
+							leafEvaluation = CalcLeafEvaluation(next);
+						}
+
+						//visited, win 업데이트
+						lock (root)
+						{
+							for (int i = visitedNodes.Count - 1; i >= 0; i--)
+							{
+								Node node = visitedNodes[i];
+								//부모노드의 승리를 각 child에 나눠서 저장
+								if (node.parent.board.IsMyTurn)
+								{
+									node.win += leafEvaluation;
+								}
+								else
+								{
+									//상대 차례일 때는 반대로 업데이트
+									node.win += (1 - leafEvaluation);
+								}
+
+								node.visited++;
+							}
+
+							root.visited++;
+						}
+
+						//for (int i = 0; i < root.children.Length; i++)
+						//{
+						//	Node child = root.children[i];
+						//	if (child == null) Console.WriteLine(i + "not visited");
+						//	else
+						//	Console.WriteLine($"{i} : {child.win} / {child.visited} ... {child.UcbScore()}");
+						//}
+					});
+
+					ProgressUpdated?.Invoke(this, root.visited, root.visited / (double)MaxVisitCount);
+
+					signalPause.WaitOne();
 				}
 
-				
-
-
-				//for (int i = 0; i < root.children.Length; i++)
-				//{
-				//	Node child = root.children[i];
-				//	if (child == null) Console.WriteLine(i + "not visited");
-				//	else
-				//	Console.WriteLine($"{i} : {child.win} / {child.visited} ... {child.UcbScore()}");
-				//}
+				Console.WriteLine($"Max depth : {maxDepth}");
+				Console.WriteLine($"Visited : {root.visited}");
 			});
 
-			Console.WriteLine($"Max depth : {maxDepth}, Average : {depthSum / (double)numSearchNodes}");
-			Console.WriteLine("Count Finish : " + countFinish + " / " + numSearchNodes);
+			
+
+			
 			for (int i = 0; i < root.children.Length; i++)
 			{
 				Node child = root.children[i];
 				if (child != null)
 				{
-					Console.WriteLine($"{i} : {child.win} / {child.visited} ... {root.moves[i]} ... {root.scores[i]}");
+					Console.WriteLine($"{i} : {child.win} / {child.visited} ... {root.moves[i]}");
 				}
 				else
 				{
-					Console.WriteLine($"{i} : ... {root.scores[i]}");
+					Console.WriteLine($"{i} : ... ");
 				}
 			}
+
+		
 
 			//if (root.promNode == null)
 			//{
@@ -227,12 +292,13 @@ namespace Janggi.Ai
 
 		public void ForceStopSearch()
 		{
-
+			signalPause.Set();
+			signalSearch.Set();
 		}
 
 		public void SetMove(Move move)
 		{
-			root.CalcMoves();
+			root.PrepareMoves();
 			bool moved = false;
 			for (int i = 0; i < root.moves.Count; i++)
 			{
@@ -262,18 +328,8 @@ namespace Janggi.Ai
 		{
 			lock (parent)
 			{
-				if (parent.scores == null)
-				{
-					parent.CalcMoves();
-					parent.scores = new float[parent.moves.Count];
-				}
-
-				parent.CalcChildren();
-				parent.CalcProms();
-
-				CalcScores(parent);
-
-				float[] scores = parent.scores;
+				parent.PrepareChildren();
+				float[] scores = CalcScores(parent);
 				float max = scores[0];
 				int index = 0;
 				for (int i = 1; i < scores.Length; i++)

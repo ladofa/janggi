@@ -62,6 +62,9 @@
     <Compile Include="Stage.xaml.cs">
       <DependentUpon>Stage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TreeViewer.xaml.cs">
+      <DependentUpon>TreeViewer.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Unit.xaml.cs">
       <DependentUpon>Unit.xaml</DependentUpon>
     </Compile>
@@ -78,6 +81,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Stage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="TreeViewer.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

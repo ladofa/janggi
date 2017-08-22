@@ -29,10 +29,9 @@ namespace Janggi.Ai
 		public Node[] children;
 
 		//갈 길에 대한 policy network 확률
-		public float[] proms;
-
-		//최종 점수
-		public float[] scores;
+		//매 방문때마다 단 한 번만 계산되고,
+		//계속 써먹게 되므로 저장해둔다.
+		public float[] policyWeights;
 
 		public Node(Node parent, Board board, Move prevMove)
 		{
@@ -44,7 +43,7 @@ namespace Janggi.Ai
 			}
 		}
 
-		public void CalcMoves()
+		public void PrepareMoves()
 		{
 			lock (this)
 			{
@@ -70,19 +69,17 @@ namespace Janggi.Ai
 					{
 						moves.Remove(p2.parent.prevMove);
 					}
-
-
 				}
 			}
 		}
 
-		public void CalcChildren()
+		public void PrepareChildren()
 		{
 			lock (this)
 			{
 				if (children == null)
 				{
-					CalcMoves();
+					PrepareMoves();
 					children = new Node[moves.Count];
 				}
 			}
@@ -92,7 +89,7 @@ namespace Janggi.Ai
 		{
 			lock (this)
 			{
-				CalcChildren();
+				PrepareChildren();
 
 				if (children[index] == null)
 				{
@@ -112,12 +109,10 @@ namespace Janggi.Ai
 			{
 				if (moves == null)
 				{
-					CalcMoves();
+					PrepareMoves();
 				}
 
-
-
-				proms = new float[moves.Count];
+				policyWeights = new float[moves.Count];
 				int[] points = new int[moves.Count];
 
 				//todo...
@@ -145,7 +140,7 @@ namespace Janggi.Ai
 				int max = int.MinValue;
 
 				//마지막 rest빼고.
-				for (int i = 0; i < proms.Length - 1; i++)
+				for (int i = 0; i < policyWeights.Length - 1; i++)
 				{
 					Move move = moves[i];
 					uint stoneFrom = board[move.From];
@@ -170,7 +165,7 @@ namespace Janggi.Ai
 				const int under = 10;
 
 				int sum = 0;
-				for (int i = 0; i < proms.Length - 1; i++)
+				for (int i = 0; i < policyWeights.Length - 1; i++)
 				{
 					points[i] = points[i] - max + diff;
 					if (points[i] < under)
@@ -182,18 +177,28 @@ namespace Janggi.Ai
 				}
 
 				//마지막 rest
-				points[proms.Length - 1] = under;
+				points[policyWeights.Length - 1] = under;
 				sum += under;
 
 				//확률값으로 변경
-				for (int i = 0; i < proms.Length; i++)
+				for (int i = 0; i < policyWeights.Length; i++)
 				{
-					proms[i] = points[i] / (float)sum;
+					policyWeights[i] = points[i] / (float)sum;
 				}
 			}
 		}
 
-		
+		internal void PreparePolicyWeights()
+		{
+			lock (this)
+			{
+				if (policyWeights == null)
+				{
+					PrepareMoves();
+					policyWeights = new float[moves.Count];
+				}
+			}
+		}
 
 		public void Clear()
 		{
@@ -201,8 +206,7 @@ namespace Janggi.Ai
 			{
 				children = null;
 				moves = null;
-				proms = null;
-				scores = null;
+				policyWeights = null;
 			}
 		}
 

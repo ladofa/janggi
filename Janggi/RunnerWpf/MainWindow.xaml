@@ -12,7 +12,7 @@
 			<ColumnDefinition/>
 		</Grid.ColumnDefinitions>
 		<StackPanel Orientation="Vertical" Margin="2">
-			<Button x:Name="ButtonNewGame" Height="30" Margin="2" Content="새 게임" Click="ButtonNewGame_Click"/>
+			<Button x:Name="ButtonNewGame" Margin="2" Content="새 게임" Click="ButtonNewGame_Click"/>
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="2">
 				<RadioButton x:Name="RadioButtonMyFirst" Content="선수" GroupName="MyFirst" IsChecked="True"/>
 				<RadioButton x:Name="RadioButtonYoFirst" Content="후수" GroupName="MyFirst"/>
@@ -58,6 +58,26 @@
 					<RadioButton x:Name="RadioButtonMyControllerHuman" Content="Human" GroupName="MyController" IsChecked="True"/>
 				</StackPanel>
 			</Grid>
+			<Rectangle Fill="LightGray" Height="1" Margin="10"/>
+			<StackPanel Orientation="Horizontal" Margin="2">
+				<TextBlock Text="AI 탐색횟수 : "/>
+				<TextBox x:Name="TextBoxMaxVisitCount" Width="60" TextChanged="TextBoxMaxVisitCount_TextChanged"/>
+			</StackPanel>
+			
+
+			<StackPanel Orientation="Horizontal" Margin="2">
+				<CheckBox x:Name="CheckBoxTimer" Content="AI 시간제한 : " Checked="CheckBoxTimer_Checked" Unchecked="CheckBoxTimer_Unchecked"/>
+				<TextBox x:Name="TextBoxTimer" Width="30" Text="5" TextChanged="TextBoxTimer_TextChanged"/>
+				<TextBlock Text="초"/>
+			</StackPanel>
+
+			<CheckBox x:Name="CheckBoxThinkAlways" Content="사용자가 둘 때 탐색" Margin="2" Checked="CheckBoxThinkAlways_Checked" Unchecked="CheckBoxThinkAlways_Unchecked" IsChecked="True"/>
+			<CheckBox x:Name="CheckBoxStepByStep" Content="AI 자동 시작" Margin="2" Checked="CheckBoxStepByStep_Checked" Unchecked="CheckBoxStepByStep_Unchecked" IsChecked="True"/>
+
+			<Button x:Name="ButtonStartAI" Content="AI 생각 시작" Margin="2" Click="ButtonStartAI_Click"/>
+			<Button x:Name="ButtonForceAI" Content="바로 두기" Margin="2" Click="ButtonForceAI_Click"/>
+			<ProgressBar x:Name="ProgressBarVisitCount" Height="23" Margin="2"/>
+			
 		</StackPanel>
 		<local:Stage x:Name="StageMain" Grid.Column="1"/>
 	</Grid>

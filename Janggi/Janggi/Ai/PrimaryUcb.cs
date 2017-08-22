@@ -8,12 +8,12 @@ using static Janggi.StoneHelper;
 
 namespace Janggi.Ai
 {
-	public class PrimaryUcb : Mcts.IHandlers
+	public class PrimaryUcb : Mcts.Handlers
 	{
 		public PrimaryUcb()
 		{
 			MaxRolloutDepth = 100;
-			ExplorationRate = 0.7f;
+			ExplorationRate = 0.5f;
 		}
 
 		public int MaxRolloutDepth
@@ -45,8 +45,7 @@ namespace Janggi.Ai
 				{
 					//일단 상대를 따먹으면 10점
 					int takingPoint = GetPoint(stoneTo);
-					int dodgePoint = IsYours(targetFrom) ? 10 : 0;
-					return takingPoint + dodgePoint + ((IsYours(targetTo) ? GetPoint(stoneFrom) : 0) + (takingPoint != 0 ? 10 : 0));
+					return takingPoint + ((IsYours(targetTo) ? GetPoint(stoneFrom) : 0) + (takingPoint != 0 ? 10 : 0));
 				};
 			}
 			else
@@ -54,7 +53,6 @@ namespace Janggi.Ai
 				Judge = (stoneFrom, stoneTo, targetTo, targetFrom) =>
 				{
 					int takingPoint = -GetPoint(stoneTo);
-					int dodgePoint = IsMine(targetFrom) ? 10 : 0;
 					return takingPoint + ((IsMine(targetTo) ? -GetPoint(stoneFrom) : 0) + (takingPoint != 0 ? 10 : 0));
 				};
 			}
@@ -83,6 +81,9 @@ namespace Janggi.Ai
 				sum += judge;
 			}
 
+			proms[proms.Length - 1] = min;
+			sum += min;
+
 			sum += (-min + 10) * proms.Length;
 
 			int prob = Global.Rand.Next(sum);
@@ -104,7 +105,45 @@ namespace Janggi.Ai
 			throw new Exception("??");
 		}
 
-		public bool Rollout(Node node)
+
+		public override void CalcPolicyWeights(Node node)
+		{
+			//기본 UCB에서는 pollicy가 없다.
+			;
+		}
+
+		public override float[] CalcScores(Node node)
+		{
+			Node[] children = node.children;
+			float[] scores = new float[children.Length];
+			if (node.visited == 0)
+			{
+				for (int i = 0; i < children.Length; i++)
+				{
+					scores[i] = float.MaxValue;
+				}
+			}
+			else
+			{
+				for (int i = 0; i < children.Length; i++)
+				{
+					Node child = children[i];
+					if (child == null)
+					{
+						//방문 안 한건 무조건 방문하도록 높게 책정
+						scores[i] = float.MaxValue;
+					}
+					else
+					{
+						scores[i] = (float)child.win / child.visited + 
+							(float)(ExplorationRate * Math.Sqrt(2 * Math.Log(node.visited) / child.visited));
+					}
+				}
+			}
+			return scores;
+		}
+
+		public override float CalcLeafEvaluation(Node node)
 		{
 			//rollout
 			Board rollout = new Board(node.board);
@@ -116,55 +155,15 @@ namespace Janggi.Ai
 
 				if (rollout.IsMyWin)
 				{
-					return true;
+					return 1;
 				}
 				else if (rollout.IsYoWin)
 				{
-					return false;
+					return 0;
 				}
 			}
 
-			return rollout.Point > 0;
-		}
-
-		public float[] CalcPolicy(Node node)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void CalcScores(Node node)
-		{
-			Node[] children = node.children;
-			if (node.visited == 0)
-			{
-				for (int i = 0; i < children.Length; i++)
-				{
-					node.scores[i] = float.MaxValue;
-				}
-			}
-			else
-			{
-				for (int i = 0; i < children.Length; i++)
-				{
-					Node child = children[i];
-					if (child == null)
-					{
-						//방문 안 한건 무조건 방문하도록 높게 책정
-						node.scores[i] = float.MaxValue;
-					}
-					else
-					{
-						node.scores[i] = (float)child.visited / node.visited + 
-							(float)(ExplorationRate * Math.Sqrt(2 * Math.Log(node.visited) / child.visited));
-					}
-				}
-			}
-			
-		}
-
-		public float CalcValue(Node node)
-		{
-			throw new NotImplementedException();
+			return rollout.Point > 0 ? 1 : 0;
 		}
 	}
 }
