@@ -13,7 +13,7 @@ namespace Janggi.Ai
 		public PrimaryUcb()
 		{
 			MaxRolloutDepth = 100;
-			ExplorationRate = 0.7f;
+			ExplorationRate = 0.7;
 		}
 
 		public int MaxRolloutDepth
@@ -22,7 +22,7 @@ namespace Janggi.Ai
 			get;
 		}
 
-		public float ExplorationRate
+		public double ExplorationRate
 		{
 			set;
 			get;

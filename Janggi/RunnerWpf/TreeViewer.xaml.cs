@@ -125,11 +125,11 @@ namespace RunnerWpf
 
 				if (node.board.IsMyTurn)
 				{
-					letter = "Yo" + letter;
+					letter = "My" + letter;
 				}
 				else
 				{
-					letter = "My" + letter;
+					letter = "Yo" + letter;
 				}
 
 				button.Content = letter;
@@ -195,7 +195,7 @@ namespace RunnerWpf
 
 			if (node != null)
 			{
-				progress.Value = node.visited / maxVisited * 100;
+				progress.Value = node.win / maxVisited * 100;
 				progress.Tag = node.prevMove;
 				progress.MouseEnter += Progress_MouseEnter;
 
@@ -248,12 +248,12 @@ namespace RunnerWpf
 				{
 					Node[] children = node.children;
 
-					int maxVisited = 1;
+					float maxVisited = 1;
 					for (int i = 0; i < children.Length; i++)
 					{
 						if (children[i] != null)
 						{
-							int visited = children[i].visited;
+							float visited = children[i].win;
 							if (visited > maxVisited)
 							{
 								maxVisited = visited;
@@ -266,12 +266,14 @@ namespace RunnerWpf
 						var move = MakeNodeButtonAndState(children[i], maxVisited);
 						StackPanelMoves.Children.Add(move);
 					}
-					StageCurrent.Board = node.board;
+					
 				}
 				else
 				{
-					StageCurrent.Board = new Board();
+					
 				}
+
+				StageCurrent.Board = node.board;
 			});
 
 			
