@@ -168,67 +168,50 @@ namespace Janggi.Ai
 					{
 						//랜덤으로 깊이 탐색
 						List<Node> visitedNodes = new List<Node>();
-						Node next = root;
 
-						float leafEvaluation = 0;
-						bool finished = false;
+						//예전 커밋을 보면 while로 내려가던 것을
+						//parallel에서 lock을 걸기 편하게 하기 위해서
+						//재귀형식으로 바꿈
 
-						while (true)
+						visitDown(root);
+
+						float visitDown(Node node)
 						{
-							//새로운 노드를 탐색하여 방문
-							next = GetBestScoreChild(next);
-							visitedNodes.Add(next);
-
-							//겜이 끝났는지 확인 (익스펜드된 거라도 상관없음)
-							if (next.board.IsMyWin)
-							{
-								finished = true;
-								leafEvaluation = 1;
-								break;
-							}
-							else if (next.board.IsYoWin)
-							{
-								finished = true;
-								leafEvaluation = 0;
-								break;
-							}
-							//첫 방문 노드라면 (익스펜드된 노드라면)
-							else if (next.visited == 0)
-							{
-								break;
-							}
-
-							//이도 저도 아니면 다음 while로~
-						}
-
-						//얼마나 깊이 들어가는지 보기 위해 재미로 통계를 낸다. 
-						int depth = visitedNodes.Count;
-						depthSum += depth;
-						if (depth > maxDepth)
-						{
-							maxDepth = depth;
-						}
-
-						//마지막 노드에서 게임이 끝나지 않았다면
-						if (!finished)
-						{
-							//첫 방문 때, 정책망 계산을 한다.
-							CalcPolicyWeights(next);
-
-							//끝 노드를 평가한다.
-							leafEvaluation = CalcLeafEvaluation(next);
-						}
-
-						//visited, win 업데이트
-
-						for (int i = visitedNodes.Count - 1; i >= 0; i--)
-						{
-							Node node = visitedNodes[i];
 							lock (node)
 							{
-								//부모노드의 승리를 각 child에 나눠서 저장
-								if (node.parent.board.IsMyTurn)
+								float leafEvaluation;
+								if (node.board.IsMyWin)
 								{
+									leafEvaluation = 1;
+									//exit
+								}
+								else if (node.board.IsYoWin)
+								{
+									leafEvaluation = 0;
+									//exit
+								}
+								//첫 방문 노드라면 (익스펜드된 노드라면)
+								else if (node.visited == 0)
+								{
+									//첫 방문 때, 정책망 계산을 한다.
+									CalcPolicyWeights(node);
+									//끝 노드를 평가한다.
+									leafEvaluation = CalcLeafEvaluation(node);
+									//exit
+								}
+								else
+								{
+									//익스펜션 포함해서 다음 노드를 꺼내준다.
+									Node next = GetBestScoreChild(node);
+									//go down
+									leafEvaluation = visitDown(next);
+								}
+
+								//평가가 끝났으면 재귀가 풀리면서 업데이트
+								//부모 노드의 턴으로 생각해야 하므로 myTurn을 반대로
+								if (!node.board.IsMyTurn)
+								{
+									//부모 노드의 내차례인 경우
 									node.win += leafEvaluation;
 								}
 								else
@@ -238,22 +221,10 @@ namespace Janggi.Ai
 								}
 
 								node.visited++;
+
+								return leafEvaluation;
 							}
 						}
-
-						lock (root)
-						{
-							root.visited++;
-						}
-
-
-						//for (int i = 0; i < root.children.Length; i++)
-						//{
-						//	Node child = root.children[i];
-						//	if (child == null) Console.WriteLine(i + "not visited");
-						//	else
-						//	Console.WriteLine($"{i} : {child.win} / {child.visited} ... {child.UcbScore()}");
-						//}
 					});
 
 					signalCycle.Set();
