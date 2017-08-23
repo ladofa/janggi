@@ -146,6 +146,7 @@ namespace RunnerWpf
 			Dispatcher.Invoke(() =>
 			{
 				ProgressBarVisitCount.Value = rate * 100;
+				TextVisitCount.Text = visit.ToString();
 			});
 		}
 
@@ -273,6 +274,8 @@ namespace RunnerWpf
 					MessageBox.Show("상대가 이겼다.");
 					break;
 				}
+
+				TreeViewerMain.Load(mcts);
 			}
 		}
 
@@ -336,7 +339,6 @@ namespace RunnerWpf
 				if (mcts.IsPaused)
 				{
 					ResumeSearching();
-					
 				}
 				else
 				{

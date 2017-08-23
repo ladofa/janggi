@@ -10,6 +10,8 @@
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="150"/>
 			<ColumnDefinition/>
+			<ColumnDefinition Width="5"/>
+			<ColumnDefinition/>
 		</Grid.ColumnDefinitions>
 		<StackPanel Orientation="Vertical" Margin="2">
 			<Button x:Name="ButtonNewGame" Margin="2" Content="새 게임" Click="ButtonNewGame_Click"/>
@@ -71,14 +73,21 @@
 				<TextBlock Text="초"/>
 			</StackPanel>
 
-			<CheckBox x:Name="CheckBoxThinkAlways" Content="사용자가 둘 때 탐색" Margin="2" Checked="CheckBoxThinkAlways_Checked" Unchecked="CheckBoxThinkAlways_Unchecked" IsChecked="True"/>
+			<CheckBox x:Name="CheckBoxThinkAlways" Content="사용자가 둘 때 탐색" Margin="2" Checked="CheckBoxThinkAlways_Checked" Unchecked="CheckBoxThinkAlways_Unchecked" IsChecked="False"/>
 			<CheckBox x:Name="CheckBoxStepByStep" Content="AI 자동 시작" Margin="2" Checked="CheckBoxStepByStep_Checked" Unchecked="CheckBoxStepByStep_Unchecked" IsChecked="True"/>
 
 			<Button x:Name="ButtonStartAI" Content="AI 생각 시작" Margin="2" Click="ButtonStartAI_Click"/>
 			<Button x:Name="ButtonForceAI" Content="바로 두기" Margin="2" Click="ButtonForceAI_Click"/>
-			<ProgressBar x:Name="ProgressBarVisitCount" Height="23" Margin="2"/>
+			<Grid Margin="2">
+				<ProgressBar x:Name="ProgressBarVisitCount" Height="23"/>
+				<TextBlock x:Name="TextVisitCount" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+			</Grid>
+			
 			
 		</StackPanel>
 		<local:Stage x:Name="StageMain" Grid.Column="1"/>
+
+		<GridSplitter Grid.Column="2" HorizontalAlignment="Stretch"/>
+		<local:TreeViewer x:Name="TreeViewerMain" Grid.Column="3"/>
 	</Grid>
 </Window>

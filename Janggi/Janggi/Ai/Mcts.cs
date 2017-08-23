@@ -35,7 +35,7 @@ namespace Janggi.Ai
 		List<Node> history;
 
 		Node start;
-		Node root;
+		public Node root;
 
 		int currentLevel;
 
@@ -50,7 +50,7 @@ namespace Janggi.Ai
 			maxVisitCount = 50000;
 		}
 
-		
+
 		public void Init(Board board)
 		{
 			start = new Node(null, board, Move.Rest);
@@ -80,6 +80,11 @@ namespace Janggi.Ai
 			signalPause.Reset();
 		}
 
+		public void WaitCycle()
+		{
+			signalCycle.WaitOne();
+		}
+
 		public void ResumeSearching()
 		{
 			signalPause.Set();
@@ -101,6 +106,8 @@ namespace Janggi.Ai
 		System.Threading.ManualResetEvent signalSearch = new System.Threading.ManualResetEvent(true);
 		//잠시멈춤 시그널
 		System.Threading.ManualResetEvent signalPause = new System.Threading.ManualResetEvent(true);
+		//한 사이클 처리가 끝나기를 기다릴 수 있는 시그널
+		System.Threading.ManualResetEvent signalCycle = new System.Threading.ManualResetEvent(true);
 
 		public async Task<Node> SearchNextAsync()
 		{
@@ -108,7 +115,7 @@ namespace Janggi.Ai
 			{
 				return null;
 			}
-			
+
 			signalSearch.Reset();
 
 			await Task.Run(() =>
@@ -133,8 +140,8 @@ namespace Janggi.Ai
 
 				bool isMyTurn = root.board.IsMyTurn;
 
-				ParallelOptions option = new ParallelOptions();
-				option.MaxDegreeOfParallelism = 10;
+				//ParallelOptions option = new ParallelOptions();
+				//option.MaxDegreeOfParallelism = 10;
 
 				signalPause.Set();
 
@@ -143,7 +150,7 @@ namespace Janggi.Ai
 					//이미 셋으로 돌아섰다면 그냥 리턴
 					if (signalSearch.WaitOne(0))
 					{
-						return;
+						break;
 					}
 
 					//조건을 만족한다면 셋으로 변경하고 리턴
@@ -153,9 +160,11 @@ namespace Janggi.Ai
 						break;
 					}
 
+					signalCycle.Reset();
+
 					//500단위로 끊자.
-					Parallel.For(0, 500, option, turn =>
-					//for (int turn = 0; turn < numSearchNodes; turn++)
+					Parallel.For(0, 500, turn =>
+					//for (int turn = 0; turn < 500; turn++)
 					{
 						//랜덤으로 깊이 탐색
 						List<Node> visitedNodes = new List<Node>();
@@ -211,11 +220,12 @@ namespace Janggi.Ai
 						}
 
 						//visited, win 업데이트
-						lock (root)
+
+						for (int i = visitedNodes.Count - 1; i >= 0; i--)
 						{
-							for (int i = visitedNodes.Count - 1; i >= 0; i--)
+							Node node = visitedNodes[i];
+							lock (node)
 							{
-								Node node = visitedNodes[i];
 								//부모노드의 승리를 각 child에 나눠서 저장
 								if (node.parent.board.IsMyTurn)
 								{
@@ -229,9 +239,13 @@ namespace Janggi.Ai
 
 								node.visited++;
 							}
+						}
 
+						lock (root)
+						{
 							root.visited++;
 						}
+
 
 						//for (int i = 0; i < root.children.Length; i++)
 						//{
@@ -242,6 +256,8 @@ namespace Janggi.Ai
 						//}
 					});
 
+					signalCycle.Set();
+
 					ProgressUpdated?.Invoke(this, root.visited, root.visited / (double)MaxVisitCount);
 
 					signalPause.WaitOne();
@@ -251,9 +267,9 @@ namespace Janggi.Ai
 				Console.WriteLine($"Visited : {root.visited}");
 			});
 
-			
 
-			
+
+
 			for (int i = 0; i < root.children.Length; i++)
 			{
 				Node child = root.children[i];
@@ -267,7 +283,7 @@ namespace Janggi.Ai
 				}
 			}
 
-		
+
 
 			//if (root.promNode == null)
 			//{

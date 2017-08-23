@@ -327,21 +327,32 @@ namespace RunnerWpf
 						{
 							var stone = value[y, x];
 							units[y, x].SetStone(stone, board.IsMyFirst);
-							units[y, x].IsMarked = false;
 						}
 					}
 
 					TextBlockInfo.Text = "Point : " + board.Point.ToString();
 
-					
-					Pos from = board.PrevMove.From;
-					if (from.X != -1)
-					{
-						units[from.Y, from.X].IsMarked = true;
-						Pos to = board.PrevMove.To;
-						units[to.Y, to.X].IsMarked = true;
-					}
+					Mark(board.PrevMove);
 				});
+			}
+		}
+
+		public void Mark(Move move)
+		{
+			for (int y = 0; y < Board.Height; y++)
+			{
+				for (int x = 0; x < Board.Width; x++)
+				{
+					units[y, x].IsMarked = false;
+				}
+			}
+
+			Pos from = move.From;
+			if (from.X != -1)
+			{
+				units[from.Y, from.X].IsMarked = true;
+				Pos to = move.To;
+				units[to.Y, to.X].IsMarked = true;
 			}
 		}
 	}

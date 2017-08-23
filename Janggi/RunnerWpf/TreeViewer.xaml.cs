@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using Janggi;
+using Janggi.Ai;
 
 namespace RunnerWpf
 {
@@ -25,8 +26,239 @@ namespace RunnerWpf
 		public TreeViewer()
 		{
 			InitializeComponent();
+			KeyDown += TreeViewer_KeyDown;
 		}
 
-		
+		private void TreeViewer_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (mcts == null) return;
+
+			mcts.PauseSearching();
+			mcts.WaitCycle();
+			if (e.Key == Key.B)
+			{
+				if (currentNode != null)
+				{
+					if (currentNode.parent != null && mcts.root != currentNode)
+					{
+						show(currentNode.parent);
+					}
+				}
+			}
+			mcts.ResumeSearching();
+		}
+
+		Mcts mcts;
+
+		public void Load(Mcts mcts)
+		{
+			this.mcts = mcts;
+			mcts.PauseSearching();
+			mcts.WaitCycle();
+			listUpTree(mcts.root);
+			show(mcts.root);
+			mcts.ResumeSearching();
+
+			
+		}
+
+		void listUpTree(Node node)
+		{
+			if (node == null)
+			{
+				return;
+			}
+
+			Dispatcher.Invoke(() =>
+			{
+				StackPanelTree.Children.Clear();
+
+				while (true)
+				{
+					Button button = makeNodeButton(node);
+					StackPanelTree.Children.Insert(0, button);
+
+					if (node == mcts.root)
+					{
+						break;
+					}
+
+					if (node.parent == null)
+					{
+						Console.WriteLine("asdfasdf");
+						break;
+					}
+
+					node = node.parent;
+				}
+			});
+		}
+
+		Button makeNodeButton(Node node)
+		{
+			Button button = new Button();
+			
+			button.Tag = node;
+			button.Click += Button_Click_Tree;
+
+			if (node != null)
+			{
+
+				string letter = "";
+				if (!node.prevMove.Equals(Move.Rest))
+				{
+					uint stone = node.board[node.prevMove.To];
+					letter = StoneHelper.GetLetter(stone, node.board.IsMyFirst);
+				}
+				else
+				{
+					letter = "不";
+				}
+
+				if (node.board.IsMyTurn)
+				{
+					letter = "Yo" + letter;
+				}
+				else
+				{
+					letter = "My" + letter;
+				}
+
+				button.Content = letter;
+			}
+			else
+			{
+				button.Content = "N";
+			}
+
+			return button;
+		}
+
+		private void Button_Click_Tree(object sender, RoutedEventArgs e)
+		{
+			mcts.PauseSearching();
+			mcts.WaitCycle();
+			Button button = sender as Button;
+			if (button.Tag == null) return;
+			Node node = button.Tag as Node;
+			show(node);
+			mcts.ResumeSearching();
+		}
+
+		FrameworkElement MakeNodeButtonAndState(Node node)
+		{
+			Button button = new Button();
+
+			button.Tag = node;
+			button.Click += Button_Click_Moves;
+
+			if (node != null)
+			{
+				string letter = "";
+				if (!node.prevMove.Equals(Move.Rest))
+				{
+					uint stone = node.board[node.prevMove.To];
+					letter = StoneHelper.GetLetter(stone, node.board.IsMyFirst);
+				}
+				else
+				{
+					letter = "不";
+				}
+
+				button.Content = letter;
+			}
+			else
+			{
+				button.Content = "N";
+			}
+
+			button.Width = 23;
+			button.Height = 23;
+
+			Grid grid = new Grid();
+
+			ProgressBar progress = new ProgressBar();
+			progress.Width = 50;
+			progress.Height = 23;
+
+			TextBlock textBlock = new TextBlock();
+			textBlock.HorizontalAlignment = HorizontalAlignment.Center;
+			textBlock.VerticalAlignment = VerticalAlignment.Center;
+
+			if (node != null)
+			{
+				progress.Value = node.win / node.visited * 100;
+				progress.Tag = node.prevMove;
+				progress.MouseEnter += Progress_MouseEnter;
+
+				textBlock.Text = node.win.ToString("f0") + "/" + node.visited.ToString();
+			}
+
+			grid.Children.Add(progress);
+			grid.Children.Add(textBlock);
+
+			StackPanel panel = new StackPanel();
+			panel.Children.Add(button);
+			panel.Children.Add(grid);
+			panel.Orientation = Orientation.Horizontal;
+			panel.Margin = new Thickness(1);
+
+			return panel;
+		}
+
+		private void Progress_MouseEnter(object sender, MouseEventArgs e)
+		{
+			ProgressBar progress = sender as ProgressBar;
+			Move move = (Move)progress.Tag;
+			StageCurrent.Mark(move);
+		}
+
+		private void Button_Click_Moves(object sender, RoutedEventArgs e)
+		{
+			mcts.PauseSearching();
+			mcts.WaitCycle();
+			Button button = sender as Button;
+			Node node = button.Tag as Node;
+
+			listUpTree(node);
+			show(node);
+
+			mcts.ResumeSearching();
+		}
+
+		Node currentNode;
+		void show(Node node)
+		{
+			if (node == null) return;
+
+			currentNode = node;
+
+			Dispatcher.Invoke(() =>
+			{
+				StackPanelMoves.Children.Clear();
+				if (node.children != null)
+				{
+					Node[] children = node.children;
+					for (int i = 0; i < children.Length; i++)
+					{
+						var move = MakeNodeButtonAndState(children[i]);
+						StackPanelMoves.Children.Add(move);
+					}
+					StageCurrent.Board = node.board;
+				}
+				else
+				{
+					StageCurrent.Board = new Board();
+				}
+			});
+
+			
+		}
+
+		private void Grid_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			//StageCurrent.Width = ActualWidth;
+			//StageCurrent.Height = ActualHeight;
+		}
 	}
 }

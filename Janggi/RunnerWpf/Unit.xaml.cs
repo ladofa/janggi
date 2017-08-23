@@ -89,6 +89,8 @@ namespace RunnerWpf
 			{(uint)Stones.YoKing, 2 },
 		};
 
+		List<Tuple<double, double, double, double, double, double>> lastMarkerPositions;
+
 		//유닛 크기가 변할때마다 마커 크기 변경
 		void changeMarkerSize()
 		{
@@ -108,7 +110,14 @@ namespace RunnerWpf
 			if (index == 4)
 			{
 				//빈공간은 몰라~
-				return;
+				if (lastMarkerPositions == null)
+				{
+					markerPositions = markerPositionsSmall;
+				}
+				else
+				{
+					markerPositions = lastMarkerPositions;
+				}
 			}
 			else if (index == 0)
 			{
@@ -122,6 +131,8 @@ namespace RunnerWpf
 			{
 				markerPositions = markerPositionsBig;
 			}
+
+			lastMarkerPositions = markerPositions;
 
 			double x0 = ActualWidth / 2 - width / 2;
 			double y0 = 0;

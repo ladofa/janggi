@@ -6,21 +6,20 @@
              xmlns:local="clr-namespace:RunnerWpf"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
+    <Grid SizeChanged="Grid_SizeChanged">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="50"/>
+			<ColumnDefinition Width="100"/>
 			<ColumnDefinition/>
 		</Grid.ColumnDefinitions>
 		
 			<StackPanel Grid.Column="0" x:Name="StackPanelTree" Orientation="Vertical">
 				
 			</StackPanel>
-		
 
-		
-		<StackPanel Grid.Column="1" Orientation="Vertical">
-			<Grid x:Name="GridMoves"/>
-			<local:Stage x:Name="StageCurrent"/>
-		</StackPanel>
+		<ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Visible" Margin="0,2,0,-2">
+			<StackPanel x:Name="StackPanelMoves" Orientation="Vertical"/>
+		</ScrollViewer>
+		<local:Stage Grid.Column="2" x:Name="StageCurrent" HorizontalAlignment="Stretch"/>
 	</Grid>
 </UserControl>
