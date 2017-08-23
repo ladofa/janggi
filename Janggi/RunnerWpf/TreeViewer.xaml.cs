@@ -55,8 +55,16 @@ namespace RunnerWpf
 			this.mcts = mcts;
 			mcts.PauseSearching();
 			mcts.WaitCycle();
-			listUpTree(mcts.root);
-			show(mcts.root);
+			if (mcts.root.parent != null)
+			{
+				listUpTree(mcts.root.parent);
+				show(mcts.root.parent);
+			}
+			else
+			{
+				listUpTree(mcts.root);
+				show(mcts.root);
+			}
 			mcts.ResumeSearching();
 
 			
@@ -78,7 +86,7 @@ namespace RunnerWpf
 					Button button = makeNodeButton(node);
 					StackPanelTree.Children.Insert(0, button);
 
-					if (node == mcts.root)
+					if (node == mcts.root.parent)
 					{
 						break;
 					}
@@ -145,7 +153,7 @@ namespace RunnerWpf
 			mcts.ResumeSearching();
 		}
 
-		FrameworkElement MakeNodeButtonAndState(Node node)
+		FrameworkElement MakeNodeButtonAndState(Node node, double maxVisited)
 		{
 			Button button = new Button();
 
@@ -178,16 +186,16 @@ namespace RunnerWpf
 			Grid grid = new Grid();
 
 			ProgressBar progress = new ProgressBar();
-			progress.Width = 50;
+			TextBlock textBlock = new TextBlock();
+			progress.Width = 104;
 			progress.Height = 23;
 
-			TextBlock textBlock = new TextBlock();
 			textBlock.HorizontalAlignment = HorizontalAlignment.Center;
 			textBlock.VerticalAlignment = VerticalAlignment.Center;
 
 			if (node != null)
 			{
-				progress.Value = node.win / node.visited * 100;
+				progress.Value = node.visited / maxVisited * 100;
 				progress.Tag = node.prevMove;
 				progress.MouseEnter += Progress_MouseEnter;
 
@@ -239,9 +247,23 @@ namespace RunnerWpf
 				if (node.children != null)
 				{
 					Node[] children = node.children;
+
+					int maxVisited = 1;
 					for (int i = 0; i < children.Length; i++)
 					{
-						var move = MakeNodeButtonAndState(children[i]);
+						if (children[i] != null)
+						{
+							int visited = children[i].visited;
+							if (visited > maxVisited)
+							{
+								maxVisited = visited;
+							}
+						}
+					}
+
+					for (int i = 0; i < children.Length; i++)
+					{
+						var move = MakeNodeButtonAndState(children[i], maxVisited);
 						StackPanelMoves.Children.Add(move);
 					}
 					StageCurrent.Board = node.board;

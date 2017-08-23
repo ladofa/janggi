@@ -335,7 +335,10 @@ namespace Janggi.Ai
 
 		public void SetMove(Node node)
 		{
-			root.Clear();
+			if (root.parent != null)
+			{
+				root.parent.Clear();
+			}
 			history.Add(root);
 			root = node;
 		}

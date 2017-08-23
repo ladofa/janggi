@@ -9,7 +9,7 @@
     <Grid SizeChanged="Grid_SizeChanged">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="50"/>
-			<ColumnDefinition Width="100"/>
+			<ColumnDefinition Width="150"/>
 			<ColumnDefinition/>
 		</Grid.ColumnDefinitions>
 		
