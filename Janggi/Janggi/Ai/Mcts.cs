@@ -198,8 +198,6 @@ namespace Janggi.Ai
 								//첫 방문 노드라면 (익스펜드된 노드라면)
 								else if (next.visited == 0)
 								{
-									//첫 방문 때, 정책망 계산을 한다.
-									CalcPolicyWeights(next);
 									//끝 노드를 평가한다.
 									leafEvaluation = CalcLeafEvaluation(next);
 									finished = true;
@@ -342,6 +340,11 @@ namespace Janggi.Ai
 				parent.PrepareChildren();
 				float[] scores = CalcScores(parent);
 				float max = scores[0];
+
+				if (parent.policyWeights == null)
+				{
+					CalcPolicyWeights(parent);
+				}
 				
 				List<int> maxIndexies = new List<int>();
 				maxIndexies.Add(0);

@@ -131,7 +131,8 @@ namespace RunnerWpf
 			}
 
 			PrimaryUcb primaryUcb = new PrimaryUcb();
-			mcts = new Mcts(primaryUcb);
+			PseudoYame pseudoYame = new PseudoYame();
+			mcts = new Mcts(pseudoYame);
 			TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
 			mcts.Init(mainBoard);
 			mcts.ProgressUpdated += Mcts_ProgressUpdated;

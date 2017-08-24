@@ -500,6 +500,19 @@ namespace Janggi
 				}
 
 				//TODO : 궁 가운데 있을 경우
+				else if (px == 4 && (py == 1 || py == 8))
+				{
+					for (int y = py - 1; y <= py + 1; y++)
+					{
+						for (int x = px - 1; x <= px + 1; x++)
+						{
+							if (x != px || y != py)
+							{
+								confirmAndAdd(x, y);
+							}
+						}
+					}
+				}
 			}
 			else if (IsPo(stoneFrom))
 			{
@@ -939,7 +952,7 @@ namespace Janggi
 			return Point + GetPoint(this[move.To]);
 		}
 
-		public int Judge()
+		public float Judge()
 		{
 			//내 점수를 더한다.
 			int p1 = Point;
@@ -955,11 +968,11 @@ namespace Janggi
 
 			if (GetPos(16).Y == 7)
 			{
-				p4 -= 5;
+				p4 -= 10;
 			}
 			else if (GetPos(32).Y == 2)
 			{
-				p4 += 5;
+				p4 += 10;
 			}
 
 			//포의 안형
@@ -985,7 +998,7 @@ namespace Janggi
 			}
 
 			//p6
-			//마상은 일단 중앙이 좋다.
+			//마상은 일단 중앙진출이 좋다.
 			int p6 = 0;
 			const int outMa = 3;
 			for (int x = 0; x < Width; x++)
@@ -1021,7 +1034,7 @@ namespace Janggi
 			//차길, 포길은 무조건 +2
 			int p7 = 0;
 
-			const int addCha = 1;
+			const int addCha = 2;
 			for (int y = 0; y < Height; y++)
 			{
 				for (int x = 0; x < Width; x++)
@@ -1083,7 +1096,21 @@ namespace Janggi
 				p3 /= 6;
 			}
 
-			return p1 + p2 + p3 + p4 + p5 + p6 + p7;
+
+
+			float score = p1 + p2 + p3 + p4 + p5 + p6 + p7;
+
+			score = score / 400 + 0.5f;
+			if (score < 0)
+			{
+				score = 0;
+			}
+			else if (score > 1)
+			{
+				score = 1;
+			}
+
+			return score;
 		}
 
 		//총 잡을 수 있는 기물

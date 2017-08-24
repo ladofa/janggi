@@ -65,8 +65,6 @@
   <ItemGroup>
     <Compile Include="Ai\Mcts.cs" />
     <Compile Include="Ai\Node.cs" />
-    <Compile Include="Ai\PlacePromCalculator.cs" />
-    <Compile Include="Ai\PointPromCalculator.cs" />
     <Compile Include="Ai\PrimaryUcb.cs" />
     <Compile Include="Ai\PseudoYame.cs" />
     <Compile Include="Board.cs" />
