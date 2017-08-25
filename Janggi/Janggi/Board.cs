@@ -14,7 +14,7 @@ namespace Janggi
 		public uint[,] targets;//해당 위치를 노리고 있는 돌
 		public uint[,] blocks;//해당 위치때문에 못 움직이는 돌
 
-		Pos[] positions;
+		public Pos[] positions;
 
 		bool isMyTurn;
 		public int Point;
