@@ -1,23 +1,30 @@
 # TCP server example
 import socket
 
-def proc_check(self, header, socket):
-	socket.send('')
+def send_ok(socket):
+	socket.send(bytes([101, 0]))
 
-def proc_create(self, header, socket):
+def send_failed(socket):
+	socket.send(bytes([102, 0]))
 
+def proc_check(header, socket):
+	send_ok(socket)
 
-def proc_load(self, header, socket):
+def proc_create(header, socket):
+	#생성 작업 후
+	send_ok(socket)
 
+def proc_load(header, socket):
+	send_ok(socket)
 
-def proc_save(self, header, socket):
+def proc_save(header, socket):
+	send_ok(socket)
 
+def proc_evaluate(header, socket):
+	send_ok(socket)
 
-def proc_evaluate(self, header, socket):
-
-
-def proc_train(self, header, socket):
-
+def proc_train(header, socket):
+	send_ok(socket)
 
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,17 +39,23 @@ while 1:
 	print ("I got a connection from ", address)
 
 	while 1:
-		received = client_socket.recv(2)
-		if not received : break
-		print(type(received))
-		#보여주고
-		print ("RECEIVED:" , received.decode())
-		#에코
-		client_socket.send(data);
-	
-	print("received all!")
-	for data in dataList:
-		print(data)
+		header = client_socket.recv(2)
+		if not header : break
+		code = header[0]
+
+		if code == 1:
+			proc_check(header, client_socket)
+		elif code == 2:
+			proc_create(header, client_socket)
+		elif code == 3:
+			proc_load(header, client_socket)
+		elif code == 4:
+			proc_save(header, client_socket)
+		elif code == 5:
+			proc_evaluate(header, client_socket)
+		elif code == 6:
+			proc_train(header, client_socket)
+
 	
 	#data = input('SEND( TYPE q or Q to Quit):')
 	#if(data == 'Q' or data == 'q'):

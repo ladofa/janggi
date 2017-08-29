@@ -19,6 +19,11 @@ namespace Janggi.TensorFlow
 		System.IO.BinaryReader reader;
 		System.IO.BinaryWriter writer;
 
+		public bool IsConnected
+		{
+			get => client != null && client.Connected;
+		}
+
 		public enum Code : byte
 		{
 			//--req
@@ -163,7 +168,7 @@ namespace Janggi.TensorFlow
 				reader = new System.IO.BinaryReader(stream);
 				writer = new System.IO.BinaryWriter(stream);
 			}
-			catch
+			catch (Exception e)
 			{
 				return false;
 			}
@@ -173,6 +178,8 @@ namespace Janggi.TensorFlow
 
 		public void Disconnect()
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			reader.Close();
 			stream.Close();
 			client.Close();
@@ -184,13 +191,17 @@ namespace Janggi.TensorFlow
 
 		public bool CheckConnection()
 		{
-			byte[] dataCheck = GetBytes(Code.Check, NetworkKinds.Null);
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+			
+			write(Code.Check, NetworkKinds.Null);
 			return readOk();
 		}
 
 		public static int FixedLength = 64;
 		public bool CreateModel(NetworkKinds kinds, string name)
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			write(Code.Create, kinds);
 			write(name);
 			return readOk();
@@ -198,6 +209,8 @@ namespace Janggi.TensorFlow
 
 		public bool LoadModel(NetworkKinds kinds, string name)
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			write(Code.Load, kinds);
 			write(name);
 			return readOk();
@@ -205,6 +218,8 @@ namespace Janggi.TensorFlow
 
 		public bool SaveModel(NetworkKinds kinds, string oldName, string newName)
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			write(Code.Save, kinds);
 			write(oldName);
 			write(newName);
@@ -213,6 +228,8 @@ namespace Janggi.TensorFlow
 
 		public float[] EvaluatePolicy(Board board, string name)
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			write(Code.Evaluate, NetworkKinds.Policy);
 			write(name);
 			write(board);
@@ -238,6 +255,8 @@ namespace Janggi.TensorFlow
 
 		public float EvaluateValue(Board board, string name)
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			write(Code.Evaluate, NetworkKinds.Value);
 			write(name);
 			write(board);
@@ -254,6 +273,8 @@ namespace Janggi.TensorFlow
 
 		public bool TrainPolicy(List<Tuple<Board, Move>> list, string name)
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			write(Code.Train, NetworkKinds.Policy);
 			write(name);
 
@@ -270,6 +291,8 @@ namespace Janggi.TensorFlow
 
 		public bool TrainValue(List<Tuple<Board, float>> list, string name)
 		{
+			if (!IsConnected) throw new Exception("Is Not Connected.");
+
 			write(Code.Train, NetworkKinds.Policy);
 			write(name);
 
@@ -283,7 +306,5 @@ namespace Janggi.TensorFlow
 
 			return readOk();
 		}
-
-
 	}
 }

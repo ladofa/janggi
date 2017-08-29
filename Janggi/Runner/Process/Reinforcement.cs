@@ -33,8 +33,14 @@ namespace Runner.Process
 		{
 			//openServerAsync();
 			Janggi.TensorFlow.TcpCommClient tcpCommClient = new Janggi.TensorFlow.TcpCommClient();
-			tcpCommClient.Connect("localhost", 9999);
-		
+			if (!tcpCommClient.Connect("localhost", 9999))
+			{
+				Console.WriteLine("ConnectionFailed.");
+				return;
+			}
+			bool c = tcpCommClient.CheckConnection();
+			Console.WriteLine(c);
+			tcpCommClient.Disconnect();
 		}
 	}
 }

@@ -1,19 +1,22 @@
-# 야매장기(Quack Janggi)
+# 야매장기(Yame Janggi)
 
 ## Introduction
-This is an implementation of deep-learning AI for Janggi(Korean Chess).
+This is an implementation of deep-learning AI for Janggi(Korean Chess). All documents, comments and other description are written in Korean.
 
 Janggi : https://en.wikipedia.org/wiki/Janggi
 
-야매장기는 알파고에서 강하게 영감을 받아 딥러닝으로 구현한 장기 AI입니다. 딥러닝은 텐서플로우로 구현되었고, 나머지 게임과 MinMax, 강화 학습 등은 WPF 및 C#으로 제작되었습니다.. 가 아니고 지금 공부하면서 만들고 있습니다.^^
+야매장기는 알파고에서 강하게 영감을 받아 딥러닝으로 구현한 장기 AI입니다. 딥러닝은 텐서플로우로 구현되었고, 나머지 게임과 MinMax, 강화 학습 등은 WPF 및 C#으로 제작 중입니다.
 
 ## Features
 
-우선 밝힐 것은 모든 구현은 자료를 참고하여 제 나름의 방식으로 구현한 것이므로 기본적인 알고리즘의 원리를 공부하는 데는 도움이 되지 않습니다.
-
-일단 MCTS를 쓰지 않습니다. 효율적인 rollout을 구현하는데 많은 시간이 걸리기 때문입니다. 대신 알파고의 형세 판단 네트워크를 100% 신뢰하는 방법을 사용했습니다. MinMax트리에서 마지막 수를 누가 두었느냐에 따라 형세가 왔다갔다 하기 때문에 상대가 마지막으로 뒀던 형세 판단값과 자신이 둔 형세 판단값을 따로 구분하여 업데이트합니다.
+  알파고의 구현 원리를 참고하되, 학습 방법에서 다소 저의 편의대로 변형이 있을 수 있습니다. 누군가 같이 개발해주면 좋겠지만 아직 특별히 도움을 기대하지 않으므로 저 나름 재미나게 만들 계획입니다.
 
 ## Environment / Requirement
+
+ - Visual Studio 2017
+ - .Net Framework 4.7
+ - Windows 10
+ - Python 3.6 64bit
 
 모든 개발은 Visual Studio 2017에서 이루어졌습니다. C#/WPF 코드는 .NET 4.6.2 환경에서 만들었습니다. TensorFlow를 이용한 딥러닝 알고리즘은 Python 3.6에서 작동됩니다.
 
