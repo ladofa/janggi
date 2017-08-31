@@ -6,20 +6,58 @@ import tensorflow as tf
 #from tensorflow.examples.tutorials.mnist import input_data
 #mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
-def weight_variable(shape):
-  initial = tf.truncated_normal(shape, stddev=0.1)
-  val =  tf.Variable(initial)
-  
+class Network():
+	def __init__(self):
+		self.graph = tf.Graph()
+		with self.graph.as_default():
+			self.sess = tf.Session()
 
+	def save(self, new_name):
+		with self.graph.as_default():
+			saver = tf.train.Saver()
+			saver.save(self.sess, "./training_data/" + new_name)
+
+	def load(self, new_name):
+		with self.graph.as_default():
+			saver = tf.train.Saver()
+			saver.restore(self.sess, "./training_data/" + new_name)
+
+class PolicyNetwork(Network):
+	def __init__(self):
+		Network.__init__(self)
+		with self.graph.as_default():
+			x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
+			conv1 = conv_net(x, 56)
+			conv2 = conv_net(conv1, 56)
+			conv3 = conv_net(conv2, 56)
+			conv4 = conv_net(conv3, 56)
+			conv5 = conv_net(conv4, 56)
+			self.model = fc_net(conv5, 9 * 10 * 9 * 10)
+			
+	def train(self, x, y_):
+		with self.graph.as_default():
+			cross_entropy = tf.reduce_mean(
+				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = model))
+			self.train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+			sess.run(self.train_step, feed_dict={x: x, y_: y_})
+
+	def predict(self, x):
+		with self.graph.as_default():
+			return sess.run(self.model, {x: x})
+
+	
+
+def weight_variable(shape):
+	return tf.Variable(tf.truncated_normal(shape, stddev=0.1))
+  
 def bias_variable(shape):
-  initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
+	return tf.Variable(tf.constant(0.1, shape=shape))
 
 def conv2d(x, W):
-  return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+	return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
 
 def max_pool_2x2(x):
-  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
+	return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
 
 def conv_net(x, f):
@@ -27,13 +65,20 @@ def conv_net(x, f):
 	w = weight_variable([5, 5, d1, f])
 	b = bias_variable([f])
 	conv = tf.nn.relu(conv2d(x, w) + b)
+	return conv
 
 def fc_net(x, out_dim):
-	in_dim = x.shape[1] * x.shape[2] * x.shape[3]
+	in_dim = (x.shape[1] * x.shape[2] * x.shape[3]).value
+	print(x)
+	print(in_dim)
 	in_net = tf.reshape(x, [-1, in_dim])
 	w = weight_variable([in_dim, out_dim])
-	b = bias_variable(out_dim)
+	b = bias_variable([out_dim])
 	return tf.nn.relu(tf.matmul(in_net, w) + b)
+
+
+
+######################################################################################
 
 
 def create_policy_net(kind):
@@ -91,14 +136,15 @@ def train_policy(net, x, y_):
 	#      x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
 
 
+
+
+
 def test_tensorflow():
 	
 	x = tf.placeholder(tf.float32, shape=[None, 28, 28, 14])
 
 	W_conv1 = weight_variable([5, 5, 14, numFilter])
 	b_conv1 = bias_variable([numFilter])
-
-	
 
 	x_image = tf.reshape(x, [-1, 28, 28, 3])#-1, width, height, depth
 
