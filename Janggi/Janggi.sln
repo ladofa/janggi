@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.10
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Janggi", "Janggi\Janggi.csproj", "{8E961DBA-7716-49C2-B14D-15B2D1B9CA65}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunnerWpf", "RunnerWpf\RunnerWpf.csproj", "{B053AAB1-410A-480C-8815-F6B8CEDC0B21}"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "TensorNetworks", "TensorNetworks\TensorNetworks.pyproj", "{DB42E584-379E-425D-AAE9-B10A50D1B7B3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "genMoveSet", "genMoveSet\genMoveSet.csproj", "{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,14 @@ Global
 		{DB42E584-379E-425D-AAE9-B10A50D1B7B3}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{DB42E584-379E-425D-AAE9-B10A50D1B7B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB42E584-379E-425D-AAE9-B10A50D1B7B3}.Release|x64.ActiveCfg = Release|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Debug|x64.Build.0 = Debug|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Release|x64.ActiveCfg = Release|Any CPU
+		{330ED89F-15FF-47FA-A3E5-A4151AE9A1E0}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
