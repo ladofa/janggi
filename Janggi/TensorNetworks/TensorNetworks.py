@@ -27,12 +27,13 @@ class PolicyNetwork(Network):
 		Network.__init__(self)
 		with self.graph.as_default():
 			x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
-			conv1 = conv_net(x, 56)
-			conv2 = conv_net(conv1, 56)
-			conv3 = conv_net(conv2, 56)
-			conv4 = conv_net(conv3, 56)
-			conv5 = conv_net(conv4, 56)
-			self.model = fc_net(conv5, 9 * 10 * 9 * 10)
+			conv1 = conv_net(x, 5, 56)
+			conv2 = conv_net(conv1, 3, 56)
+			conv3 = conv_net(conv2, 3, 56)
+			conv4 = conv_net(conv3, 3, 56)
+			conv5 = conv_net(conv4, 3, 56)
+			self.model = fc_net(conv5, 512)
+			self.model = fc_net(conv5, 512)
 			
 	def train(self, x, y_):
 		with self.graph.as_default():
@@ -50,11 +51,11 @@ class ValueNetwork(Network):
 		Network.__init__(self)
 		with self.graph.as_default():
 			x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
-			conv1 = conv_net(x, 56)
-			conv2 = conv_net(conv1, 56)
-			conv3 = conv_net(conv2, 56)
-			conv4 = conv_net(conv3, 56)
-			conv5 = conv_net(conv4, 56)
+			conv1 = conv_net(x, 5, 56)
+			conv2 = conv_net(conv1, 3, 56)
+			conv3 = conv_net(conv2, 3, 56)
+			conv4 = conv_net(conv3, 3, 56)
+			conv5 = conv_net(conv4, 3, 56)
 			self.model = fc_net(conv5, 9 * 10 * 9 * 10)
 			
 	def train(self, x, y_):
@@ -91,8 +92,6 @@ def conv_net(x, f):
 
 def fc_net(x, out_dim):
 	in_dim = (x.shape[1] * x.shape[2] * x.shape[3]).value
-	print(x)
-	print(in_dim)
 	in_net = tf.reshape(x, [-1, in_dim])
 	w = weight_variable([in_dim, out_dim])
 	b = bias_variable([out_dim])
@@ -105,12 +104,12 @@ def fc_net(x, out_dim):
 
 def create_policy_net():
 	x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
-	conv1 = conv_net(x, 56)
-	conv2 = conv_net(conv1, 56)
-	conv3 = conv_net(conv2, 56)
+	conv1 = conv_net(x, 5, 56)
+	conv2 = conv_net(conv1, 3, 56)
+	conv3 = conv_net(conv2, 3, 56)
 	conv4 = conv_net(conv3, 56)
 	conv5 = conv_net(conv4, 56)
-	fc = fc_net(conv5, 9 * 10 * 9 * 10)
+	fc1 = fc_net(conv5, 9 * 10 * 9 * 10)
 		
 	cross_entropy = tf.reduce_mean(
 		tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = fc))
@@ -127,8 +126,8 @@ def create_value_net():
 	conv3 = conv_net(conv2, 56)
 	conv4 = conv_net(conv3, 56)
 	conv5 = conv_net(conv4, 56)
-	fc1 = fc_net(conv5, 1024)
-	fc2 = fc_net(fc1, 1)
+	fc1 = fc_net(conv5, 1024, 'relu')
+	y = fc_net(fc1, 1, 'sigmoid')
 
 	cross_entropy = tf.reduce_mean(
 		tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=fc2))
