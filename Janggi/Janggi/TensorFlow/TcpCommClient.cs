@@ -198,31 +198,32 @@ namespace Janggi.TensorFlow
 		}
 
 		public static int FixedLength = 64;
-		public bool CreateModel(NetworkKinds kinds, string name)
+		public bool CreateModel(NetworkKinds kinds, string callname)
 		{
 			if (!IsConnected) throw new Exception("Is Not Connected.");
 
 			write(Code.Create, kinds);
-			write(name);
+			write(callname);
 			return readOk();
 		}
 
-		public bool LoadModel(NetworkKinds kinds, string name)
+		public bool LoadModel(NetworkKinds kinds, string callname, string filename)
 		{
 			if (!IsConnected) throw new Exception("Is Not Connected.");
 
 			write(Code.Load, kinds);
-			write(name);
+			write(callname);
+			write(filename);
 			return readOk();
 		}
 
-		public bool SaveModel(NetworkKinds kinds, string oldName, string newName)
+		public bool SaveModel(NetworkKinds kinds, string callname, string filename)
 		{
 			if (!IsConnected) throw new Exception("Is Not Connected.");
 
 			write(Code.Save, kinds);
-			write(oldName);
-			write(newName);
+			write(callname);
+			write(filename);
 			return readOk();
 		}
 

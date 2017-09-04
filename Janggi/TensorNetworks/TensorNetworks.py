@@ -45,6 +45,28 @@ class PolicyNetwork(Network):
 		with self.graph.as_default():
 			return sess.run(self.model, {x: x})
 
+class ValueNetwork(Network):
+	def __init__(self):
+		Network.__init__(self)
+		with self.graph.as_default():
+			x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
+			conv1 = conv_net(x, 56)
+			conv2 = conv_net(conv1, 56)
+			conv3 = conv_net(conv2, 56)
+			conv4 = conv_net(conv3, 56)
+			conv5 = conv_net(conv4, 56)
+			self.model = fc_net(conv5, 9 * 10 * 9 * 10)
+			
+	def train(self, x, y_):
+		with self.graph.as_default():
+			cross_entropy = tf.reduce_mean(
+				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = model))
+			self.train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+			sess.run(self.train_step, feed_dict={x: x, y_: y_})
+
+	def predict(self, x):
+		with self.graph.as_default():
+			return sess.run(self.model, {x: x})
 	
 
 def weight_variable(shape):
@@ -81,7 +103,7 @@ def fc_net(x, out_dim):
 ######################################################################################
 
 
-def create_policy_net(kind):
+def create_policy_net():
 	x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
 	conv1 = conv_net(x, 56)
 	conv2 = conv_net(conv1, 56)
@@ -98,7 +120,7 @@ def create_policy_net(kind):
 	
 	return accurary
 
-def create_value_net(kind):
+def create_value_net():
 	x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
 	conv1 = conv_net(x, 56)
 	conv2 = conv_net(conv1, 56)
