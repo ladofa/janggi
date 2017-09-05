@@ -2,9 +2,14 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import tensorflow as tf
+import move_transfer
+
 
 #from tensorflow.examples.tutorials.mnist import input_data
 #mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+
+
+
 
 class Network():
 	def __init__(self):
@@ -32,17 +37,20 @@ class PolicyNetwork(Network):
 			conv3 = conv_net(conv2, 3, 56)
 			conv4 = conv_net(conv3, 3, 56)
 			conv5 = conv_net(conv4, 3, 56)
-			self.model = fc_net(conv5, 512)
-			self.model = fc_net(conv5, 512)
-			
-	def train(self, x, y_):
-		with self.graph.as_default():
-			cross_entropy = tf.reduce_mean(
-				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = model))
-			self.train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-			sess.run(self.train_step, feed_dict={x: x, y_: y_})
 
-	def predict(self, x):
+			dim =  (conv5.shape[1] * conv5.shape[2] * conv5.shape[3]).value
+			fc0 = tf.reshape(conv5, [-1, dim])
+			fc1 = fc_net(fc0, 512, 'relu')
+			self.model = fc_net(fc1, 2443, 'softmax')
+			self.loss = tf.reduce_mean(
+				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = model))
+			self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
+			
+	def train(self, data):
+		with self.graph.as_default():
+			self.sess.run(self.train_step, feed_dict={x: data[0], y_: data[1]})
+
+	def evaluate(self, x):
 		with self.graph.as_default():
 			return sess.run(self.model, {x: x})
 
@@ -56,16 +64,19 @@ class ValueNetwork(Network):
 			conv3 = conv_net(conv2, 3, 56)
 			conv4 = conv_net(conv3, 3, 56)
 			conv5 = conv_net(conv4, 3, 56)
-			self.model = fc_net(conv5, 9 * 10 * 9 * 10)
+			dim = (conv5.shape[1] * conv5.shape[2] * conv5.shape[3]).value
+			fc0 = tf.reshape(conv5, [-1, dim])
+			fc1 = fc_net(fc0, 1024, 'relu')
+			self.model = fc_net(fc1, 1, 'sigmoid')
+			self.loss = tf.reduce_mean(
+				tf.nn.sigmoid_cross_entropy_with_logits(labels = y_, logits = model))
+			self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
 			
-	def train(self, x, y_):
+	def train(self, data):
 		with self.graph.as_default():
-			cross_entropy = tf.reduce_mean(
-				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = model))
-			self.train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-			sess.run(self.train_step, feed_dict={x: x, y_: y_})
+			self.sess.run(self.train_step, feed_dict={x: data[0], y_: data[1]})
 
-	def predict(self, x):
+	def evaluate(self, x):
 		with self.graph.as_default():
 			return sess.run(self.model, {x: x})
 	
@@ -90,58 +101,20 @@ def conv_net(x, f):
 	conv = tf.nn.relu(conv2d(x, w) + b)
 	return conv
 
-def fc_net(x, out_dim):
-	in_dim = (x.shape[1] * x.shape[2] * x.shape[3]).value
-	in_net = tf.reshape(x, [-1, in_dim])
+def fc_net(x, out_dim, func = 'relu'):
+	in_dim = x.shape[1].value;
 	w = weight_variable([in_dim, out_dim])
 	b = bias_variable([out_dim])
-	return tf.nn.relu(tf.matmul(in_net, w) + b)
+	if func == 'relu':
+		return tf.nn.relu(tf.matmul(in_net, w) + b)
+	elif func == 'sigmoid':
+		return tf.nn.sigmoid(tf.matmul(in_net, w) + b)
+	elif func == 'softmax':
+		return tf.nn.softmax(tf.matmul(in_net, w) + b)
 
 
 
 ######################################################################################
-
-
-def create_policy_net():
-	x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
-	conv1 = conv_net(x, 5, 56)
-	conv2 = conv_net(conv1, 3, 56)
-	conv3 = conv_net(conv2, 3, 56)
-	conv4 = conv_net(conv3, 56)
-	conv5 = conv_net(conv4, 56)
-	fc1 = fc_net(conv5, 9 * 10 * 9 * 10)
-		
-	cross_entropy = tf.reduce_mean(
-		tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = fc))
-	train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-	correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-	accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-	
-	return accurary
-
-def create_value_net():
-	x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
-	conv1 = conv_net(x, 56)
-	conv2 = conv_net(conv1, 56)
-	conv3 = conv_net(conv2, 56)
-	conv4 = conv_net(conv3, 56)
-	conv5 = conv_net(conv4, 56)
-	fc1 = fc_net(conv5, 1024, 'relu')
-	y = fc_net(fc1, 1, 'sigmoid')
-
-	cross_entropy = tf.reduce_mean(
-		tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=fc2))
-	train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-	correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-	accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-	return accurary
-
-
-def train_policy(net, x, y_):
-
-	train_accuracy = net.eval(feed_dict={
-	x: x, y_: y_})
-
 
 	#with tf.Session() as sess:
 	#  sess.run(tf.global_variables_initializer())

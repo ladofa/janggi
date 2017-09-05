@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>db42e584-379e-425d-aae9-b10a50d1b7b3</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>TensorNetworks.py</StartupFile>
+    <StartupFile>tensor_networks.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,13 +21,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="policyNetwork.py">
+    <Compile Include="move_transfer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TcpCommServer.py">
+    <Compile Include="tcp_comm_server.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TensorNetworks.py" />
+    <Compile Include="tensor_networks.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="game\" />

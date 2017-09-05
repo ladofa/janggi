@@ -13,9 +13,13 @@ namespace genMoveSet
 		static void Main(string[] args)
 		{
 			StreamWriter writer = new StreamWriter(new FileStream("moveSet.txt", FileMode.Create));
+			int index = 0;
 			void write(int x1, int y1, int x2, int y2)
 			{
-				writer.WriteLine($"moveSet.Add(new Move({x1}, {y1}, {x2}, {y2}));");
+				//writer.WriteLine($"moveSet.Add(new Move({x1}, {y1}, {x2}, {y2}));");
+				var p1 = y1 * 9 + x1;
+				var p2 = y2 * 9 + x2;
+				writer.WriteLine($"move_set.append(bytes([{p1}, {p2}]))");
 			}
 
 			int[,] maWays = new int[,]{

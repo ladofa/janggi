@@ -52,7 +52,7 @@ namespace Janggi.TensorFlow
 			code = (byte)(pos.Y * Board.Width + pos.X);
 		}
 
-		public void Encode(Move move, ref byte[] data, ref int index)
+		public void Encode(Move move, byte[] data, ref int index)
 		{
 			Encode(move.From, out data[index++]);
 			Encode(move.To, out data[index++]);
@@ -99,7 +99,7 @@ namespace Janggi.TensorFlow
 
 			foreach (Move move in moves)
 			{
-				Encode(move, ref data, ref index);
+				Encode(move, data, ref index);
 			}
 
 			return data;
@@ -281,10 +281,15 @@ namespace Janggi.TensorFlow
 
 			byte size = (byte)(list.Count / 255);
 			writer.Write(size);
-			foreach (var tuple in list)
+			int index = 0;
+			for (int i = 0; i < size; i++)
 			{
-				write(tuple.Item1);
-				write(tuple.Item2);
+				for (int j = 0; j < 255; j++)
+				{
+					var tuple = list[index++];
+					write(tuple.Item1);
+					write(tuple.Item2);
+				}
 			}
 
 			return readOk();

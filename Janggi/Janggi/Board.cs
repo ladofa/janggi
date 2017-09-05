@@ -184,20 +184,18 @@ namespace Janggi
 			isMyFirst = myfirst;
 
 
-			for (int i = 0; i < 32; i++)
+
+			for (int y = 0; y < Height; y++)
 			{
-				uint stone = (uint)1 << i;
-				for (int y = 0; y < Height; y++)
+				for (int x = 0; x < Width; x++)
 				{
-					for (int x = 0; x < Width; x++)
+					if (!IsEmpty(stones[y, x]))
 					{
-						if (stones[y, x] == stone)
-						{
-							positions[i + 1] = new Pos(x, y);
-						}
+						positions[Stone2Index(stones[y, x])] = new Pos(x, y);
 					}
 				}
 			}
+			
 
 
 			for (int i = 0; i < 32; i++)
