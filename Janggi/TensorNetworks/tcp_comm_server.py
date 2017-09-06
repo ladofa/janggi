@@ -1,10 +1,14 @@
 # TCP server example
 import socket
 import tensor_networks as tn
+import move_transfer as mt
 
+#네트워크를 string라벨 붙여서 저장
 policy_networks = {}
 value_networks = {}
 
+############################################################################3
+#데이터 송수신 및 변환
 def send_ok(socket):
 	socket.send(bytes([101, 0]))
 
@@ -13,19 +17,21 @@ def send_failed(socket):
 
 def recv_string(socket):
 	size = socket.recv(1)
-	str = socket.recv(size)
+	str = socket.recv(size[0])
 	return str.decode()
 
 def recv_board(socket):
-	return socket.recv(32)
+	str = socket.recv(33)
+	return mt.board_str2layers(str)
 
 def recv_move(socket):
-	return socket.recv(2)
+	str = socket.recv(2)
+	return mt.move_str2layers(str)
 
 def recv_moves(socket):
 	moves = []
 	size = socket.recv(1)
-	for i in range(size):
+	for i in range(size[0]):
 		moves.append(recv_move(socket))
 	return moves
 
@@ -45,7 +51,7 @@ def send_judge(socket, judge):
 def recv_policy_train_data(socket):
 	#255개 단위로 들어옴.
 	size_255 = socket.recv(1)
-	size = size_255 * 255
+	size = size_255[0] * 255
 	data_x = []
 	data_y = []
 	for i in range(size):
@@ -55,7 +61,7 @@ def recv_policy_train_data(socket):
 
 def recv_value_train_data(socket):
 	size_255 = socket.recv(1)
-	size = size_255 * 255
+	size = size_255[0] * 255
 	data_x = []
 	data_y = []
 	for i in range(size):
@@ -63,6 +69,8 @@ def recv_value_train_data(socket):
 		data_y.append(recv_judge(socket))
 	return [data_x, data_y]
 
+###########################################################################
+#각 명령에 대한 처리 함수
 def proc_check(header, socket):
 	send_ok(socket)
 
@@ -88,12 +96,15 @@ def proc_load(header, socket):
 	if header[1] == 1:
 		if not callname in policy_networks:
 			policy_networks[callname] = tn.PolicyNetwork()
-		policy_networks[callname].load(filename)
+		result = policy_networks[callname].load(filename)
 	else:
 		if not callname in value_networks:
 			value_networks[callname] = tn.ValueNetwork()
-		value_networks[callname].load(filename)
-	send_ok(socket)
+		result = value_networks[callname].load(filename)
+	if result:
+		send_ok(socket)
+	else:
+		send_failed(socket)
 
 def proc_save(header, socket):
 	callname = recv_string(socket)
@@ -114,8 +125,7 @@ def proc_evaluate(header, socket):
 	callname = recv_string(socket)
 	if header[1] == 1:
 		board = recv_board(socket)
-		moves = recv_moves(socket)
-		proms = policy_networks[callname].evaluate(board, moves)
+		proms = policy_networks[callname].evaluate(board)
 		send_ok(socket)
 		send_proms(socket, proms)
 	else:
@@ -134,6 +144,11 @@ def proc_train(header, socket):
 		value_networks[callname].train(value_train_data)
 	send_ok(socket)
 
+############################################################
+##########################################################
+# 메인
+
+print("start to setting server up...")
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind(("", 9999))
 server_socket.listen(5)
@@ -146,6 +161,8 @@ while 1:
 	print ("I got a connection from ", address)
 
 	while 1:
+		
+
 		header = client_socket.recv(2)
 		if not header : break
 		code = header[0]

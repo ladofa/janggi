@@ -53,7 +53,7 @@ namespace Janggi.Ai
 
 		public void Init(Board board)
 		{
-			start = new Node(null, board, Move.Rest);
+			start = new Node(null, board, Move.Empty);
 			root = start;
 
 			currentLevel = 0;

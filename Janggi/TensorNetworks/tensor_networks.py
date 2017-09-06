@@ -19,19 +19,29 @@ class Network():
 
 	def save(self, new_name):
 		with self.graph.as_default():
-			saver = tf.train.Saver()
-			saver.save(self.sess, "./training_data/" + new_name)
+			try:
+				saver = tf.train.Saver()
+				saver.save(self.sess, "./training_data/" + new_name)
+				return True
+			except:
+				return False
+
 
 	def load(self, new_name):
 		with self.graph.as_default():
-			saver = tf.train.Saver()
-			saver.restore(self.sess, "./training_data/" + new_name)
+			try:
+				saver = tf.train.Saver()
+				saver.restore(self.sess, "./training_data/" + new_name)
+				return True
+			except:
+				return False
 
 class PolicyNetwork(Network):
 	def __init__(self):
 		Network.__init__(self)
 		with self.graph.as_default():
-			x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
+			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 15])
+			y_ = tf.placeholder(tf.float32, shape=[None, 2443])
 			conv1 = conv_net(x, 5, 56)
 			conv2 = conv_net(conv1, 3, 56)
 			conv3 = conv_net(conv2, 3, 56)
@@ -43,7 +53,7 @@ class PolicyNetwork(Network):
 			fc1 = fc_net(fc0, 512, 'relu')
 			self.model = fc_net(fc1, 2443, 'softmax')
 			self.loss = tf.reduce_mean(
-				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = model))
+				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = self.model))
 			self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
 			
 	def train(self, data):
@@ -52,13 +62,14 @@ class PolicyNetwork(Network):
 
 	def evaluate(self, x):
 		with self.graph.as_default():
-			return sess.run(self.model, {x: x})
+			return self.sess.run(self.model, {x: x})
 
 class ValueNetwork(Network):
 	def __init__(self):
 		Network.__init__(self)
 		with self.graph.as_default():
-			x = tf.placeholder(tf.float32, shape=[None, 9, 10, 14])
+			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 15])
+			y_ = tf.placeholder(tf.float32, shape=[None, 1])
 			conv1 = conv_net(x, 5, 56)
 			conv2 = conv_net(conv1, 3, 56)
 			conv3 = conv_net(conv2, 3, 56)
@@ -69,7 +80,7 @@ class ValueNetwork(Network):
 			fc1 = fc_net(fc0, 1024, 'relu')
 			self.model = fc_net(fc1, 1, 'sigmoid')
 			self.loss = tf.reduce_mean(
-				tf.nn.sigmoid_cross_entropy_with_logits(labels = y_, logits = model))
+				tf.nn.sigmoid_cross_entropy_with_logits(labels = y_, logits = self.model))
 			self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
 			
 	def train(self, data):
@@ -94,9 +105,9 @@ def max_pool_2x2(x):
 	return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
 
-def conv_net(x, f):
+def conv_net(x, s, f):
 	d1 = x.shape[3].value
-	w = weight_variable([5, 5, d1, f])
+	w = weight_variable([s, s, d1, f])
 	b = bias_variable([f])
 	conv = tf.nn.relu(conv2d(x, w) + b)
 	return conv
@@ -106,11 +117,11 @@ def fc_net(x, out_dim, func = 'relu'):
 	w = weight_variable([in_dim, out_dim])
 	b = bias_variable([out_dim])
 	if func == 'relu':
-		return tf.nn.relu(tf.matmul(in_net, w) + b)
+		return tf.nn.relu(tf.matmul(x, w) + b)
 	elif func == 'sigmoid':
-		return tf.nn.sigmoid(tf.matmul(in_net, w) + b)
+		return tf.nn.sigmoid(tf.matmul(x, w) + b)
 	elif func == 'softmax':
-		return tf.nn.softmax(tf.matmul(in_net, w) + b)
+		return tf.nn.softmax(tf.matmul(x, w) + b)
 
 
 

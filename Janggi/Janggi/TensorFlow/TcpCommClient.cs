@@ -47,15 +47,10 @@ namespace Janggi.TensorFlow
 
 		#region encoder and writer
 
-		public void Encode(Pos pos, out byte code)
-		{
-			code = (byte)(pos.Y * Board.Width + pos.X);
-		}
-
 		public void Encode(Move move, byte[] data, ref int index)
 		{
-			Encode(move.From, out data[index++]);
-			Encode(move.To, out data[index++]);
+			data[index++] = move.From.Byte;
+			data[index++] = move.To.Byte;
 		}
 
 		public byte[] GetBytes(Code code, NetworkKinds kinds)
@@ -81,13 +76,23 @@ namespace Janggi.TensorFlow
 
 		public byte[] GetBytes(Board board)
 		{
-			byte[] data = new byte[32];
+			byte[] data = new byte[33];
 			int index = 0;
 			Pos[] positions = board.positions;
 			for (int i = 1; i <= 32; i++)
 			{
-				Encode(positions[i], out data[index++]);
+				data[index++] = positions[i].Byte;
 			}
+
+			if (board.IsMyFirst)
+			{
+				data[index++] = 1;
+			}
+			else
+			{
+				data[index++] = 0;
+			}
+
 			return data;
 		}
 
@@ -108,8 +113,8 @@ namespace Janggi.TensorFlow
 		public byte[] GetBytes(Move move)
 		{
 			byte[] data = new byte[2];
-			Encode(move.From, out data[0]);
-			Encode(move.To, out data[1]);
+			data[0] = move.From.Byte;
+			data[1] = move.To.Byte;
 			return data;
 		}
 
@@ -234,8 +239,6 @@ namespace Janggi.TensorFlow
 			write(Code.Evaluate, NetworkKinds.Policy);
 			write(name);
 			write(board);
-			List<Move> moves = board.GetAllPossibleMoves();
-			write(moves);
 
 			if (readOk())
 			{
@@ -274,12 +277,18 @@ namespace Janggi.TensorFlow
 
 		public bool TrainPolicy(List<Tuple<Board, Move>> list, string name)
 		{
+			if (list.Count < 255)
+			{
+				return false;
+			}
 			if (!IsConnected) throw new Exception("Is Not Connected.");
 
 			write(Code.Train, NetworkKinds.Policy);
 			write(name);
 
+			//255개로 끊어서 넣고
 			byte size = (byte)(list.Count / 255);
+
 			writer.Write(size);
 			int index = 0;
 			for (int i = 0; i < size; i++)
@@ -291,6 +300,8 @@ namespace Janggi.TensorFlow
 					write(tuple.Item2);
 				}
 			}
+
+			//나머지는 버린다.
 
 			return readOk();
 		}

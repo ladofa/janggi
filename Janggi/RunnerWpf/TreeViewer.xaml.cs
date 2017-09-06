@@ -113,7 +113,7 @@ namespace RunnerWpf
 			{
 
 				string letter = "";
-				if (!node.prevMove.Equals(Move.Rest))
+				if (!node.prevMove.Equals(Move.Empty))
 				{
 					uint stone = node.board[node.prevMove.To];
 					letter = StoneHelper.GetLetter(stone, node.board.IsMyFirst);
@@ -163,7 +163,7 @@ namespace RunnerWpf
 			if (node != null)
 			{
 				string letter = "";
-				if (!node.prevMove.Equals(Move.Rest))
+				if (!node.prevMove.Equals(Move.Empty))
 				{
 					uint stone = node.board[node.prevMove.To];
 					letter = StoneHelper.GetLetter(stone, node.board.IsMyFirst);

@@ -11,6 +11,8 @@ namespace Janggi
 		public sbyte X;
 		public sbyte Y;
 
+		public static Pos Empty = new Pos(12, 27);
+
 		public Pos(sbyte x, sbyte y)
 		{
 			X = x;
@@ -57,6 +59,11 @@ namespace Janggi
 			return X == (sbyte)x && Y == (sbyte)y;
 		}
 
+		public bool IsEmpty
+		{
+			get => X == Pos.Empty.X && Y == Pos.Empty.Y;
+		}
+
 		public byte Byte
 		{
 			set
@@ -99,11 +106,11 @@ namespace Janggi
 			return move2index[this];
 		}
 
-		public static Move Rest = new Move(-1, -1, -1, -1);
+		public static Move Empty = new Move(Pos.Empty, Pos.Empty);
 
-		public bool IsRest
+		public bool IsEmpty
 		{
-			get => From.X == -1;
+			get => From.IsEmpty && To.IsEmpty;
 		}
 
 		public override string ToString()
@@ -262,8 +269,8 @@ namespace Janggi
 			moveSet.Add(new Move(5, 0, 7, 3));
 			moveSet.Add(new Move(5, 0, 3, 1));
 			moveSet.Add(new Move(5, 0, 3, 3));
-			moveSet.Add(new Move(5, 0, 4, -1));
-			moveSet.Add(new Move(5, 0, 7, 2));
+			moveSet.Add(new Move(5, 0, 4, 1));
+			moveSet.Add(new Move(5, 0, 3, 2));
 			moveSet.Add(new Move(6, 0, 0, 0));
 			moveSet.Add(new Move(6, 0, 1, 0));
 			moveSet.Add(new Move(6, 0, 2, 0));
@@ -2043,8 +2050,8 @@ namespace Janggi
 			moveSet.Add(new Move(5, 7, 3, 8));
 			moveSet.Add(new Move(5, 7, 3, 6));
 			moveSet.Add(new Move(5, 7, 3, 4));
-			moveSet.Add(new Move(5, 7, 4, 6));
-			moveSet.Add(new Move(5, 7, 7, 9));
+			moveSet.Add(new Move(5, 7, 4, 8));
+			moveSet.Add(new Move(5, 7, 3, 9));
 			moveSet.Add(new Move(6, 7, 0, 7));
 			moveSet.Add(new Move(6, 7, 1, 7));
 			moveSet.Add(new Move(6, 7, 2, 7));
@@ -2560,7 +2567,8 @@ namespace Janggi
 			moveSet.Add(new Move(8, 9, 5, 7));
 			moveSet.Add(new Move(8, 9, 6, 8));
 			moveSet.Add(new Move(8, 9, 6, 6));
-			moveSet.Add(new Move(-1, -1, -1, -1));
+			moveSet.Add(new Move(12, 27, 12, 27));
+
 
 			move2index = new Dictionary<Move, int>();
 			for (int i = 0; i < moveSet.Count; i++)

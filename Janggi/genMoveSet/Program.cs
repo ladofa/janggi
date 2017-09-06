@@ -16,10 +16,14 @@ namespace genMoveSet
 			int index = 0;
 			void write(int x1, int y1, int x2, int y2)
 			{
-				//writer.WriteLine($"moveSet.Add(new Move({x1}, {y1}, {x2}, {y2}));");
-				var p1 = y1 * 9 + x1;
-				var p2 = y2 * 9 + x2;
-				writer.WriteLine($"move_set.append(bytes([{p1}, {p2}]))");
+				writer.WriteLine($"moveSet.Add(new Move({x1}, {y1}, {x2}, {y2}));");
+				//var p1 = y1 * 9 + x1;
+				//var p2 = y2 * 9 + x2;
+				//if (p1 < 0 || p2 < 0)
+				//{
+				//	throw new Exception("???");
+				//}
+				//writer.WriteLine($"move_set.append(bytes([{p1}, {p2}]))");
 			}
 
 			int[,] maWays = new int[,]{
@@ -84,8 +88,8 @@ namespace genMoveSet
 					}
 					else if (x1 == 5 && y1 == 0)
 					{
-						write(x1, y1, x1 - 1, y1 - 1);
-						write(x1, y1, x1 + 2, y1 + 2);
+						write(x1, y1, x1 - 1, y1 + 1);
+						write(x1, y1, x1 - 2, y1 + 2);
 					}
 					else if (x1 == 5 && y1 == 2)
 					{
@@ -104,8 +108,8 @@ namespace genMoveSet
 					}
 					else if (x1 == 5 && y1 == 7)
 					{
-						write(x1, y1, x1 - 1, y1 - 1);
-						write(x1, y1, x1 + 2, y1 + 2);
+						write(x1, y1, x1 - 1, y1 + 1);
+						write(x1, y1, x1 - 2, y1 + 2);
 					}
 					else if (x1 == 5 && y1 == 9)
 					{
@@ -116,7 +120,7 @@ namespace genMoveSet
 			}
 
 			//맨 마지막으로 제자리 움직임.
-			write(-1, -1, -1, -1);
+			write(12, 27, 12, 27);
 
 			writer.Close();
 		}

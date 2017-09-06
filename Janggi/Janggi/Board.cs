@@ -19,7 +19,7 @@ namespace Janggi
 		bool isMyTurn;
 		public int Point;
 
-		Move prevMove = Move.Rest;
+		Move prevMove = Move.Empty;
 		public Move PrevMove
 		{
 			get => prevMove;
@@ -183,7 +183,21 @@ namespace Janggi
 
 			isMyFirst = myfirst;
 
+			setUpPosAndTargets();
+			
+			Changed?.Invoke(this);
+		}
 
+		/// <summary>
+		/// stones만 정의했을 때, 나머지 타겟, pos등을 정리해준다.
+		/// </summary>
+		void setUpPosAndTargets()
+		{
+			//position
+			for (int i = 0; i < positions.Length; i++)
+			{
+				positions[i] = Pos.Empty;
+			}
 
 			for (int y = 0; y < Height; y++)
 			{
@@ -195,8 +209,17 @@ namespace Janggi
 					}
 				}
 			}
-			
 
+			//targets and blocks
+
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					blocks[y, x] = 0;
+					targets[y, x] = 0;
+				}
+			}
 
 			for (int i = 0; i < 32; i++)
 			{
@@ -205,7 +228,6 @@ namespace Janggi
 				Pos p = GetPos(i + 1);
 				setTargets(p);
 			}
-			Changed?.Invoke(this);
 		}
 
 		public bool Equals(Board b)
@@ -225,6 +247,7 @@ namespace Janggi
 		}
 
 		//상대방 입장에서 보도록 회전시킨다.
+		//판을 180도 돌리는 효과
 		public Board GetOpposite()
 		{
 			Board nuBoard = new Board();
@@ -243,9 +266,82 @@ namespace Janggi
 				}
 			}
 
+			nuBoard.setUpPosAndTargets();
+
 			nuBoard.Point = -Point;
+			nuBoard.isMyTurn = !isMyTurn;
+			nuBoard.isMyFirst = !isMyFirst;
+
+			
 
 			return nuBoard;
+		}
+
+
+		public Move GetRandomMove(float[] proms)
+		{
+			List<Move> moves = GetAllMyMoves();
+			List<Tuple<float, Move>> promMoves = new List<Tuple<float, Move>>();
+			float total = 0;//확률 총합
+			foreach (Move move in moves)
+			{
+				int index = Move.move2index[move];
+				float prom = proms[index];
+				promMoves.Add(new Tuple<float, Move>(prom, move));
+				total += prom;
+			}
+
+			//얼마나 policy network가 그지같으면 불가능한 움직임만 확률로 나왔을까.
+			if (total == 0)
+			{
+				int best = Global.Rand.Next(moves.Count);
+				return moves[best];
+			}
+			else
+			{
+				float best = (float)(Global.Rand.NextDouble() * total);
+				float sum = 0;
+				foreach (var promMove in promMoves)
+				{
+					sum += promMove.Item1;
+					if (sum < best)
+					{
+						return promMove.Item2;
+					}
+				}
+
+				throw new Exception("거의 이런 일은 없다.");
+				return promMoves.Last().Item2;
+			}
+		}
+
+		public Move GetBsetMove(float[] proms)
+		{
+			List<Move> moves = GetAllMyMoves();
+			float bestProm = 0;
+			int bestIndex = -1;
+			for (int i = 0; i < moves.Count; i++)
+			{
+				int index = Move.move2index[moves[i]];
+				float prom = proms[index];
+
+				if (prom > bestProm)
+				{
+					bestProm = prom;
+					bestIndex = i;
+				}
+			}
+
+			//얼마나 policy network가 그지같으면 불가능한 움직임만 확률로 나왔을까.
+			if (bestIndex == -1)
+			{
+				int best = Global.Rand.Next(moves.Count);
+				return moves[best];
+			}
+			else
+			{
+				return moves[bestIndex];
+			}
 		}
 
 		public List<Move> GetAllPossibleMoves()
@@ -283,7 +379,7 @@ namespace Janggi
 				}
 			}
 
-			moves.Add(Move.Rest);
+			moves.Add(Move.Empty);
 			return moves;
 		}
 		public List<Move> GetAllYoMoves()
@@ -308,7 +404,7 @@ namespace Janggi
 				}
 			}
 
-			moves.Add(Move.Rest);
+			moves.Add(Move.Empty);
 			return moves;
 		}
 
@@ -833,7 +929,7 @@ namespace Janggi
 				{
 					removeTargets(stone);
 					Pos from = GetPos(i + 1);
-					if (from.X != -1)
+					if (!from.IsEmpty)
 					{
 						setTargets(from);
 					}
@@ -847,7 +943,7 @@ namespace Janggi
 		public void MoveNext(Move move)
 		{
 			prevMove = move;
-			if (!move.IsRest)
+			if (!move.IsEmpty)
 			{
 				uint stone = this[move.From];
 
@@ -881,7 +977,7 @@ namespace Janggi
 					//타겟을 지워준다.
 					removeTargets(stoneTo);
 					Point += GetPoint(stoneTo);
-					positions[Stone2Index(stoneTo)] = new Pos(-1, -1);
+					positions[Stone2Index(stoneTo)] = Pos.Empty;
 				}
 
 				//기물을 제거
