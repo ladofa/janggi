@@ -71,6 +71,7 @@ namespace Janggi.TensorFlow
 				data[i + 1] = bytes[i];
 			}
 
+
 			return data;
 		}
 
