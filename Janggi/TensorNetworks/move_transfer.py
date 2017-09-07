@@ -2464,16 +2464,8 @@ _pos2index = [0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6,
 
 #byte stream을 학습 가능한 보드로 바꿈
 def board_str2layers(str):
-	layers = np.zeros([90, 15])
-	for i in range(32):
-		if str[i] != 255:
-			layers[str[i]][_pos2index[i]] = 1
-
-	if str[32] == 1:
-		for i in range(90):
-			layers[i][14] = 1
-		
-	return np.reshape(layers, [10, 9, 15])
+	raw = [float(v) for v in str]
+	return np.reshape(raw, [10, 9, 118])
 
 def move_str2layers(str):
 	layers = np.zeros(len(_move_set))

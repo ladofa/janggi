@@ -1470,5 +1470,83 @@ namespace Janggi
 		}
 
 		#endregion
+
+
+		public static int[] index2layer = new int[]
+		{
+			0, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8,
+			9, 9, 9, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15
+		};
+
+		public byte[] GetBytes()
+		{
+			//스톤 레이어 16개
+			//선수레이어 1개
+			//그냥 패딩 1개
+			//각 위치별 target 90개
+			// => 118 개 헐
+
+			
+			byte[,,] layer = new byte[10, 9, 118];
+
+			int fromLayer = 18;//to 117
+			for (int y = 0; y < 10; y++)
+			{
+				for (int x = 0; x < 9; x++)
+				{
+					//스톤 칠하기
+					uint stone = stones[y, x];
+					int k = index2layer[Stone2Index(stone)];
+					layer[y, x, k] = 1;
+
+					//타겟 칠하기
+					if (!IsEmpty(stone))
+					{
+						for (int ty = 0; ty < 10; ty++)
+						{
+							for (int tx = 0; tx < 9; tx++)
+							{
+								if ((targets[ty, tx] & stone) != 0)
+								{
+									layer[ty, tx, fromLayer] = 1;
+								}
+							}
+						}
+					}
+
+					fromLayer++;
+
+					//그냥 패딩
+
+					layer[y, x, 17] = 1;
+				}
+			}
+
+			if (IsMyTurn)
+			{
+				for (int y = 0; y < 10; y++)
+				{
+					for (int x = 0; x < 9; x++)
+					{
+						layer[y, x, 16] = 1;
+					}
+				}
+			}
+
+			byte[] data = new byte[10 * 9 * 118];
+			int index = 0;
+			for (int y = 0; y < 10; y++)
+			{
+				for (int x = 0; x < 9; x++)
+				{
+					for (int k = 0; k < 118; k++)
+					{
+						data[index++] = layer[y, x, k];
+					}
+				}
+			}
+
+			return data;
+		}
 	}
 }

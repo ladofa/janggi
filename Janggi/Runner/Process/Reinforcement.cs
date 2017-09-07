@@ -24,7 +24,7 @@ namespace Runner.Process
 
 			Console.WriteLine("Connected!");
 
-			bool succeed = tcpCommClient.LoadModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "pure_reign", "pure_reign");
+			bool succeed = tcpCommClient.LoadModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "possible_move", "possible_move");
 			if (succeed)
 			{
 				Console.WriteLine("LOAD succeed.");
@@ -66,7 +66,7 @@ namespace Runner.Process
 						board = board.GetOpposite();
 						isP1Turn = !isP1Turn;
 
-						var proms = tcpCommClient.EvaluatePolicy(board, "pure_reign");
+						var proms = tcpCommClient.EvaluatePolicy(board, "possible_move");
 
 						//proms를 기반으로 랜덤으로 고른다.
 						Move move = board.GetRandomMove(proms);
@@ -124,11 +124,11 @@ namespace Runner.Process
 
 				//학습
 				Console.WriteLine("train and save...");
-				tcpCommClient.TrainPolicy(recWin, "pure_reign");
+				tcpCommClient.TrainPolicy(recWin, "possible_move");
 
 				if (patch++ % 10 == 0)
 				{
-					tcpCommClient.SaveModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "pure_reign", "pure_reign");
+					tcpCommClient.SaveModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "possible_move", "possible_move");
 				}
 
 			}

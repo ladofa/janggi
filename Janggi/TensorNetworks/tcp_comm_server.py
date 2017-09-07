@@ -9,6 +9,16 @@ value_networks = {}
 
 ############################################################################3
 #데이터 송수신 및 변환
+
+def recv_bytes(socket, size_):
+	received = socket.recv(size_)
+	while True:
+		size = size_ - len(received)
+		if size == 0:
+			return received
+		else:
+			received = received + socket.recv(size)
+
 def send_ok(socket):
 	socket.send(bytes([101, 0]))
 
@@ -21,7 +31,7 @@ def recv_string(socket):
 	return str.decode()
 
 def recv_board(socket):
-	str = socket.recv(33)
+	str = recv_bytes(socket, 10*9*118)
 	return mt.board_str2layers(str)
 
 def recv_move(socket):

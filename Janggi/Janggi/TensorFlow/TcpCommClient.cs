@@ -75,27 +75,7 @@ namespace Janggi.TensorFlow
 			return data;
 		}
 
-		public byte[] GetBytes(Board board)
-		{
-			byte[] data = new byte[33];
-			int index = 0;
-			Pos[] positions = board.positions;
-			for (int i = 1; i <= 32; i++)
-			{
-				data[index++] = positions[i].Byte;
-			}
-
-			if (board.IsMyFirst)
-			{
-				data[index++] = 1;
-			}
-			else
-			{
-				data[index++] = 0;
-			}
-
-			return data;
-		}
+		
 
 		public byte[] GetBytes(List<Move> moves)
 		{
@@ -134,10 +114,7 @@ namespace Janggi.TensorFlow
 			write(GetBytes(str));
 		}
 
-		void write(Board board)
-		{
-			write(GetBytes(board));
-		}
+
 
 		void write(List<Move> moves)
 		{
@@ -245,7 +222,7 @@ namespace Janggi.TensorFlow
 
 			write(Code.Evaluate, NetworkKinds.Policy);
 			write(name);
-			write(board);
+			write(board.GetBytes());
 
 			if (readOk())
 			{
@@ -270,7 +247,7 @@ namespace Janggi.TensorFlow
 
 			write(Code.Evaluate, NetworkKinds.Value);
 			write(name);
-			write(board);
+			write(board.GetBytes());
 
 			if (readOk())
 			{
@@ -303,7 +280,8 @@ namespace Janggi.TensorFlow
 				for (int j = 0; j < 255; j++)
 				{
 					var tuple = list[index++];
-					write(tuple.Item1);
+					var boardBytes = tuple.Item1.GetBytes();
+					write(boardBytes);
 					write(tuple.Item2);
 				}
 			}
@@ -324,7 +302,7 @@ namespace Janggi.TensorFlow
 			writer.Write(size);
 			foreach (var tuple in list)
 			{
-				write(tuple.Item1);
+				write(tuple.Item1.GetBytes());
 				writer.Write((byte)(tuple.Item2 * 255));
 			}
 

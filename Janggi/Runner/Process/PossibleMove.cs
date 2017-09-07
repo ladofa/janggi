@@ -40,7 +40,7 @@ namespace Runner.Process
 				List<Tuple<Board, Move>> recWin = new List<Tuple<Board, Move>>();
 
 				//대충 2550개정도로 모아볼까.
-				while (recWin.Count < 255 * 50)
+				while (recWin.Count < 255 * 20)
 				{
 					//게임 한 판 시작 ---------------------------
 					List<Tuple<Board, Move>> recP1 = new List<Tuple<Board, Move>>();
@@ -67,12 +67,7 @@ namespace Runner.Process
 						Move move;
 						if (turn > 10)
 						{
-
 							List<Move> possibleMoves = board.GetAllPossibleMoves();
-							foreach (Move e in possibleMoves)
-							{
-								recWin.Add(new Tuple<Board, Move>(board, e));
-							}
 							int r = Global.Rand.Next(possibleMoves.Count);
 							move = possibleMoves[r];
 						}
@@ -84,6 +79,8 @@ namespace Runner.Process
 							//proms를 기반으로 랜덤으로 고른다.
 							move = board.GetRandomMove(proms);
 						}
+
+						recWin.Add(new Tuple<Board, Move>(board, move));
 
 						//다음보드로.
 						board = board.GetNext(move);
@@ -128,9 +125,14 @@ namespace Runner.Process
 
 				//학습
 				Console.WriteLine("train..." + patch);
-				tcpCommClient.TrainPolicy(recWin, "possible_move");
+				while (recWin.Count >= 255)
+				{
+					Console.WriteLine("   remain : " + recWin.Count);
+					tcpCommClient.TrainPolicy(recWin.GetRange(0, 255), "possible_move");
+					recWin.RemoveRange(0, 255);
+				}
 
-				if (patch++ % 5 == 0)
+				//if (patch++ % 5 == 0)
 				{
 					Console.WriteLine("and save...");
 					tcpCommClient.SaveModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "possible_move", "possible_move");

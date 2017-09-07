@@ -40,13 +40,13 @@ class PolicyNetwork(Network):
 	def __init__(self):
 		Network.__init__(self)
 		with self.graph.as_default():
-			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 15], name="x")
+			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 118], name="x")
 			y_ = tf.placeholder(tf.float32, shape=[None, 2451], name="y_")
-			conv1 = conv_net(x, 5, 56)
-			conv2 = conv_net(conv1, 3, 56)
-			conv3 = conv_net(conv2, 3, 56)
-			conv4 = conv_net(conv3, 3, 56)
-			conv5 = conv_net(conv4, 3, 56)
+			conv1 = conv_net(x, 5, 192)
+			conv2 = conv_net(conv1, 3, 192)
+			conv3 = conv_net(conv2, 3, 192)
+			conv4 = conv_net(conv3, 3, 192)
+			conv5 = conv_net(conv4, 3, 192)
 
 			dim =  (conv5.shape[1] * conv5.shape[2] * conv5.shape[3]).value
 			fc0 = tf.reshape(conv5, [-1, dim])
@@ -54,7 +54,7 @@ class PolicyNetwork(Network):
 			self.model = fc_net(fc0, 2451, 'softmax')
 			self.loss = tf.reduce_mean(
 				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = self.model))
-			self.train_step = tf.train.AdadeltaOptimizer(0.1).minimize(self.loss)
+			self.train_step = tf.train.AdamOptimizer(1, epsilon=1).minimize(self.loss)
 			self.sess.run(tf.global_variables_initializer())
 			
 	def train(self, data):
