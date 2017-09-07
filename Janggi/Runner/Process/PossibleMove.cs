@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
 using Janggi;
 
-
 namespace Runner.Process
 {
-	public class Reinforcement
+	class PossibleMove
 	{
-		public Reinforcement()
+		public PossibleMove()
 		{
 			//openServerAsync();
 			Janggi.TensorFlow.TcpCommClient tcpCommClient = new Janggi.TensorFlow.TcpCommClient();
@@ -24,7 +22,7 @@ namespace Runner.Process
 
 			Console.WriteLine("Connected!");
 
-			bool succeed = tcpCommClient.LoadModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "pure_reign", "pure_reign");
+			bool succeed = tcpCommClient.LoadModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "possible_move", "possible_move");
 			if (succeed)
 			{
 				Console.WriteLine("LOAD succeed.");
@@ -40,9 +38,9 @@ namespace Runner.Process
 			while (true)
 			{
 				List<Tuple<Board, Move>> recWin = new List<Tuple<Board, Move>>();
-			
+
 				//대충 2550개정도로 모아볼까.
-				while (recWin.Count < 255 )
+				while (recWin.Count < 255 * 50)
 				{
 					//게임 한 판 시작 ---------------------------
 					List<Tuple<Board, Move>> recP1 = new List<Tuple<Board, Move>>();
@@ -60,25 +58,31 @@ namespace Runner.Process
 
 					for (int turn = 0; turn < 255; turn++)
 					{
-						Console.Write("turn : " + turn + "   ");
+						
 						//빙글 돌려서 p2->p1->p2 가 플레이할 수 있도록 해준다.
 						//policy network는 항상 아래쪽 세력을 움직여야할 기물로 여기기 때문.
 						board = board.GetOpposite();
 						isP1Turn = !isP1Turn;
 
-						var proms = tcpCommClient.EvaluatePolicy(board, "pure_reign");
-
-						//proms를 기반으로 랜덤으로 고른다.
-						Move move = board.GetRandomMove(proms);
-
-						//움직임을 저장해주고
-						if (isP1Turn)
+						Move move;
+						if (turn > 10)
 						{
-							recP1.Add(new Tuple<Board, Move>(board, move));
+
+							List<Move> possibleMoves = board.GetAllPossibleMoves();
+							foreach (Move e in possibleMoves)
+							{
+								recWin.Add(new Tuple<Board, Move>(board, e));
+							}
+							int r = Global.Rand.Next(possibleMoves.Count);
+							move = possibleMoves[r];
 						}
 						else
 						{
-							recP2.Add(new Tuple<Board, Move>(board, move));
+							Console.Write("turn : " + turn + "   ");
+							var proms = tcpCommClient.EvaluatePolicy(board, "possible_move");
+
+							//proms를 기반으로 랜덤으로 고른다.
+							move = board.GetRandomMove(proms);
 						}
 
 						//다음보드로.
@@ -123,14 +127,14 @@ namespace Runner.Process
 				}
 
 				//학습
-				Console.WriteLine("train and save...");
-				tcpCommClient.TrainPolicy(recWin, "pure_reign");
+				Console.WriteLine("train..." + patch);
+				tcpCommClient.TrainPolicy(recWin, "possible_move");
 
-				if (patch++ % 10 == 0)
+				if (patch++ % 5 == 0)
 				{
-					tcpCommClient.SaveModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "pure_reign", "pure_reign");
+					Console.WriteLine("and save...");
+					tcpCommClient.SaveModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, "possible_move", "possible_move");
 				}
-
 			}
 
 			tcpCommClient.Disconnect();

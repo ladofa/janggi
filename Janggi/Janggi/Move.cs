@@ -463,6 +463,10 @@ namespace Janggi
 			moveSet.Add(new Move(4, 1, 2, 2));
 			moveSet.Add(new Move(4, 1, 2, 4));
 			moveSet.Add(new Move(4, 1, 2, 0));
+			moveSet.Add(new Move(4, 1, 3, 0));
+			moveSet.Add(new Move(4, 1, 3, 2));
+			moveSet.Add(new Move(4, 1, 5, 0));
+			moveSet.Add(new Move(4, 1, 5, 2));
 			moveSet.Add(new Move(5, 1, 0, 1));
 			moveSet.Add(new Move(5, 1, 1, 1));
 			moveSet.Add(new Move(5, 1, 2, 1));
@@ -2256,6 +2260,10 @@ namespace Janggi
 			moveSet.Add(new Move(4, 8, 2, 9));
 			moveSet.Add(new Move(4, 8, 2, 7));
 			moveSet.Add(new Move(4, 8, 2, 5));
+			moveSet.Add(new Move(4, 8, 3, 7));
+			moveSet.Add(new Move(4, 8, 3, 9));
+			moveSet.Add(new Move(4, 8, 5, 7));
+			moveSet.Add(new Move(4, 8, 5, 9));
 			moveSet.Add(new Move(5, 8, 0, 8));
 			moveSet.Add(new Move(5, 8, 1, 8));
 			moveSet.Add(new Move(5, 8, 2, 8));
@@ -2568,6 +2576,7 @@ namespace Janggi
 			moveSet.Add(new Move(8, 9, 6, 8));
 			moveSet.Add(new Move(8, 9, 6, 6));
 			moveSet.Add(new Move(12, 27, 12, 27));
+
 
 
 			move2index = new Dictionary<Move, int>();

@@ -16,14 +16,14 @@ namespace genMoveSet
 			int index = 0;
 			void write(int x1, int y1, int x2, int y2)
 			{
-				writer.WriteLine($"moveSet.Add(new Move({x1}, {y1}, {x2}, {y2}));");
-				//var p1 = y1 * 9 + x1;
-				//var p2 = y2 * 9 + x2;
-				//if (p1 < 0 || p2 < 0)
-				//{
-				//	throw new Exception("???");
-				//}
-				//writer.WriteLine($"move_set.append(bytes([{p1}, {p2}]))");
+				//writer.WriteLine($"moveSet.Add(new Move({x1}, {y1}, {x2}, {y2}));");
+				var p1 = y1 * 9 + x1;
+				var p2 = y2 * 9 + x2;
+				if (p1 < 0 || p2 < 0)
+				{
+					throw new Exception("???");
+				}
+				writer.WriteLine($"_move_set.append(bytes([{p1}, {p2}]))");
 			}
 
 			int[,] maWays = new int[,]{
@@ -96,6 +96,13 @@ namespace genMoveSet
 						write(x1, y1, x1 - 1, y1 - 1);
 						write(x1, y1, x1 - 2, y1 - 2);
 					}
+					else if (x1 == 4 && y1 == 1)
+					{
+						write(x1, y1, x1 - 1, y1 - 1);
+						write(x1, y1, x1 - 1, y1 + 1);
+						write(x1, y1, x1 + 1, y1 - 1);
+						write(x1, y1, x1 + 1, y1 + 1);
+					}
 					else if (x1 == 3 && y1 == 7)
 					{
 						write(x1, y1, x1 + 1, y1 + 1);
@@ -115,6 +122,13 @@ namespace genMoveSet
 					{
 						write(x1, y1, x1 - 1, y1 - 1);
 						write(x1, y1, x1 - 2, y1 - 2);
+					}
+					else if (x1 == 4 && y1 == 8)
+					{
+						write(x1, y1, x1 - 1, y1 - 1);
+						write(x1, y1, x1 - 1, y1 + 1);
+						write(x1, y1, x1 + 1, y1 - 1);
+						write(x1, y1, x1 + 1, y1 + 1);
 					}
 				}
 			}

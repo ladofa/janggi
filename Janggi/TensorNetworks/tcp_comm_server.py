@@ -36,7 +36,8 @@ def recv_moves(socket):
 	return moves
 
 def send_proms(socket, proms):
-	msg = bytes([len(proms)]) + bytes([int(p * 255) for p in proms])
+	msg2 = bytes([int(p * 255) for p in proms])
+	msg = msg2
 	socket.send(msg)
 
 def recv_judge(socket):
@@ -125,14 +126,14 @@ def proc_evaluate(header, socket):
 	callname = recv_string(socket)
 	if header[1] == 1:
 		board = recv_board(socket)
-		proms = policy_networks[callname].evaluate(board)
+		proms = policy_networks[callname].evaluate([board])
 		send_ok(socket)
-		send_proms(socket, proms)
+		send_proms(socket, proms[0])
 	else:
 		board = recv_board(socket)
-		judge = value_networks[callname].evaluate(board)
+		judge = value_networks[callname].evaluate([board])
 		send_ok(socket)
-		send_judge(socket, judge)
+		send_judge(socket, judge[0])
 
 def proc_train(header, socket):
 	callname = recv_string(socket)

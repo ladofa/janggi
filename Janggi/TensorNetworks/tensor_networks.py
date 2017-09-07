@@ -40,8 +40,8 @@ class PolicyNetwork(Network):
 	def __init__(self):
 		Network.__init__(self)
 		with self.graph.as_default():
-			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 15])
-			y_ = tf.placeholder(tf.float32, shape=[None, 2443])
+			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 15], name="x")
+			y_ = tf.placeholder(tf.float32, shape=[None, 2451], name="y_")
 			conv1 = conv_net(x, 5, 56)
 			conv2 = conv_net(conv1, 3, 56)
 			conv3 = conv_net(conv2, 3, 56)
@@ -50,26 +50,27 @@ class PolicyNetwork(Network):
 
 			dim =  (conv5.shape[1] * conv5.shape[2] * conv5.shape[3]).value
 			fc0 = tf.reshape(conv5, [-1, dim])
-			fc1 = fc_net(fc0, 512, 'relu')
-			self.model = fc_net(fc1, 2443, 'softmax')
+			
+			self.model = fc_net(fc0, 2451, 'softmax')
 			self.loss = tf.reduce_mean(
 				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = self.model))
-			self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
+			self.train_step = tf.train.AdadeltaOptimizer(0.1).minimize(self.loss)
+			self.sess.run(tf.global_variables_initializer())
 			
 	def train(self, data):
 		with self.graph.as_default():
-			self.sess.run(self.train_step, feed_dict={x: data[0], y_: data[1]})
+			self.sess.run(self.train_step, feed_dict={"x:0": data[0], "y_:0": data[1]})
 
-	def evaluate(self, x):
+	def evaluate(self, data):
 		with self.graph.as_default():
-			return self.sess.run(self.model, {x: x})
+			return self.sess.run(self.model, {"x:0": data})
 
 class ValueNetwork(Network):
 	def __init__(self):
 		Network.__init__(self)
 		with self.graph.as_default():
-			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 15])
-			y_ = tf.placeholder(tf.float32, shape=[None, 1])
+			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 15], name="x")
+			y_ = tf.placeholder(tf.float32, shape=[None, 1], name="y_")
 			conv1 = conv_net(x, 5, 56)
 			conv2 = conv_net(conv1, 3, 56)
 			conv3 = conv_net(conv2, 3, 56)
@@ -82,14 +83,15 @@ class ValueNetwork(Network):
 			self.loss = tf.reduce_mean(
 				tf.nn.sigmoid_cross_entropy_with_logits(labels = y_, logits = self.model))
 			self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
+			self.sess.run(tf.global_variables_initializer())
 			
 	def train(self, data):
 		with self.graph.as_default():
-			self.sess.run(self.train_step, feed_dict={x: data[0], y_: data[1]})
+			self.sess.run(self.train_step, feed_dict={"x:0": data[0], "y_:0": data[1]})
 
-	def evaluate(self, x):
+	def evaluate(self, data):
 		with self.graph.as_default():
-			return sess.run(self.model, {x: x})
+			return sess.run(self.model, {x: data})
 	
 
 def weight_variable(shape):

@@ -339,6 +339,10 @@ _move_set.append(bytes([13, 6]))
 _move_set.append(bytes([13, 20]))
 _move_set.append(bytes([13, 38]))
 _move_set.append(bytes([13, 2]))
+_move_set.append(bytes([13, 3]))
+_move_set.append(bytes([13, 21]))
+_move_set.append(bytes([13, 5]))
+_move_set.append(bytes([13, 23]))
 _move_set.append(bytes([14, 9]))
 _move_set.append(bytes([14, 10]))
 _move_set.append(bytes([14, 11]))
@@ -2132,6 +2136,10 @@ _move_set.append(bytes([76, 51]))
 _move_set.append(bytes([76, 83]))
 _move_set.append(bytes([76, 65]))
 _move_set.append(bytes([76, 47]))
+_move_set.append(bytes([76, 66]))
+_move_set.append(bytes([76, 84]))
+_move_set.append(bytes([76, 68]))
+_move_set.append(bytes([76, 86]))
 _move_set.append(bytes([77, 72]))
 _move_set.append(bytes([77, 73]))
 _move_set.append(bytes([77, 74]))
@@ -2446,6 +2454,7 @@ _move_set.append(bytes([89, 60]))
 _move_set.append(bytes([255, 255]))
 
 
+
 _move_index = {}
 for i in range(len(_move_set)):
 	_move_index[_move_set[i]] = i
@@ -2456,11 +2465,11 @@ _pos2index = [0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6,
 #byte stream을 학습 가능한 보드로 바꿈
 def board_str2layers(str):
 	layers = np.zeros([90, 15])
-	for i in range(14):
+	for i in range(32):
 		if str[i] != 255:
 			layers[str[i]][_pos2index[i]] = 1
 
-	if str[14] == 1:
+	if str[32] == 1:
 		for i in range(90):
 			layers[i][14] = 1
 		

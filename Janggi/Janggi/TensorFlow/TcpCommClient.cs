@@ -162,6 +162,12 @@ namespace Janggi.TensorFlow
 			return data;
 		}
 
+		byte[] readByteArray(int length)
+		{
+			byte[] data = reader.ReadBytes(length);
+			return data;
+		}
+
 		#endregion
 
 		public bool Connect(string addr, int port)
@@ -242,14 +248,14 @@ namespace Janggi.TensorFlow
 
 			if (readOk())
 			{
-				byte[] arr = readByteArray();
-				float[] probs = new float[arr.Length];
+				byte[] arr = readByteArray(Move.moveSet.Count);
+				float[] proms = new float[arr.Length];
 				for (int i = 0; i < arr.Length; i++)
 				{
-					probs[i] = arr[i] / 255.0f;
+					proms[i] = arr[i] / 255.0f;
 				}
 
-				return probs;
+				return proms;
 			}
 			else
 			{

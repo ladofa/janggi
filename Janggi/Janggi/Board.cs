@@ -226,7 +226,10 @@ namespace Janggi
 				uint stone = (uint)1 << i;
 
 				Pos p = GetPos(i + 1);
-				setTargets(p);
+				if (!p.IsEmpty)
+				{
+					setTargets(p);
+				}
 			}
 		}
 
@@ -291,6 +294,8 @@ namespace Janggi
 				total += prom;
 			}
 
+			Console.WriteLine("total : " + total);
+
 			//얼마나 policy network가 그지같으면 불가능한 움직임만 확률로 나왔을까.
 			if (total == 0)
 			{
@@ -304,7 +309,7 @@ namespace Janggi
 				foreach (var promMove in promMoves)
 				{
 					sum += promMove.Item1;
-					if (sum < best)
+					if (sum > best)
 					{
 						return promMove.Item2;
 					}
