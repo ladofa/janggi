@@ -63,8 +63,8 @@ def recv_policy_train_data(socket):
 	#255개 단위로 들어옴.
 	size_255 = socket.recv(1)
 	size = size_255[0] * 255
-	data_x = []
-	data_y = []
+	data_x = [None] * size
+	data_y = [None] * size
 	for i in range(size):
 		data_x.append(recv_board(socket))
 		data_y.append(recv_move(socket))
