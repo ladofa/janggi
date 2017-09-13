@@ -77,7 +77,7 @@ namespace Runner.Process
 							var proms = tcpCommClient.EvaluatePolicy(board, "possible_move");
 
 							//proms를 기반으로 랜덤으로 고른다.
-							move = board.GetRandomMove(proms);
+							move = board.GetRandomMove(proms, out float total);
 						}
 
 						recWin.Add(new Tuple<Board, Move>(board, move));

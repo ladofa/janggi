@@ -47,11 +47,12 @@ class PolicyNetwork(Network):
 			conv3 = conv_net(conv2, 3, 192)
 			conv4 = conv_net(conv3, 3, 192)
 			conv5 = conv_net(conv4, 3, 192)
+			conv6 = conv_net(conv4, 3, 192)
 
-			dim =  (conv5.shape[1] * conv5.shape[2] * conv5.shape[3]).value
-			fc0 = tf.reshape(conv5, [-1, dim])
-			
-			self.model = fc_net(fc0, 2451, 'softmax')
+			dim =  (conv6.shape[1] * conv6.shape[2] * conv6.shape[3]).value
+			fc0 = tf.reshape(conv6, [-1, dim])
+			fc1 = fc_net(fc0, 4096, 'relu')
+			self.model = fc_net(fc1, 2451, 'softmax')
 			self.loss = tf.reduce_mean(
 				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = self.model))
 			self.train_step = tf.train.AdamOptimizer(1, epsilon=1).minimize(self.loss)

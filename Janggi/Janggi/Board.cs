@@ -281,11 +281,11 @@ namespace Janggi
 		}
 
 
-		public Move GetRandomMove(float[] proms)
+		public Move GetRandomMove(float[] proms, out float total)
 		{
 			List<Move> moves = GetAllMyMoves();
 			List<Tuple<float, Move>> promMoves = new List<Tuple<float, Move>>();
-			float total = 0;//확률 총합
+			total = 0;//확률 총합
 			foreach (Move move in moves)
 			{
 				int index = Move.move2index[move];
@@ -294,7 +294,7 @@ namespace Janggi
 				total += prom;
 			}
 
-			Console.WriteLine("total : " + total);
+			//Console.WriteLine("total : " + total);
 
 			//얼마나 policy network가 그지같으면 불가능한 움직임만 확률로 나왔을까.
 			if (total == 0)
