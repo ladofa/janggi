@@ -2,10 +2,14 @@
 import socket
 import tensor_networks as tn
 import move_transfer as mt
+import time
 
 #네트워크를 string라벨 붙여서 저장
 policy_networks = {}
 value_networks = {}
+
+time_recv = 0
+time_train = 0
 
 ############################################################################3
 #데이터 송수신 및 변환
@@ -31,8 +35,9 @@ def recv_string(socket):
 	return str.decode()
 
 def recv_board(socket):
-	str = recv_bytes(socket, 10*9*118)
-	return mt.board_str2layers(str)
+	stream = recv_bytes(socket, 10*9*118)
+	ret = mt.board_str2layers(stream)
+	return ret
 
 def recv_move(socket):
 	str = socket.recv(2)
@@ -66,18 +71,18 @@ def recv_policy_train_data(socket):
 	data_x = [None] * size
 	data_y = [None] * size
 	for i in range(size):
-		data_x.append(recv_board(socket))
-		data_y.append(recv_move(socket))
+		data_x[i] = (recv_board(socket))
+		data_y[i] = (recv_move(socket))
 	return [data_x, data_y]
 
 def recv_value_train_data(socket):
 	size_255 = socket.recv(1)
 	size = size_255[0] * 255
-	data_x = []
-	data_y = []
+	data_x = [None] * size
+	data_y = [None] * size
 	for i in range(size):
-		data_x.append(recv_board(socket))
-		data_y.append(recv_judge(socket))
+		data_x[i] = (recv_board(socket))
+		data_y[i] = (recv_judge(socket))
 	return [data_x, data_y]
 
 ###########################################################################
@@ -118,6 +123,7 @@ def proc_load(header, socket):
 		send_failed(socket)
 
 def proc_save(header, socket):
+	print("save...")
 	callname = recv_string(socket)
 	filename = recv_string(socket)
 	if header[1] == 1:
@@ -131,6 +137,7 @@ def proc_save(header, socket):
 			return
 		value_networks[callname].save(filename)
 	send_ok(socket)
+	print("save OK.")
 
 def proc_evaluate(header, socket):
 	callname = recv_string(socket)
@@ -145,11 +152,27 @@ def proc_evaluate(header, socket):
 		send_ok(socket)
 		send_judge(socket, judge[0])
 
+time_recv = 0
+time_train = 0
+
 def proc_train(header, socket):
 	callname = recv_string(socket)
 	if header[1] == 1:
+		
+		print("train...")
+		t1 = time.clock()
 		policy_train_data = recv_policy_train_data(socket)
-		policy_networks[callname].train(policy_train_data)
+		t2 = time.clock()
+		print("    recieved data : " + str(t2 - t1))
+
+		for i in range(50):
+			if i % 10 == 0:
+				print("    turn : " + str(i))
+			policy_networks[callname].train(policy_train_data)
+		t3 = time.clock()
+		print("train OK.")
+
+		
 	else:
 		value_train_data = recv_value_train_data(socket)
 		value_networks[callname].train(value_train_data)
@@ -158,6 +181,7 @@ def proc_train(header, socket):
 ############################################################
 ##########################################################
 # 메인
+
 
 print("start to setting server up...")
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
