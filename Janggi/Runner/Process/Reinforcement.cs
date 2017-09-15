@@ -76,16 +76,18 @@ namespace Runner.Process
 			running = true;
 			while (running)
 			{
-				if (recWin.Count >= 255)
+				const int setCount = 255 * 20;
+				if (recWin.Count >= setCount)
 				{
-					Console.WriteLine("train ... ");
-					tcpCommClient.TrainPolicy(recWin.GetRange(0, 255), netName);
+					Console.WriteLine("train ... " + DateTime.Now.ToString());
+					tcpCommClient.TrainPolicy(recWin.GetRange(0, setCount), netName);
 
 					lock (recWin)
 					{
-						recWin.RemoveRange(0, 255);
+						recWin.RemoveRange(0, setCount);
 						Console.WriteLine("  remain : " + recWin.Count);
 					}
+					Console.WriteLine("train OK.");
 				}
 				else
 				{
@@ -99,12 +101,17 @@ namespace Runner.Process
 
 		private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
 		{
+			Console.WriteLine("save ...");
 			tcpCommClient.SaveModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, netName, netName);
+			Console.WriteLine("save OK.");
 		}
+
+
+		int confirmRandom = 0;
 
 		void genRandom()
 		{
-			Console.WriteLine("genRandom ... ");
+			//Console.WriteLine("genRandom ... ");
 			//게임 한 판 시작 ---------------------------
 			List<Tuple<Board, Move>> rec = new List<Tuple<Board, Move>>();
 
@@ -126,21 +133,23 @@ namespace Runner.Process
 				isP1Turn = !isP1Turn;
 
 				Move move;
-				if (turn > 2)
+				if (turn >= 2 && confirmRandom % 100 != 0)
 				{
-					List<Move> possibleMoves = board.GetAllPossibleMoves();
-					int r = Global.Rand.Next(possibleMoves.Count);
-					move = possibleMoves[r];
+					
 				}
 				else
 				{
 					var proms = tcpCommClient.EvaluatePolicy(board, netName);
 
 					//proms를 기반으로 랜덤으로 고른다.
-					move = board.GetRandomMove(proms, out float total);
+					Move move2 = board.GetRandomMove(proms, out float total);
 					correctionRate += total;
 					correctionCount++;
 				}
+
+				List<Move> possibleMoves = board.GetAllPossibleMoves();
+				int r = Global.Rand.Next(possibleMoves.Count);
+				move = possibleMoves[r];
 
 
 				rec.Add(new Tuple<Board, Move>(board, move));
@@ -171,8 +180,13 @@ namespace Runner.Process
 			{
 				recWin.AddRange(rec);
 				Console.WriteLine("  remain : " + recWin.Count);
-				Console.WriteLine("  correction rate : " + (correctionRate / correctionCount));
+				if (correctionCount > 0)
+				{
+					Console.WriteLine("  * correction rate : " + (correctionRate / correctionCount));
+				}
 			}
+
+			confirmRandom++;
 		}
 
 		void genPolicy()
