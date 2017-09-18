@@ -25,7 +25,7 @@ namespace Runner.Process
 		System.Threading.ManualResetEvent signal = new System.Threading.ManualResetEvent(false);
 		Janggi.TensorFlow.TcpCommClient tcpCommClient = new Janggi.TensorFlow.TcpCommClient();
 
-		string netName = "random";
+		string netName = "random128";
 
 		public Reinforcement()
 		{
@@ -76,7 +76,7 @@ namespace Runner.Process
 			running = true;
 			while (running)
 			{
-				const int setCount = 255 * 20;
+				const int setCount = 255 * 3;
 				if (recWin.Count >= setCount)
 				{
 					Console.WriteLine("train ... " + DateTime.Now.ToString());
@@ -85,7 +85,7 @@ namespace Runner.Process
 					lock (recWin)
 					{
 						recWin.RemoveRange(0, setCount);
-						Console.WriteLine("  remain : " + recWin.Count);
+						//Console.WriteLine("  remain : " + recWin.Count);
 					}
 					Console.WriteLine("train OK.");
 				}
@@ -103,7 +103,7 @@ namespace Runner.Process
 		{
 			Console.WriteLine("save ...");
 			tcpCommClient.SaveModel(Janggi.TensorFlow.TcpCommClient.NetworkKinds.Policy, netName, netName);
-			Console.WriteLine("save OK.");
+			Console.WriteLine("save OK. #######################################################");
 		}
 
 
@@ -125,7 +125,7 @@ namespace Runner.Process
 
 			float correctionRate = 0;
 			int correctionCount = 0;
-			for (int turn = 0; turn < 500; turn++)
+			for (int turn = 0; turn < 200; turn++)
 			{
 				//빙글 돌려서 p2->p1->p2 가 플레이할 수 있도록 해준다.
 				//policy network는 항상 아래쪽 세력을 움직여야할 기물로 여기기 때문.
@@ -133,11 +133,7 @@ namespace Runner.Process
 				isP1Turn = !isP1Turn;
 
 				Move move;
-				if (turn >= 2 && confirmRandom % 100 != 0)
-				{
-					
-				}
-				else
+				if (turn < 10 && confirmRandom % 20 == 0)
 				{
 					var proms = tcpCommClient.EvaluatePolicy(board, netName);
 
@@ -151,8 +147,8 @@ namespace Runner.Process
 				int r = Global.Rand.Next(possibleMoves.Count);
 				move = possibleMoves[r];
 
-
-				rec.Add(new Tuple<Board, Move>(board, move));
+				if (turn > 20)
+					rec.Add(new Tuple<Board, Move>(board, move));
 
 				//다음보드로.
 				board = board.GetNext(move);
@@ -179,7 +175,7 @@ namespace Runner.Process
 			lock (recWin)
 			{
 				recWin.AddRange(rec);
-				Console.WriteLine("  remain : " + recWin.Count);
+				//Console.WriteLine("  remain : " + recWin.Count);
 				if (correctionCount > 0)
 				{
 					Console.WriteLine("  * correction rate : " + (correctionRate / correctionCount));
@@ -267,7 +263,7 @@ namespace Runner.Process
 				{
 					recWin.AddRange(recP2);
 				}
-				Console.WriteLine("  remain : " + recWin.Count);
+				//Console.WriteLine("  remain : " + recWin.Count);
 				Console.WriteLine("  correction rate : " + (correctionRate / correctionCount));
 			}
 		}

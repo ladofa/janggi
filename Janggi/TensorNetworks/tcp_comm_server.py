@@ -165,10 +165,15 @@ def proc_train(header, socket):
 		t2 = time.clock()
 		print("    recieved data : " + str(t2 - t1))
 
-		for i in range(50):
-			if i % 10 == 0:
-				print("    turn : " + str(i))
+		loss = policy_networks[callname].get_loss(policy_train_data)
+		print("    loss start : " + str(loss))
+		for i in range(5):
+			#if i % 10 == 0:
 			policy_networks[callname].train(policy_train_data)
+			print("    turn : " + str(i))
+			loss = policy_networks[callname].get_loss(policy_train_data)
+			print("    loss end : " + str(loss))
+		
 		t3 = time.clock()
 		print("train OK.")
 

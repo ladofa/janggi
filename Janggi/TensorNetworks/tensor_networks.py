@@ -44,7 +44,7 @@ class PolicyNetwork(Network):
 			y_ = tf.placeholder(tf.float32, shape=[None, 2451], name="y_")
 			keep_prob = tf.placeholder(tf.float32, name="keep_prob")
 
-			f = 56
+			f = 128
 			conv1 = conv_net(x, 5, f, 'conv1')
 			conv2 = conv_net(conv1, 3, f, 'conv2')
 			conv3 = conv_net(conv2, 3, f, 'conv3')
@@ -54,24 +54,42 @@ class PolicyNetwork(Network):
 
 
 			dim =  (conv6.shape[1] * conv6.shape[2] * conv6.shape[3]).value
-			fc0 = tf.reshape(conv6, [-1, dim])
+			with tf.name_scope('fc'):
+				fc0 = tf.reshape(conv6, [-1, dim])
 
-			#fc1 = fc_net(fc0, 4096, 'relu')
-			#fc1_drop = tf.nn.dropout(fc1, keep_prob)
+				fc1 = fc_net(fc0, 4096, 'fc1', 'relu')
+				fc1_drop = tf.nn.dropout(fc1, keep_prob)
 
-			self.model = fc_net(fc0, 2451, 'fc', 'softmax')
-			self.loss = tf.reduce_mean(
-				tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = self.model))
-			self.train_step = tf.train.AdamOptimizer(1).minimize(self.loss)
+				self.model = fc_net(fc1_drop, 2451, 'fc2', 'none')
+
+			with tf.name_scope('output'):
+				self.prom = tf.nn.softmax(self.model)
+
+			with tf.name_scope('loss'):
+				self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = y_, logits = self.model))
+
+			with tf.name_scope('train'):
+				self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
+			
+			#self.writer = tf.summary.FileWriter("d:/temp/1")
+			#self.writer.add_graph(self.graph)
+			#self.writer.close()
+
 			self.sess.run(tf.global_variables_initializer())
+			
 			
 	def train(self, data):
 		with self.graph.as_default():
 			self.sess.run(self.train_step, feed_dict={"x:0": data[0], "y_:0": data[1], "keep_prob:0":0.5})
 
+
 	def evaluate(self, data):
 		with self.graph.as_default():
-			return self.sess.run(self.model, {"x:0": data, "keep_prob:0":1})
+			return self.sess.run(self.prom, {"x:0": data, "keep_prob:0":1})
+
+	def get_loss(self, data):
+		with self.graph.as_default():
+			return self.sess.run(self.loss, feed_dict={"x:0": data[0], "y_:0": data[1], "keep_prob:0":1})
 
 class ValueNetwork(Network):
 	def __init__(self):
@@ -134,6 +152,8 @@ def fc_net(x, out_dim, name, func = 'relu'):
 			return tf.nn.sigmoid(tf.matmul(x, w) + b)
 		elif func == 'softmax':
 			return tf.nn.softmax(tf.matmul(x, w) + b)
+		elif func == 'none' :
+			return (tf.matmul(x, w) + b)
 
 
 
