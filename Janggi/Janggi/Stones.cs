@@ -57,7 +57,7 @@ namespace Janggi
 			YoCha = 0x18_00_00_00,
 			Sa =   0x60_00_60_00,
 			King = 0x80_00_80_00,
-			Mine = 0x00_00_FF_Ff,
+			Mine = 0x00_00_FF_FF,
 			Yours = 0xFF_FF_00_00
 		}
 

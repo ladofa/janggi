@@ -44,6 +44,12 @@ namespace RunnerWpf
 		Controllers myController;
 		Controllers yoController;
 
+		
+		PrimaryUcb primaryUcb = new PrimaryUcb();
+		PseudoYame pseudoYame = new PseudoYame();
+		OnlyPolicy onlyPolicy;// = new OnlyPolicy();
+		RealYame realYame;
+
 		private void ButtonNewGame_Click(object sender, RoutedEventArgs e)
 		{
 			Board.Tables myTable;
@@ -130,9 +136,13 @@ namespace RunnerWpf
 				thread?.Join();
 			}
 
-			PrimaryUcb primaryUcb = new PrimaryUcb();
-			PseudoYame pseudoYame = new PseudoYame();
-			mcts = new Mcts(pseudoYame);
+			if (realYame == null)
+			{
+				realYame = new RealYame();
+			}
+			mcts = new Mcts(realYame);
+			mcts.MaxVisitCount = 5000;
+
 			TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
 			mcts.Init(mainBoard);
 			mcts.ProgressUpdated += Mcts_ProgressUpdated;
@@ -199,7 +209,7 @@ namespace RunnerWpf
 				timer = null;
 				return task.Result.prevMove;
 			}
-			else if (myController == Controllers.Human)
+			else if (controller == Controllers.Human)
 			{
 				Task<Node> task = null;
 				if (thinkAlways)

@@ -7,7 +7,13 @@ using System.Threading.Tasks;
 
 namespace Janggi.TensorFlow
 {
-	
+
+	public enum NetworkKinds : byte
+	{
+		Policy = 1,
+		Value = 2,
+		Null = 3
+	}
 
 	/// <summary>
 	/// Python 구현체와 통신하기 위한 모듈
@@ -38,12 +44,7 @@ namespace Janggi.TensorFlow
 			Failed = 102
 		}
 
-		public enum NetworkKinds : byte
-		{
-			Policy = 1,
-			Value = 2,
-			Null = 3
-		}
+		
 
 		#region encoder and writer
 
@@ -234,7 +235,7 @@ namespace Janggi.TensorFlow
 			}
 		}
 
-		public float[] EvaluatePolicy(Board board, string name)
+		public float[] EvaluatePolicy(Board board, List<Move> moves, string name)
 		{
 			lock (this)
 			{
@@ -247,10 +248,13 @@ namespace Janggi.TensorFlow
 				if (readOk())
 				{
 					byte[] arr = readByteArray(Move.moveSet.Count);
-					float[] proms = new float[arr.Length];
-					for (int i = 0; i < arr.Length; i++)
+
+					float[] proms = new float[moves.Count];
+					for (int i = 0; i < moves.Count; i++)
 					{
-						proms[i] = arr[i] / 255.0f;
+						Move move = moves[i];
+						int index = Move.move2index[move];
+						proms[i] = arr[index] / 255.0f;
 					}
 
 					return proms;
@@ -324,7 +328,7 @@ namespace Janggi.TensorFlow
 			{
 				if (!IsConnected) throw new Exception("Is Not Connected.");
 
-				write(Code.Train, NetworkKinds.Policy);
+				write(Code.Train, NetworkKinds.Value);
 				write(name);
 
 				byte size = (byte)(list.Count / 255);

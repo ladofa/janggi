@@ -269,32 +269,72 @@ namespace Janggi
 				}
 			}
 
-			nuBoard.setUpPosAndTargets();
-
 			nuBoard.Point = -Point;
 			nuBoard.isMyTurn = !isMyTurn;
 			nuBoard.isMyFirst = !isMyFirst;
 
+			nuBoard.setUpPosAndTargets();
+
+			return nuBoard;
+		}
+
+		//좌우로 뒤집는 효과
+		public Board GetFlip()
+		{
+			Board nuBoard = new Board();
+			//이전 포석을 보관하고
+
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					//회전된 새로운 위치
+					int nx = Width - x - 1;
+					int ny = y;
+
+					//편 바꾸지 않고 그냥 넣어야지.
+					nuBoard.stones[ny, nx] = stones[y, x];
+				}
+			}
+
+			nuBoard.Point = Point;
+			nuBoard.isMyTurn = isMyTurn;
+			nuBoard.isMyFirst = isMyFirst;
+
+			nuBoard.setUpPosAndTargets();
+
+			//나머진 다 똑같다.
 			
 
 			return nuBoard;
 		}
 
+		public float[] GetProms(float[] gp)
+		{
+			List<Move> moves = GetAllPossibleMoves();
+			float[] proms = new float[moves.Count];
+
+			for (int i = 0; i < moves.Count; i++)
+			{
+				Move move = moves[i];
+				int index = Move.move2index[move];
+				float prom = proms[index];
+				proms[i] = prom;
+			}
+
+			return proms;
+		}
+
 
 		public Move GetRandomMove(float[] proms, out float total)
 		{
-			List<Move> moves = GetAllMyMoves();
-			List<Tuple<float, Move>> promMoves = new List<Tuple<float, Move>>();
-			total = 0;//확률 총합
-			foreach (Move move in moves)
-			{
-				int index = Move.move2index[move];
-				float prom = proms[index];
-				promMoves.Add(new Tuple<float, Move>(prom, move));
-				total += prom;
-			}
+			List<Move> moves = GetAllPossibleMoves();
 
-			//Console.WriteLine("total : " + total);
+			total = 0;
+			for (int i = 0; i < proms.Length; i++)
+			{
+				total += proms[i];
+			}
 
 			//얼마나 policy network가 그지같으면 불가능한 움직임만 확률로 나왔을까.
 			if (total == 0)
@@ -306,23 +346,23 @@ namespace Janggi
 			{
 				float best = (float)(Global.Rand.NextDouble() * total);
 				float sum = 0;
-				foreach (var promMove in promMoves)
+				for (int i = 0; i < proms.Length; i++)
 				{
-					sum += promMove.Item1;
+					sum += proms[i];
 					if (sum > best)
 					{
-						return promMove.Item2;
+						return moves[i];
 					}
 				}
 
-				throw new Exception("거의 이런 일은 없다.");
-				return promMoves.Last().Item2;
+				//throw new Exception("거의 이런 일은 없다.");
+				return moves.Last();
 			}
 		}
 
 		public Move GetBsetMove(float[] proms)
 		{
-			List<Move> moves = GetAllMyMoves();
+			List<Move> moves = GetAllPossibleMoves();
 			float bestProm = 0;
 			int bestIndex = -1;
 			for (int i = 0; i < moves.Count; i++)
@@ -349,18 +389,29 @@ namespace Janggi
 			}
 		}
 
+		List<Move> allPossibleMoves = null;
 		public List<Move> GetAllPossibleMoves()
 		{
+			if (allPossibleMoves != null)
+			{
+				return allPossibleMoves;
+			}
+
 			if (IsMyTurn)
 			{
-				return GetAllMyMoves();
+				allPossibleMoves = GetAllMyMoves();
 			}
 			else
 			{
-				return GetAllYoMoves();
+				allPossibleMoves = GetAllYoMoves();
 			}
+
+			return allPossibleMoves;
 		}
-		public List<Move> GetAllMyMoves()
+
+		//무브를 아예 보드에 저장해놓는다.
+		List<Move> allMyMoves = null;
+		private List<Move> GetAllMyMoves()
 		{
 			List<Move> moves = new List<Move>();
 
@@ -387,7 +438,9 @@ namespace Janggi
 			moves.Add(Move.Empty);
 			return moves;
 		}
-		public List<Move> GetAllYoMoves()
+
+
+		private List<Move> GetAllYoMoves()
 		{
 			List<Move> moves = new List<Move>();
 
@@ -947,6 +1000,7 @@ namespace Janggi
 
 		public void MoveNext(Move move)
 		{
+			allPossibleMoves = null;
 			prevMove = move;
 			if (!move.IsEmpty)
 			{
@@ -1051,6 +1105,7 @@ namespace Janggi
 			return Point + GetPoint(this[move.To]);
 		}
 
+		//차례와 관계없이 내가 이길 확률.
 		public float Judge()
 		{
 			//내 점수를 더한다.

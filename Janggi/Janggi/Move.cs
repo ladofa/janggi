@@ -77,6 +77,30 @@ namespace Janggi
 				return (byte)(X + Y * Board.Width);
 			}
 		}
+
+		public Pos GetOpposite()
+		{
+			if (IsEmpty)
+			{
+				return Empty;
+			}
+			else
+			{
+				return new Pos(Board.Width - X - 1, Board.Height - Y - 1);
+			}
+		}
+
+		internal Pos GetFlip()
+		{
+			if (IsEmpty)
+			{
+				return Empty;
+			}
+			else
+			{
+				return new Pos(Board.Width - X - 1, Y);
+			}
+		}
 	}
 
 	public struct Move
@@ -116,6 +140,35 @@ namespace Janggi
 		public override string ToString()
 		{
 			return $"({From.X},  {From.Y}) -> ({To.X}, {To.Y})";
+		}
+
+
+		public Move GetOpposite()
+		{
+			Move op = new Move();
+			op.From = From.GetOpposite();
+			op.To = To.GetOpposite();
+			return op;
+		}
+
+		public Move GetFlip()
+		{
+			Move flip = new Move();
+			flip.From = From.GetFlip();
+			flip.To = To.GetFlip();
+			return flip;
+		}
+
+		public static List<Move> GetOpposite(List<Move> moves)
+		{
+			List<Move> ops = new List<Move>();
+
+			foreach (var move in moves)
+			{
+				ops.Add(move.GetOpposite());
+			}
+
+			return ops;
 		}
 
 

@@ -163,7 +163,10 @@ namespace Janggi.Ai
 					signalCycle.Reset();
 
 					//500단위로 끊자.
-					Parallel.For(0, 500, turn =>
+					int parallelLoop = Math.Min(MaxVisitCount, 100);
+
+
+					Parallel.For(0, parallelLoop, turn =>
 					//for (int turn = 0; turn < 500; turn++)
 					{
 						//랜덤으로 깊이 탐색
@@ -243,7 +246,7 @@ namespace Janggi.Ai
 						if (depth > maxDepth)
 						{
 							maxDepth = depth;
-						}			
+						}
 					});
 
 					signalCycle.Set();
@@ -311,7 +314,6 @@ namespace Janggi.Ai
 				if (move.Equals(root.moves[i]))
 				{
 					SetMove(root.GetChild(i));
-					currentLevel++;
 					moved = true;
 					break;
 				}
@@ -331,21 +333,22 @@ namespace Janggi.Ai
 			}
 			history.Add(root);
 			root = node;
+			currentLevel++;
 		}
 
 		public Node GetBestScoreChild(Node parent)
 		{
 			lock (parent)
 			{
-				parent.PrepareChildren();
-				float[] scores = CalcScores(parent);
-				float max = scores[0];
-
 				if (parent.policyWeights == null)
 				{
 					CalcPolicyWeights(parent);
 				}
-				
+
+				parent.PrepareChildren();
+				float[] scores = CalcScores(parent);
+				float max = scores[0];
+
 				List<int> maxIndexies = new List<int>();
 				maxIndexies.Add(0);
 				for (int i = 1; i < scores.Length; i++)

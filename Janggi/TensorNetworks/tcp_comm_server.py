@@ -58,7 +58,7 @@ def send_proms(socket, proms):
 def recv_judge(socket):
 	msg = socket.recv(1)
 	judge = msg[0] / 255.0
-	return judge
+	return [judge]
 
 def send_judge(socket, judge):
 	msg = bytes([int(judge * 255)])
@@ -107,19 +107,28 @@ def proc_create(header, socket):
 	
 
 def proc_load(header, socket):
+	
 	callname = recv_string(socket)
 	filename = recv_string(socket)
+	print("load... " + callname + ", " + filename)
 	if header[1] == 1:
 		if not callname in policy_networks:
 			policy_networks[callname] = tn.PolicyNetwork()
-		result = policy_networks[callname].load(filename)
+			result = policy_networks[callname].load(filename)
+		else:
+			result = True
 	else:
 		if not callname in value_networks:
 			value_networks[callname] = tn.ValueNetwork()
-		result = value_networks[callname].load(filename)
+			result = value_networks[callname].load(filename)
+		else:
+			result = True
+
 	if result:
+		print("    succeed.")
 		send_ok(socket)
 	else:
+		print("    failed.")
 		send_failed(socket)
 
 def proc_save(header, socket):
@@ -157,14 +166,11 @@ time_train = 0
 
 def proc_train(header, socket):
 	callname = recv_string(socket)
+	
 	if header[1] == 1:
-		
-		print("train...")
-		t1 = time.clock()
-		policy_train_data = recv_policy_train_data(socket)
-		t2 = time.clock()
-		print("    recieved data : " + str(t2 - t1))
-
+		print("train policy...")	
+			
+		policy_train_data = recv_policy_train_data(socket)		
 		loss = policy_networks[callname].get_loss(policy_train_data)
 		print("    loss start : " + str(loss))
 		for i in range(5):
@@ -179,8 +185,20 @@ def proc_train(header, socket):
 
 		
 	else:
+		print("train value...")
 		value_train_data = recv_value_train_data(socket)
-		value_networks[callname].train(value_train_data)
+		loss = value_networks[callname].get_loss(value_train_data)
+		print("    loss start : " + str(loss))
+		for i in range(5):
+			#if i % 10 == 0:
+			value_networks[callname].train(value_train_data)
+			print("    turn : " + str(i))
+			loss = value_networks[callname].get_loss(value_train_data)
+			print("    loss end : " + str(loss))
+		
+		t3 = time.clock()
+		print("train OK.")
+
 	send_ok(socket)
 
 ############################################################
@@ -191,7 +209,7 @@ def proc_train(header, socket):
 print("start to setting server up...")
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind(("", 9999))
-server_socket.listen(5)
+server_socket.listen(10)
 
 print ("TCPServer Waiting for client on port 5000")
 

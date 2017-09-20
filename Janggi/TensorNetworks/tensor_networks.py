@@ -51,16 +51,21 @@ class PolicyNetwork(Network):
 			conv4 = conv_net(conv3, 3, f, 'conv4')
 			conv5 = conv_net(conv4, 3, f, 'conv5')
 			conv6 = conv_net(conv5, 3, f, 'conv6')
+			conv7 = conv_net(conv6, 3, f, 'conv7')
+			conv8 = conv_net(conv7, 3, f, 'conv8')
+			conv9 = conv_net(conv8, 3, f, 'conv9')
+			conv10 = conv_net(conv9, 3, f, 'conv10')
+			conv11 = conv_net(conv10, 3, f, 'conv11')
+			conv12 = conv_net(conv11, 3, f, 'conv12')
 
-
-			dim =  (conv6.shape[1] * conv6.shape[2] * conv6.shape[3]).value
+			dim =  (conv12.shape[1] * conv12.shape[2] * conv12.shape[3]).value
 			with tf.name_scope('fc'):
-				fc0 = tf.reshape(conv6, [-1, dim])
+				fc0 = tf.reshape(conv12, [-1, dim])
 
-				fc1 = fc_net(fc0, 4096, 'fc1', 'relu')
-				fc1_drop = tf.nn.dropout(fc1, keep_prob)
+				#fc1 = fc_net(fc0, 4096, 'fc1', 'relu')
+				#fc1_drop = tf.nn.dropout(fc1, keep_prob)
 
-				self.model = fc_net(fc1_drop, 2451, 'fc2', 'none')
+				self.model = fc_net(fc0, 2451, 'fc2', 'none')
 
 			with tf.name_scope('output'):
 				self.prom = tf.nn.softmax(self.model)
@@ -95,29 +100,61 @@ class ValueNetwork(Network):
 	def __init__(self):
 		Network.__init__(self)
 		with self.graph.as_default():
-			x = tf.placeholder(tf.int8, shape=[None, 10, 9, 15], name="x")
+			x = tf.placeholder(tf.float32, shape=[None, 10, 9, 118], name="x")
 			y_ = tf.placeholder(tf.float32, shape=[None, 1], name="y_")
-			conv1 = conv_net(x, 5, 56,  'conv1')
-			conv2 = conv_net(conv1, 3, 56)
-			conv3 = conv_net(conv2, 3, 56)
-			conv4 = conv_net(conv3, 3, 56)
-			conv5 = conv_net(conv4, 3, 56)
-			dim = (conv5.shape[1] * conv5.shape[2] * conv5.shape[3]).value
-			fc0 = tf.reshape(conv5, [-1, dim])
-			fc1 = fc_net(fc0, 1024, 'relu')
-			self.model = fc_net(fc1, 1, 'sigmoid')
-			self.loss = tf.reduce_mean(
-				tf.nn.sigmoid_cross_entropy_with_logits(labels = y_, logits = self.model))
-			self.train_step = tf.train.AdamOptimizer(1).minimize(self.loss)
+			keep_prob = tf.placeholder(tf.float32, name="keep_prob")
+
+			f = 128
+			conv1 = conv_net(x, 5, f, 'conv1')
+			conv2 = conv_net(conv1, 3, f, 'conv2')
+			conv3 = conv_net(conv2, 3, f, 'conv3')
+			conv4 = conv_net(conv3, 3, f, 'conv4')
+			conv5 = conv_net(conv4, 3, f, 'conv5')
+			conv6 = conv_net(conv5, 3, f, 'conv6')
+			conv7 = conv_net(conv6, 3, f, 'conv7')
+			conv8 = conv_net(conv7, 3, f, 'conv8')
+			conv9 = conv_net(conv8, 3, f, 'conv9')
+			conv10 = conv_net(conv9, 3, f, 'conv10')
+			conv11 = conv_net(conv10, 3, f, 'conv11')
+			conv12 = conv_net(conv11, 3, f, 'conv12')
+
+			dim =  (conv12.shape[1] * conv12.shape[2] * conv12.shape[3]).value
+			with tf.name_scope('fc'):
+				fc0 = tf.reshape(conv12, [-1, dim])
+
+				#fc1 = fc_net(fc0, 4096, 'fc1', 'relu')
+				#fc1_drop = tf.nn.dropout(fc1, keep_prob)
+
+				self.model = fc_net(fc0, 1, 'fc2', 'none')
+
+			with tf.name_scope('output'):
+				self.prom = tf.nn.sigmoid(self.model)
+
+			with tf.name_scope('loss'):
+				self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = y_, logits = self.model))
+
+			with tf.name_scope('train'):
+				self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
+			
+			#self.writer = tf.summary.FileWriter("d:/temp/1")
+			#self.writer.add_graph(self.graph)
+			#self.writer.close()
+
 			self.sess.run(tf.global_variables_initializer())
+			
 			
 	def train(self, data):
 		with self.graph.as_default():
-			self.sess.run(self.train_step, feed_dict={"x:0": data[0], "y_:0": data[1]})
+			self.sess.run(self.train_step, feed_dict={"x:0": data[0], "y_:0": data[1], "keep_prob:0":0.5})
+
 
 	def evaluate(self, data):
 		with self.graph.as_default():
-			return sess.run(self.model, {x: data})
+			return self.sess.run(self.prom, {"x:0": data, "keep_prob:0":1})
+
+	def get_loss(self, data):
+		with self.graph.as_default():
+			return self.sess.run(self.loss, feed_dict={"x:0": data[0], "y_:0": data[1], "keep_prob:0":1})
 	
 
 def weight_variable(shape):

@@ -199,7 +199,7 @@ namespace RunnerWpf
 				progress.Tag = node.prevMove;
 				progress.MouseEnter += Progress_MouseEnter;
 
-				textBlock.Text = node.win.ToString("f0") + "/" + node.visited.ToString();
+				textBlock.Text = node.win.ToString("f1") + "/" + node.visited.ToString();
 			}
 
 			grid.Children.Add(progress);

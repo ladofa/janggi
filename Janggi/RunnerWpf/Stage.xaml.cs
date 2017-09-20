@@ -348,7 +348,7 @@ namespace RunnerWpf
 			}
 
 			Pos from = move.From;
-			if (from.X != -1)
+			if (!from.IsEmpty)
 			{
 				units[from.Y, from.X].IsMarked = true;
 				Pos to = move.To;
