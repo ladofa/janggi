@@ -15,7 +15,7 @@ namespace Runner
 	{
 		static void Main(string[] args)
 		{
-			new Process.GiboTest();
+			new Process.Reinforcement();
 		}
 	}
 }

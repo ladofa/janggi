@@ -26,11 +26,14 @@ namespace Runner.Process
 		System.Threading.ManualResetEvent signal = new System.Threading.ManualResetEvent(false);
 		Janggi.TensorFlow.TcpCommClient tcpCommClient = new Janggi.TensorFlow.TcpCommClient();
 
-		string policyNetName = "policy256";
-		string valueNetName = "value256";
+		string policyNetName = "policy192";
+		string valueNetName = "value192";
+
+		
 
 		public Reinforcement()
 		{
+			genGibo();
 			System.Timers.Timer timer = new System.Timers.Timer(300000);
 			timer.Elapsed += Timer_Elapsed;
 			timer.Start();
@@ -78,8 +81,7 @@ namespace Runner.Process
 					}
 					else
 					{
-						
-						genMcts();
+						genGibo();
 						signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 					}
 
@@ -91,7 +93,7 @@ namespace Runner.Process
 			running = true;
 			while (running)
 			{
-				const int setCount = 255 * 3;
+				const int setCount = 255 * 2;
 				if (recWinPolicy.Count >= setCount)
 				{
 					Console.WriteLine("train policy ... " + DateTime.Now.ToString());
@@ -443,6 +445,146 @@ namespace Runner.Process
 					recWinValue.AddRange(list2Flip);
 				}
 			}
+		}
+
+
+		List<Gibo> gibos;
+		List<Tuple<Board, Move>> giboPolicy;
+		List<Tuple<Board, float>> giboValue;
+
+		int giboPolicyIndex = 0;
+		int giboValueIndex = 0;
+
+		void genGibo()
+		{
+			Console.WriteLine("genGibo ... ");
+
+			if (gibos == null)
+			{
+				Console.WriteLine("read gibos...");
+
+				gibos = new List<Gibo>();
+				giboPolicy = new List<Tuple<Board, Move>>();
+				giboValue = new List<Tuple<Board, float>>();
+
+				Search("c:/gib/포진법");
+
+				void Search(string path)
+				{
+					Console.WriteLine("search : " + path);
+					string[] files = System.IO.Directory.GetFiles(path, "*.gib");
+
+					foreach (string file in files)
+					{
+						Gibo gibo = new Gibo();
+						gibo.Read(file);
+						gibos.Add(gibo);
+					}
+
+					string[] dirs = System.IO.Directory.GetDirectories(path);
+					foreach (string dir in dirs)
+					{
+						Search(dir);
+					}
+				}
+
+				foreach (Gibo gibo in gibos)
+				{
+					for (int k = 0; k < gibo.historyList.Count; k++)
+					{
+						List<Board> history = gibo.historyList[k];
+						int isMyWin = gibo.isMyWinList[k];
+
+						for (int i = 0; i < history.Count - 1; i++)
+						{
+							Board board = history[i];
+							Move move = history[i + 1].PrevMove;
+
+							Board boardFlip = board.GetFlip();
+							Move moveFlip = move.GetFlip();
+
+							Board boardOp = board.GetOpposite();
+							Move moveOp = move.GetOpposite();
+
+							Board boardOpFlip = boardOp.GetFlip();
+							Move moveOpFlip = moveOp.GetFlip();
+
+							
+							if (board.IsMyTurn)
+							{
+								giboPolicy.Add(new Tuple<Board, Move>(board, move));
+								giboPolicy.Add(new Tuple<Board, Move>(boardFlip, moveFlip));
+							}
+							else
+							{
+								//policy는 내가 움직인 것으로 돌려서 저장
+								giboPolicy.Add(new Tuple<Board, Move>(boardOp, moveOp));
+								giboPolicy.Add(new Tuple<Board, Move>(boardOpFlip, moveOpFlip));
+							}
+
+							//모든 상태를 저장.
+							if (isMyWin == 1)
+							{
+								giboValue.Add(new Tuple<Board, float>(board, 1));
+								giboValue.Add(new Tuple<Board, float>(boardFlip, 1));
+								giboValue.Add(new Tuple<Board, float>(boardOp, 0));
+								giboValue.Add(new Tuple<Board, float>(boardOpFlip, 0));
+							}
+							else if (isMyWin == 0)
+							{
+								giboValue.Add(new Tuple<Board, float>(board, 0));
+								giboValue.Add(new Tuple<Board, float>(boardFlip, 0));
+								giboValue.Add(new Tuple<Board, float>(boardOp, 1));
+								giboValue.Add(new Tuple<Board, float>(boardOpFlip, 1));
+							}
+							else
+							{
+								//상태값 없음.
+							}
+						}
+					}
+				}//foreach all gibo
+
+				Console.WriteLine($" generated : {giboPolicy.Count} policies, {giboValue.Count} values.");
+
+				if (giboPolicy.Count < 1000)
+				{
+					throw new Exception("기보가 없졍..");
+				}
+
+				giboPolicyIndex = 0;
+				giboValueIndex = 0;
+			}//gibo is null
+
+			////////////
+
+			//순서대로 그냥 계속 쳐 넣는다.
+			if (giboPolicy.Count > 0)
+			{
+				for (int i = 0; i < 1000; i++)
+				{
+					recWinPolicy.Add(giboPolicy[giboPolicyIndex++]);
+					if (giboPolicyIndex == giboPolicy.Count)
+					{
+						Console.WriteLine("All Policy Inserted ###########");
+						giboPolicyIndex = 0;
+					}
+				}
+			}
+
+			if (giboValue.Count > 0)
+			{
+				for (int i = 0; i < 1000; i++)
+				{
+					recWinValue.Add(giboValue[giboValueIndex++]);
+					if (giboValueIndex == giboValue.Count)
+					{
+						Console.WriteLine("All Value Inserted ##########");
+						giboValueIndex = 0;
+					}
+				}
+			}
+
 		}
 	}
 }

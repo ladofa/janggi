@@ -13,7 +13,7 @@ namespace Runner.Process
 		public GiboTest()
 		{
 			Gibo gibo = new Gibo();
-			gibo.Read(@"c:\Users\ladofa\Downloads\카카오장기기보\카카오장기기보001.gib");
+			gibo.Read(@"C:\gib\아마고수기보1\아마고수기보001.gib");
 		}
 	}
 }
