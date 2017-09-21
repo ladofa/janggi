@@ -70,6 +70,7 @@
     <Compile Include="Ai\PseudoYame.cs" />
     <Compile Include="Ai\RealYame.cs" />
     <Compile Include="Board.cs" />
+    <Compile Include="Gibo.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

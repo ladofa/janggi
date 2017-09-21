@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Process\DevelopmentTest.cs" />
+    <Compile Include="Process\GiboTest.cs" />
     <Compile Include="Process\Reinforcement.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

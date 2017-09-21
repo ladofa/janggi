@@ -278,6 +278,25 @@ namespace Janggi
 			return nuBoard;
 		}
 
+		public void Set(uint[,] stones, bool isMyFirst, bool isMyTurn)
+		{
+			Point = 0;
+
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					this.stones[y, x] = stones[y, x];
+					Point += GetPoint(stones[y, x]);
+				}
+			}
+
+			this.isMyFirst = isMyFirst;
+			this.isMyTurn = isMyTurn;
+
+			setUpPosAndTargets();
+		}
+
 		//좌우로 뒤집는 효과
 		public Board GetFlip()
 		{
