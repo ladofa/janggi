@@ -13,8 +13,8 @@ namespace Janggi.Ai
 	{
 		TcpCommClient client = new TcpCommClient();
 
-		string policyNetName = "policy128";
-		string valueNetName = "value128";
+		string policyNetName = "policy256";
+		string valueNetName = "value256";
 
 		public RealYame()
 		{
@@ -28,8 +28,8 @@ namespace Janggi.Ai
 			client.LoadModel(NetworkKinds.Value, valueNetName, valueNetName);
 
 			MaxRolloutDepth = 100;
-			ExplorationRate = 1;
-			Alpha = 0;
+			ExplorationRate = 0.5;
+			Alpha = 0.5f;
 		}
 
 		public RealYame(TcpCommClient client)
@@ -37,8 +37,8 @@ namespace Janggi.Ai
 			this.client = client;
 
 			MaxRolloutDepth = 100;
-			ExplorationRate = 1;
-			Alpha = 0;
+			ExplorationRate = 0.2;
+			Alpha = 0.5f;
 		}
 
 		public int MaxRolloutDepth
@@ -140,7 +140,7 @@ namespace Janggi.Ai
 			if (Alpha != 0)
 			{
 				//100수까지만 하자 혹시나.
-				for (int i = 0; i < 30; i++)
+				for (int i = 0; i < 10; i++)
 				{
 					moveRandomNext(rollout);
 
@@ -155,12 +155,13 @@ namespace Janggi.Ai
 						finished = true;
 					}
 				}
+				if (!finished)
+				{
+					rolloutResult = client.EvaluateValue(rollout, valueNetName);
+				}
 			}
 
-			if (!finished)
-			{
-				rolloutResult = rollout.Point > 0 ? 1 : 0;
-			}
+			
 			//100% value network으로 대체
 			float valueResult = client.EvaluateValue(node.board, valueNetName);
 

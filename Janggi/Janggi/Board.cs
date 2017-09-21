@@ -1577,7 +1577,8 @@ namespace Janggi
 				}
 			}
 
-			if (IsMyTurn)
+
+			if (IsMyFirst)
 			{
 				for (int y = 0; y < 10; y++)
 				{

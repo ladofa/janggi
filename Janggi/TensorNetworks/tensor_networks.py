@@ -44,19 +44,14 @@ class PolicyNetwork(Network):
 			y_ = tf.placeholder(tf.float32, shape=[None, 2451], name="y_")
 			keep_prob = tf.placeholder(tf.float32, name="keep_prob")
 
-			f = 128
+			f = 256
 			conv1 = conv_net(x, 5, f, 'conv1')
 			conv2 = conv_net(conv1, 3, f, 'conv2')
 			conv3 = conv_net(conv2, 3, f, 'conv3')
 			conv4 = conv_net(conv3, 3, f, 'conv4')
 			conv5 = conv_net(conv4, 3, f, 'conv5')
-			conv6 = conv_net(conv5, 3, f, 'conv6')
-			conv7 = conv_net(conv6, 3, f, 'conv7')
-			conv8 = conv_net(conv7, 3, f, 'conv8')
-			conv9 = conv_net(conv8, 3, f, 'conv9')
-			conv10 = conv_net(conv9, 3, f, 'conv10')
-			conv11 = conv_net(conv10, 3, f, 'conv11')
-			conv12 = conv_net(conv11, 3, f, 'conv12')
+			
+			conv12 = conv_net(conv5, 3, f, 'conv12')
 
 			dim =  (conv12.shape[1] * conv12.shape[2] * conv12.shape[3]).value
 			with tf.name_scope('fc'):
@@ -104,19 +99,14 @@ class ValueNetwork(Network):
 			y_ = tf.placeholder(tf.float32, shape=[None, 1], name="y_")
 			keep_prob = tf.placeholder(tf.float32, name="keep_prob")
 
-			f = 128
+			f = 256
 			conv1 = conv_net(x, 5, f, 'conv1')
 			conv2 = conv_net(conv1, 3, f, 'conv2')
 			conv3 = conv_net(conv2, 3, f, 'conv3')
 			conv4 = conv_net(conv3, 3, f, 'conv4')
 			conv5 = conv_net(conv4, 3, f, 'conv5')
-			conv6 = conv_net(conv5, 3, f, 'conv6')
-			conv7 = conv_net(conv6, 3, f, 'conv7')
-			conv8 = conv_net(conv7, 3, f, 'conv8')
-			conv9 = conv_net(conv8, 3, f, 'conv9')
-			conv10 = conv_net(conv9, 3, f, 'conv10')
-			conv11 = conv_net(conv10, 3, f, 'conv11')
-			conv12 = conv_net(conv11, 3, f, 'conv12')
+			
+			conv12 = conv_net(conv5, 3, f, 'conv12')
 
 			dim =  (conv12.shape[1] * conv12.shape[2] * conv12.shape[3]).value
 			with tf.name_scope('fc'):

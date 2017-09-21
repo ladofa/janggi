@@ -26,8 +26,8 @@ namespace Runner.Process
 		System.Threading.ManualResetEvent signal = new System.Threading.ManualResetEvent(false);
 		Janggi.TensorFlow.TcpCommClient tcpCommClient = new Janggi.TensorFlow.TcpCommClient();
 
-		string policyNetName = "policy128";
-		string valueNetName = "value128";
+		string policyNetName = "policy256";
+		string valueNetName = "value256";
 
 		public Reinforcement()
 		{
@@ -181,7 +181,7 @@ namespace Runner.Process
 				}
 
 				List<Move> possibleMoves = board.GetAllPossibleMoves();
-				int r = Global.Rand.Next(possibleMoves.Count);
+				int r = Global.Rand.Next(possibleMoves.Count - 1);
 				move = possibleMoves[r];
 
 				if (turn > 10)
@@ -215,13 +215,18 @@ namespace Runner.Process
 			{
 				var flip = from r in rec select (new Tuple<Board, Move>(r.Item1.GetFlip(), r.Item2.GetFlip()));
 				recWinPolicy.AddRange(rec);
-				//recWinPolicy.AddRange(flip);
+				recWinPolicy.AddRange(flip);
 
 				var list1 = from r in rec select (new Tuple<Board, float>(r.Item1, r.Item1.Point > 0 ? 1 : 0));
 				var list2 = from r in flip select (new Tuple<Board, float>(r.Item1, r.Item1.Point > 0 ? 1 : 0));
 
+				var list1_op = from r in rec select (new Tuple<Board, float>(r.Item1.GetOpposite(), r.Item1.Point > 0 ? 0 : 1));
+				var list2_op = from r in flip select (new Tuple<Board, float>(r.Item1.GetOpposite(), r.Item1.Point > 0 ? 0 : 1));
+
 				recWinValue.AddRange(list1);
-				//recWinValue.AddRange(list2);
+				recWinValue.AddRange(list2);
+				recWinValue.AddRange(list1_op);
+				recWinValue.AddRange(list2_op);
 
 				//Console.WriteLine("  remain : " + recWin.Count);
 				if (correctionCount > 0)
@@ -325,15 +330,15 @@ namespace Runner.Process
 			//상대방 선수로 놓는다. 어차피 시작하자마자 GetOpposite로 돌릴 거다.
 
 			RealYame yame = new RealYame(tcpCommClient);
-			OnlyPolicy policy = new OnlyPolicy(tcpCommClient);
+			OnlyPolicy policy = new OnlyPolicy(tcpCommClient, policyNetName);
 
 			Mcts mcts1 = new Mcts(yame);
 			Mcts mcts2 = new Mcts(policy);
 
-			mcts1.MaxVisitCount = 500;
+			mcts1.MaxVisitCount = 300;
 			mcts2.MaxVisitCount = 1;
 
-			//먼저시작하는 쪽이 p1이든 p2든 상관없다.
+			//누가 먼저 시작하나.
 			bool isMyFirst = Global.Rand.NextDouble() > 0.5;
 			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
 
@@ -342,7 +347,7 @@ namespace Runner.Process
 			mcts1.Init(board);
 			mcts2.Init(board);
 
-			for (int turn = 0; turn < 255; turn++)
+			for (int turn = 0; turn < 100; turn++)
 			{
 				Move move;
 				Task<Node> task;
@@ -356,6 +361,12 @@ namespace Runner.Process
 				}
 				task.Wait();
 				move = task.Result.prevMove;
+
+				if (move.IsEmpty)
+				{
+					var moves = board.GetAllPossibleMoves();
+					move = moves[Global.Rand.Next(moves.Count - 1)];
+				}
 
 				//움직임을 저장해주고
 				if (isMyFirst)
