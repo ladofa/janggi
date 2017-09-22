@@ -13,8 +13,8 @@ namespace Janggi.Ai
 	{
 		TcpCommClient client = new TcpCommClient();
 
-		string policyNetName = "policy256";
-		string valueNetName = "value256";
+		string policyNetName = "policy192";
+		string valueNetName = "value192";
 
 		public RealYame()
 		{
@@ -28,7 +28,7 @@ namespace Janggi.Ai
 			client.LoadModel(NetworkKinds.Value, valueNetName, valueNetName);
 
 			MaxRolloutDepth = 100;
-			ExplorationRate = 0.5;
+			ExplorationRate = 1;
 			Alpha = 0.5f;
 		}
 
