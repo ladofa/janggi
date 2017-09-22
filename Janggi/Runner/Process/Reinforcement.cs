@@ -93,7 +93,7 @@ namespace Runner.Process
 			running = true;
 			while (running)
 			{
-				const int setCount = 255 * 5;
+				const int setCount = 255 * 2;
 				if (recWinPolicy.Count >= setCount)
 				{
 					Console.WriteLine("train policy ... " + DateTime.Now.ToString());
@@ -565,7 +565,7 @@ namespace Runner.Process
 			//순서대로 그냥 계속 쳐 넣는다.
 			if (giboPolicy.Count > 0)
 			{
-				for (int i = 0; i < 3000; i++)
+				for (int i = 0; i < 2500; i++)
 				{
 					recWinPolicy.Add(giboPolicy[giboPolicyIndex++]);
 					if (giboPolicyIndex == giboPolicy.Count)
@@ -578,7 +578,7 @@ namespace Runner.Process
 
 			if (giboValue.Count > 0)
 			{
-				for (int i = 0; i < 3000; i++)
+				for (int i = 0; i < 5000; i++)
 				{
 					recWinValue.Add(giboValue[giboValueIndex++]);
 					if (giboValueIndex == giboValue.Count)
