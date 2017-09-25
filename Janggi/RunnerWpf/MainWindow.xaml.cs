@@ -140,8 +140,10 @@ namespace RunnerWpf
 			{
 				realYame = new RealYame();
 			}
-			mcts = new Mcts(realYame);
-			mcts.MaxVisitCount = 5000;
+			mcts = new Mcts(realYame)
+			{
+				MaxVisitCount = 500
+			};
 
 			TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
 			mcts.Init(mainBoard);

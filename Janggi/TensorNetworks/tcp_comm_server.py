@@ -188,7 +188,7 @@ def proc_train(header, socket):
 		value_train_data = recv_value_train_data(socket)
 		loss = value_networks[callname].get_loss(value_train_data)
 		print("    loss start : " + str(loss))
-		for i in range(3):
+		for i in range(1):
 			#if i % 10 == 0:
 			value_networks[callname].train(value_train_data)
 			print("    turn : " + str(i))

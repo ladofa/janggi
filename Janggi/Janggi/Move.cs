@@ -145,17 +145,21 @@ namespace Janggi
 
 		public Move GetOpposite()
 		{
-			Move op = new Move();
-			op.From = From.GetOpposite();
-			op.To = To.GetOpposite();
+			Move op = new Move
+			{
+				From = From.GetOpposite(),
+				To = To.GetOpposite()
+			};
 			return op;
 		}
 
 		public Move GetFlip()
 		{
-			Move flip = new Move();
-			flip.From = From.GetFlip();
-			flip.To = To.GetFlip();
+			Move flip = new Move
+			{
+				From = From.GetFlip(),
+				To = To.GetFlip()
+			};
 			return flip;
 		}
 

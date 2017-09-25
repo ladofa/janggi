@@ -33,7 +33,7 @@ namespace Runner.Process
 
 		public Reinforcement()
 		{
-			genGibo();
+			//genGibo();
 			System.Timers.Timer timer = new System.Timers.Timer(300000);
 			timer.Elapsed += Timer_Elapsed;
 			timer.Start();
@@ -81,7 +81,7 @@ namespace Runner.Process
 					}
 					else
 					{
-						genGibo();
+						genMcts();
 						signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 					}
 
@@ -259,17 +259,22 @@ namespace Runner.Process
 
 			float correctionRate = 0;
 			int correctionCount = 0;
-			for (int turn = 0; turn < 255; turn++)
+			for (int turn = 0; turn < 100; turn++)
 			{
 				//판을 빙글 돌려서 p2->p1->p2 가 플레이할 수 있도록 해준다.
 				//policy network는 항상 아래쪽 세력을 움직여야할 기물로 여기기 때문.
 				board = board.GetOpposite();
 				isP1Turn = !isP1Turn;
 
-				var proms = tcpCommClient.EvaluatePolicy(board, board.GetAllPossibleMoves(), policyNetName);
+				List<Move> moves = board.GetAllPossibleMoves();
+				var proms = tcpCommClient.EvaluatePolicy(board, moves, policyNetName);
 
 				//proms를 기반으로 랜덤으로 고른다.
 				Move move = board.GetRandomMove(proms, out float total);
+				if (move.IsEmpty)
+				{
+					move = moves[Global.Rand.Next(moves.Count - 1)];
+				}
 				correctionRate += total;
 				correctionCount++;
 				
@@ -309,7 +314,8 @@ namespace Runner.Process
 			lock (recWinPolicy)
 			{
 				if (isP1Win)
-				{	
+				{
+
 					recWinPolicy.AddRange(recP1);
 				}
 				else
@@ -396,8 +402,6 @@ namespace Runner.Process
 				}
 			}
 
-			
-
 			//턴제한으로 끝났으면 점수로
 			if (!board.IsFinished)
 			{
@@ -433,8 +437,8 @@ namespace Runner.Process
 					recWinPolicy.AddRange(flip);
 
 
-					var list1 = from rec in recP2 select (new Tuple<Board, float>(rec.Item1, 1.0f));
-					var list2 = from rec in recP1 select (new Tuple<Board, float>(rec.Item1.GetOpposite(), 0f));
+					var list1 = from rec in recP1 select (new Tuple<Board, float>(rec.Item1, 0f));
+					var list2 = from rec in recP2 select (new Tuple<Board, float>(rec.Item1.GetOpposite(), 1.0f));
 
 					var list1Flip = from rec in list1 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
 					var list2Flip = from rec in list2 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
@@ -467,7 +471,7 @@ namespace Runner.Process
 				giboPolicy = new List<Tuple<Board, Move>>();
 				giboValue = new List<Tuple<Board, float>>();
 
-				Search("d:/temp");
+				Search("d:/temp/0926");
 
 				void Search(string path)
 				{

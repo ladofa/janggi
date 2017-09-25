@@ -349,8 +349,7 @@ namespace Janggi.Ai
 				float[] scores = CalcScores(parent);
 				float max = scores[0];
 
-				List<int> maxIndexies = new List<int>();
-				maxIndexies.Add(0);
+				List<int> maxIndexies = new List<int> { 0 };
 				for (int i = 1; i < scores.Length; i++)
 				{
 					if (max < scores[i])
