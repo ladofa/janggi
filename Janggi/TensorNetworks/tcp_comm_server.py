@@ -181,8 +181,7 @@ def proc_train(header, socket):
 		#//print("    loss end : " + str(loss))		
 		t3 = time.clock()
 		print("train OK.")
-
-		
+	
 	else:
 		print("train value...")
 		value_train_data = recv_value_train_data(socket)

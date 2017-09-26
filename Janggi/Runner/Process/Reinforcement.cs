@@ -21,15 +21,19 @@ namespace Runner.Process
 			running = false;
 		}
 
-		List<Tuple<Board, Move>> recWinPolicy = new List<Tuple<Board, Move>>();
-		List<Tuple<Board, float>> recWinValue = new List<Tuple<Board, float>>();
+		//학습시킬 원본
+		List<Tuple<Board, Move>> dataPolicy = new List<Tuple<Board, Move>>();
+		List<Tuple<Board, float>> dataValue = new List<Tuple<Board, float>>();
+
+		//flip, orientation을 거친 최종본
+		List<Tuple<Board, Move>> bufferPolicy = new List<Tuple<Board, Move>>();
+		List<Tuple<Board, float>> bufferValue = new List<Tuple<Board, float>>();
+
 		System.Threading.ManualResetEvent signal = new System.Threading.ManualResetEvent(false);
 		Janggi.TensorFlow.TcpCommClient tcpCommClient = new Janggi.TensorFlow.TcpCommClient();
 
 		string policyNetName = "policy192";
 		string valueNetName = "value192";
-
-		
 
 		public Reinforcement()
 		{
@@ -69,23 +73,73 @@ namespace Runner.Process
 
 			//학습
 
-			//자료 모으기 프로세스
-			Task.Run(()=>
+			//자료 생성 프로세스
+			Task.Run(() =>
 			{
 				int makingTurn = 0;
 				while (running)
 				{
-					if (recWinPolicy.Count > 10000)
+					if (dataPolicy.Count > 5000 || dataValue.Count > 5000)
 					{
 						System.Threading.Thread.Sleep(1000);
 					}
 					else
 					{
 						genGibo();
-						signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 					}
 
 					makingTurn++;
+				}
+			});
+
+			//생성된 자료를 뒤집어서 데이터를 추가하는 프로세스
+			Task.Run(() =>
+			{
+				while (running)
+				{
+					while (bufferPolicy.Count < 10000 && dataPolicy.Count >= 255)
+					{
+						List<Tuple<Board, Move>> sub;
+						lock (dataPolicy)
+						{
+							sub = dataPolicy.GetRange(0, 255);
+							dataPolicy.RemoveRange(0, 255);
+						}
+
+						var sub2 = from e in sub select new Tuple<Board, Move>(e.Item1.GetFlip(), e.Item2.GetFlip());
+
+						lock (bufferPolicy)
+						{
+							bufferPolicy.AddRange(sub);
+							bufferPolicy.AddRange(sub2);
+							signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
+						}
+
+					}
+
+					while (bufferValue.Count < 10000 && dataValue.Count >= 255)
+					{
+						List<Tuple<Board, float>> sub;
+						lock (dataValue)
+						{
+							sub = dataValue.GetRange(0, 255);
+							dataValue.RemoveRange(0, 255);
+						}
+
+						var subOp = from e in sub select new Tuple<Board, float>(e.Item1.GetOpposite(), e.Item2 == 0 ? 1 : 0);
+
+						var subFlip = from e in sub select new Tuple<Board, float>(e.Item1.GetFlip(), e.Item2);
+						var subOpFlip = from e in subOp select new Tuple<Board, float>(e.Item1.GetFlip(), e.Item2);
+
+						lock (bufferPolicy)
+						{
+							bufferValue.AddRange(sub);
+							bufferValue.AddRange(subOp);
+							bufferValue.AddRange(subFlip);
+							bufferValue.AddRange(subOpFlip);
+							signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
+						}
+					}
 				}
 			});
 
@@ -94,38 +148,35 @@ namespace Runner.Process
 			while (running)
 			{
 				const int setCount = 255 * 2;
-				if (recWinPolicy.Count >= setCount)
-				{
-					Console.WriteLine("train policy ... " + DateTime.Now.ToString());
-					var dataPolicy = recWinPolicy.GetRange(0, setCount);
-					tcpCommClient.TrainPolicy(dataPolicy, policyNetName);
 
-					lock (recWinPolicy)
-					{
-						recWinPolicy.RemoveRange(0, setCount);
-						//Console.WriteLine("  remain : " + recWin.Count);
-					}
-
-					while (recWinValue.Count >= setCount && recWinValue.Count > recWinPolicy.Count)
-					{
-						Console.WriteLine("train value ... " + DateTime.Now.ToString());
-						var dataValue = recWinValue.GetRange(0, setCount);
-						tcpCommClient.TrainValue(dataValue, valueNetName);
-
-						lock (recWinPolicy)
-						{
-							recWinValue.RemoveRange(0, setCount);
-							//Console.WriteLine("  remain : " + recWin.Count);
-						}
-					}
-
-					
-					Console.WriteLine("train OK.");
-				}
-				else
+				if (bufferPolicy.Count < setCount && bufferValue.Count < setCount)
 				{
 					signal.Reset();
 					signal.WaitOne();
+				}
+				else if (bufferPolicy.Count > bufferValue.Count)
+				{
+					Console.WriteLine("train policy ... " + DateTime.Now.ToString());
+					List<Tuple<Board, Move>> sub;
+					lock (bufferPolicy)
+					{
+						sub = bufferPolicy.GetRange(0, setCount);
+						bufferPolicy.RemoveRange(0, setCount);
+					}
+
+					tcpCommClient.TrainPolicy(sub, policyNetName);
+				}
+				else
+				{
+					Console.WriteLine("train value ... " + DateTime.Now.ToString());
+					List<Tuple<Board, float>> sub;
+					lock (bufferValue)
+					{
+						sub = bufferValue.GetRange(0, setCount);
+						bufferValue.RemoveRange(0, setCount);
+					}
+
+					tcpCommClient.TrainValue(sub, valueNetName);
 				}
 			}
 
@@ -213,11 +264,11 @@ namespace Runner.Process
 				isP1Win = board.Point > 0 == isP1Turn;
 			}
 
-			lock (recWinPolicy)
+			lock (dataPolicy)
 			{
 				var flip = from r in rec select (new Tuple<Board, Move>(r.Item1.GetFlip(), r.Item2.GetFlip()));
-				recWinPolicy.AddRange(rec);
-				recWinPolicy.AddRange(flip);
+				dataPolicy.AddRange(rec);
+				dataPolicy.AddRange(flip);
 
 				var list1 = from r in rec select (new Tuple<Board, float>(r.Item1, r.Item1.Point > 0 ? 1 : 0));
 				var list2 = from r in flip select (new Tuple<Board, float>(r.Item1, r.Item1.Point > 0 ? 1 : 0));
@@ -225,10 +276,10 @@ namespace Runner.Process
 				var list1_op = from r in rec select (new Tuple<Board, float>(r.Item1.GetOpposite(), r.Item1.Point > 0 ? 0 : 1));
 				var list2_op = from r in flip select (new Tuple<Board, float>(r.Item1.GetOpposite(), r.Item1.Point > 0 ? 0 : 1));
 
-				recWinValue.AddRange(list1);
-				recWinValue.AddRange(list2);
-				recWinValue.AddRange(list1_op);
-				recWinValue.AddRange(list2_op);
+				dataValue.AddRange(list1);
+				dataValue.AddRange(list2);
+				dataValue.AddRange(list1_op);
+				dataValue.AddRange(list2_op);
 
 				//Console.WriteLine("  remain : " + recWin.Count);
 				if (correctionCount > 0)
@@ -249,7 +300,7 @@ namespace Runner.Process
 
 			//랜덤으로 보드 생성
 			//상대방 선수로 놓는다. 어차피 시작하자마자 GetOpposite로 돌릴 거다.
-			
+
 			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), false);
 
 			//먼저시작하는 쪽이 p1이든 p2든 상관없다.
@@ -272,7 +323,7 @@ namespace Runner.Process
 				Move move = board.GetRandomMove(proms, out float total);
 				correctionRate += total;
 				correctionCount++;
-				
+
 
 				//움직임을 저장해주고
 				if (isP1Turn)
@@ -306,15 +357,15 @@ namespace Runner.Process
 				isP1Win = (board.Point > 0) == isP1Turn;
 			}
 
-			lock (recWinPolicy)
+			lock (dataPolicy)
 			{
 				if (isP1Win)
-				{	
-					recWinPolicy.AddRange(recP1);
+				{
+					dataPolicy.AddRange(recP1);
 				}
 				else
 				{
-					recWinPolicy.AddRange(recP2);
+					dataPolicy.AddRange(recP2);
 				}
 				//Console.WriteLine("  remain : " + recWin.Count);
 				Console.WriteLine("  correction rate : " + (correctionRate / correctionCount));
@@ -396,7 +447,7 @@ namespace Runner.Process
 				}
 			}
 
-			
+
 
 			//턴제한으로 끝났으면 점수로
 			if (!board.IsFinished)
@@ -404,15 +455,15 @@ namespace Runner.Process
 				isMyWin = (board.Point > 0);
 			}
 
-			lock (recWinPolicy)
+			lock (dataPolicy)
 			{
 				if (isMyWin)
 				{
 					Console.WriteLine("    Collect data : my win");
 					var flip = from rec in recP1 select (new Tuple<Board, Move>(rec.Item1.GetFlip(), rec.Item2.GetFlip()));
-					recWinPolicy.AddRange(recP1);
-					recWinPolicy.AddRange(flip);
-					
+					dataPolicy.AddRange(recP1);
+					dataPolicy.AddRange(flip);
+
 
 					var list1 = from rec in recP1 select (new Tuple<Board, float>(rec.Item1, 1.0f));
 					var list2 = from rec in recP2 select (new Tuple<Board, float>(rec.Item1.GetOpposite(), 0f));
@@ -420,17 +471,17 @@ namespace Runner.Process
 					var list1Flip = from rec in list1 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
 					var list2Flip = from rec in list2 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
 
-					recWinValue.AddRange(list1);
-					recWinValue.AddRange(list2);
-					recWinValue.AddRange(list1Flip);
-					recWinValue.AddRange(list2Flip);
+					dataValue.AddRange(list1);
+					dataValue.AddRange(list2);
+					dataValue.AddRange(list1Flip);
+					dataValue.AddRange(list2Flip);
 				}
 				else
 				{
 					Console.WriteLine("    Collect data : YO win");
 					var flip = from rec in recP2 select (new Tuple<Board, Move>(rec.Item1.GetFlip(), rec.Item2.GetFlip()));
-					recWinPolicy.AddRange(recP2);
-					recWinPolicy.AddRange(flip);
+					dataPolicy.AddRange(recP2);
+					dataPolicy.AddRange(flip);
 
 
 					var list1 = from rec in recP2 select (new Tuple<Board, float>(rec.Item1, 1.0f));
@@ -439,33 +490,28 @@ namespace Runner.Process
 					var list1Flip = from rec in list1 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
 					var list2Flip = from rec in list2 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
 
-					recWinValue.AddRange(list1);
-					recWinValue.AddRange(list2);
-					recWinValue.AddRange(list1Flip);
-					recWinValue.AddRange(list2Flip);
+					dataValue.AddRange(list1);
+					dataValue.AddRange(list2);
+					dataValue.AddRange(list1Flip);
+					dataValue.AddRange(list2Flip);
 				}
 			}
 		}
 
 
-		List<Gibo> gibos;
-		List<Tuple<Board, Move>> giboPolicy;
-		List<Tuple<Board, float>> giboValue;
+		List<string> pathList;
+		int pathIndex = 0;
+		List<Gibo> gibos = new List<Gibo>();
+
 
 		int giboPolicyIndex = 0;
 		int giboValueIndex = 0;
 
 		void genGibo()
 		{
-			Console.WriteLine("genGibo ... ");
-
-			if (gibos == null)
+			if (pathList == null)
 			{
 				Console.WriteLine("read gibos...");
-
-				gibos = new List<Gibo>();
-				giboPolicy = new List<Tuple<Board, Move>>();
-				giboValue = new List<Tuple<Board, float>>();
 
 				Search("d:/temp");
 
@@ -476,9 +522,7 @@ namespace Runner.Process
 
 					foreach (string file in files)
 					{
-						Gibo gibo = new Gibo();
-						gibo.Read(file);
-						gibos.Add(gibo);
+						pathList.Add(file);
 					}
 
 					string[] dirs = System.IO.Directory.GetDirectories(path);
@@ -487,109 +531,74 @@ namespace Runner.Process
 						Search(dir);
 					}
 				}
+			}
 
-				int countGibo = 0; ;
 
-				foreach (Gibo gibo in gibos)
+			string path = pathList[pathIndex++];
+			if (pathIndex == pathList.Count)
+			{
+				pathIndex = 0;
+			}
+
+			Console.WriteLine(" read new Path .. " + path);
+
+			Gibo gibo = new Gibo();
+			gibo.Read(path);
+
+			List<Tuple<Board, Move>> giboPolicy = new List<Tuple<Board, Move>>();
+			List<Tuple<Board, float>> giboValue = new List<Tuple<Board, float>>();
+
+			for (int k = 0; k < gibo.historyList.Count; k++)
+			{
+				List<Board> history = gibo.historyList[k];
+				int isMyWin = gibo.isMyWinList[k];
+
+				for (int i = 0; i < history.Count - 1; i++)
 				{
-					for (int k = 0; k < gibo.historyList.Count; k++)
+					Board board = history[i];
+					Move move = history[i + 1].PrevMove;
+
+					if (board.IsMyTurn)
 					{
-						countGibo++;
-
-						List<Board> history = gibo.historyList[k];
-						int isMyWin = gibo.isMyWinList[k];
-
-						for (int i = 0; i < history.Count - 1; i++)
-						{
-							Board board = history[i];
-							Move move = history[i + 1].PrevMove;
-
-							Board boardFlip = board.GetFlip();
-							Move moveFlip = move.GetFlip();
-
-							Board boardOp = board.GetOpposite();
-							Move moveOp = move.GetOpposite();
-
-							Board boardOpFlip = boardOp.GetFlip();
-							Move moveOpFlip = moveOp.GetFlip();
-
-							
-							if (board.IsMyTurn)
-							{
-								giboPolicy.Add(new Tuple<Board, Move>(board, move));
-								giboPolicy.Add(new Tuple<Board, Move>(boardFlip, moveFlip));
-							}
-							else
-							{
-								//policy는 내가 움직인 것으로 돌려서 저장
-								giboPolicy.Add(new Tuple<Board, Move>(boardOp, moveOp));
-								giboPolicy.Add(new Tuple<Board, Move>(boardOpFlip, moveOpFlip));
-							}
-
-							//모든 상태를 저장.
-							if (isMyWin == 1)
-							{
-								giboValue.Add(new Tuple<Board, float>(board, 1));
-								giboValue.Add(new Tuple<Board, float>(boardFlip, 1));
-								giboValue.Add(new Tuple<Board, float>(boardOp, 0));
-								giboValue.Add(new Tuple<Board, float>(boardOpFlip, 0));
-							}
-							else if (isMyWin == 0)
-							{
-								giboValue.Add(new Tuple<Board, float>(board, 0));
-								giboValue.Add(new Tuple<Board, float>(boardFlip, 0));
-								giboValue.Add(new Tuple<Board, float>(boardOp, 1));
-								giboValue.Add(new Tuple<Board, float>(boardOpFlip, 1));
-							}
-							else
-							{
-								//상태값 없음.
-							}
-						}
+						giboPolicy.Add(new Tuple<Board, Move>(board, move));
 					}
-				}//foreach all gibo
+					else
+					{
+						//policy는 내가 움직인 것으로 돌려서 저장
+						giboPolicy.Add(new Tuple<Board, Move>(board.GetOpposite(), move.GetOpposite()));
+					}
 
-				Console.WriteLine($" generated : {countGibo} gibos, {giboPolicy.Count} policies, {giboValue.Count} values.");
-
-				if (giboPolicy.Count < 1000)
-				{
-					throw new Exception("기보가 없졍..");
+					//모든 상태를 저장.
+					if (isMyWin == 1)
+					{
+						giboValue.Add(new Tuple<Board, float>(board, 1));
+					}
+					else if (isMyWin == 0)
+					{
+						giboValue.Add(new Tuple<Board, float>(board, 0));
+					}
+					else
+					{
+						//상태값 없음.
+					}
 				}
+			}
+			Console.WriteLine($"    {giboPolicy.Count} policies, {giboValue.Count} values.");
 
-				giboPolicyIndex = 0;
-				giboValueIndex = 0;
-			}//gibo is null
-
-			////////////
 
 			//순서대로 그냥 계속 쳐 넣는다.
-			if (giboPolicy.Count > 0)
+
+
+			var subPolicy = giboPolicy.GetRange(0, Math.Min(2500, giboPolicy.Count));
+			lock (dataPolicy)
 			{
-				for (int i = 0; i < 2500; i++)
-				{
-					recWinPolicy.Add(giboPolicy[giboPolicyIndex++]);
-					if (giboPolicyIndex == giboPolicy.Count)
-					{
-						Console.WriteLine("All Policy Inserted ###########");
-						giboPolicyIndex = 0;
-					}
-				}
+				dataPolicy.AddRange(giboPolicy);
 			}
 
-			if (giboValue.Count > 0)
+			lock (dataValue)
 			{
-				for (int i = 0; i < 5000; i++)
-				{
-					recWinValue.Add(giboValue[giboValueIndex++]);
-					if (giboValueIndex == giboValue.Count)
-					{
-						Console.WriteLine("All Value Inserted ##########");
-						giboValueIndex = 0;
-					}
-				}
+				dataValue.AddRange(giboValue);
 			}
-
-			Console.WriteLine($"    current gibo : {giboPolicyIndex} / {giboPolicy.Count}, {giboValueIndex} / {giboValue.Count}");
 
 		}
 	}
