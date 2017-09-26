@@ -71,8 +71,10 @@ namespace Janggi
 							board.Set(stones, isMyFirst, isMyFirst);
 						}
 
-						history = new List<Board>();
-						history.Add(board);
+						history = new List<Board>
+						{
+							board
+						};
 
 						stones = null;
 					}

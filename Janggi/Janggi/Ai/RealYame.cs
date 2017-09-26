@@ -37,7 +37,7 @@ namespace Janggi.Ai
 			this.client = client;
 
 			MaxRolloutDepth = 100;
-			ExplorationRate = 0.2;
+			ExplorationRate = 1;
 			Alpha = 0.5f;
 		}
 
@@ -122,7 +122,7 @@ namespace Janggi.Ai
 					else
 					{
 						scores[i] = child.win / child.visited +
-							(float)(ExplorationRate * policyWeights[i] * Math.Sqrt(node.visited / child.visited));
+							(float)(ExplorationRate * (policyWeights[i] + 0.5) * Math.Sqrt(node.visited / child.visited));
 					}
 				}
 			}
