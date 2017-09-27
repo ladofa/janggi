@@ -1559,6 +1559,7 @@ namespace Janggi
 			//그냥 패딩 1개
 			//각 위치별 target 90개
 			// => 118 개 헐
+			//누구 차례인지는 표시하지 않음..... 그냥 무조건 아래쪽 차례.
 
 			
 			byte[,,] layer = new byte[10, 9, 118];
@@ -1609,17 +1610,21 @@ namespace Janggi
 			}
 
 			byte[] data = new byte[10 * 9 * 118];
-			int index = 0;
-			for (int y = 0; y < 10; y++)
-			{
-				for (int x = 0; x < 9; x++)
-				{
-					for (int k = 0; k < 118; k++)
-					{
-						data[index++] = layer[y, x, k];
-					}
-				}
-			}
+			
+
+			Buffer.BlockCopy(layer, 0, data, 0, data.Length * sizeof(byte));
+
+			//int index = 0;
+			//for (int y = 0; y < 10; y++)
+			//{
+			//	for (int x = 0; x < 9; x++)
+			//	{
+			//		for (int k = 0; k < 118; k++)
+			//		{
+			//			data[index++] = layer[y, x, k];
+			//		}
+			//	}
+			//}
 
 			return data;
 		}

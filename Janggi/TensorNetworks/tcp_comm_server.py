@@ -173,13 +173,12 @@ def proc_train(header, socket):
 		policy_train_data = recv_policy_train_data(socket)		
 		loss = policy_networks[callname].get_loss(policy_train_data)
 		print("    loss start : " + str(loss))
-		for i in range(3):
+		for i in range(1):
 			#if i % 10 == 0:
 			policy_networks[callname].train(policy_train_data)
 			print("    turn : " + str(i))
 		#loss = policy_networks[callname].get_loss(policy_train_data)
-		#//print("    loss end : " + str(loss))		
-		t3 = time.clock()
+		#print("    loss end : " + str(loss))		
 		print("train OK.")
 	
 	else:
@@ -191,9 +190,8 @@ def proc_train(header, socket):
 			#if i % 10 == 0:
 			value_networks[callname].train(value_train_data)
 			print("    turn : " + str(i))
-		
-		
-		t3 = time.clock()
+		#loss = value_networks[callname].get_loss(value_train_data)
+		#print("    loss end : " + str(loss))
 		print("train OK.")
 
 	send_ok(socket)

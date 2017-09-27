@@ -47,7 +47,7 @@ namespace RunnerWpf
 		
 		PrimaryUcb primaryUcb = new PrimaryUcb();
 		PseudoYame pseudoYame = new PseudoYame();
-		OnlyPolicy onlyPolicy;// = new OnlyPolicy();
+		OnlyPolicy onlyPolicy;
 		RealYame realYame;
 
 		private void ButtonNewGame_Click(object sender, RoutedEventArgs e)
@@ -138,9 +138,9 @@ namespace RunnerWpf
 
 			if (realYame == null)
 			{
-				realYame = new RealYame();
+				//realYame = new RealYame();
 			}
-			mcts = new Mcts(realYame)
+			mcts = new Mcts(pseudoYame)
 			{
 				MaxVisitCount = 500
 			};

@@ -38,7 +38,7 @@ namespace Runner.Process
 		public Reinforcement()
 		{
 			//genGibo();
-			System.Timers.Timer timer = new System.Timers.Timer(300000);
+			System.Timers.Timer timer = new System.Timers.Timer(600000);
 			timer.Elapsed += Timer_Elapsed;
 			timer.Start();
 			while (!tcpCommClient.Connect("localhost", 9999))
@@ -85,7 +85,7 @@ namespace Runner.Process
 					}
 					else
 					{
-						genMcts();
+						genRanPseudo();
 						signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 					}
 
@@ -127,17 +127,13 @@ namespace Runner.Process
 							dataValue.RemoveRange(0, 255);
 						}
 
-						var subOp = from e in sub select new Tuple<Board, float>(e.Item1.GetOpposite(), e.Item2 == 0 ? 1 : 0);
-
 						var subFlip = from e in sub select new Tuple<Board, float>(e.Item1.GetFlip(), e.Item2);
-						var subOpFlip = from e in subOp select new Tuple<Board, float>(e.Item1.GetFlip(), e.Item2);
+						
 
-						lock (bufferPolicy)
+						lock (bufferValue)
 						{
 							bufferValue.AddRange(sub);
-							bufferValue.AddRange(subOp);
 							bufferValue.AddRange(subFlip);
-							bufferValue.AddRange(subOpFlip);
 							signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 						}
 					}
@@ -166,6 +162,8 @@ namespace Runner.Process
 					}
 
 					tcpCommClient.TrainPolicy(sub, policyNetName);
+					maxVisitedCount += 10;
+					Console.WriteLine("    maxVisitedCount : " + maxVisitedCount);
 				}
 				else
 				{
@@ -174,9 +172,13 @@ namespace Runner.Process
 					lock (bufferValue)
 					{
 						sub = bufferValue.GetRange(0, setCount);
+						if (sub[0] == null) throw new Exception("???");
+						
 						bufferValue.RemoveRange(0, setCount);
+						if (sub[0] == null) throw new Exception("???");
 					}
 
+					if (sub[0] == null) throw new Exception("???");
 					tcpCommClient.TrainValue(sub, valueNetName);
 				}
 			}
@@ -508,14 +510,12 @@ namespace Runner.Process
 		List<Gibo> gibos = new List<Gibo>();
 
 
-		int giboPolicyIndex = 0;
-		int giboValueIndex = 0;
-
 		void genGibo()
 		{
 			if (pathList == null)
 			{
 				Console.WriteLine("read gibos...");
+				pathList = new List<string>();
 
 				Search("d:/temp");
 
@@ -538,20 +538,21 @@ namespace Runner.Process
 			}
 
 
-			string path = pathList[pathIndex++];
+			string curPath = pathList[pathIndex++];
 			if (pathIndex == pathList.Count)
 			{
 				pathIndex = 0;
 			}
 
-			Console.WriteLine(" read new Path .. " + path);
+			Console.WriteLine(" read new Path .. " + curPath);
 
 			Gibo gibo = new Gibo();
-			gibo.Read(path);
+			gibo.Read(curPath);
 
 			List<Tuple<Board, Move>> giboPolicy = new List<Tuple<Board, Move>>();
 			List<Tuple<Board, float>> giboValue = new List<Tuple<Board, float>>();
 
+			//Parallel.For(0, gibo.historyList.Count, (k) =>
 			for (int k = 0; k < gibo.historyList.Count; k++)
 			{
 				List<Board> history = gibo.historyList[k];
@@ -573,20 +574,21 @@ namespace Runner.Process
 					}
 
 					//모든 상태를 저장.
-					if (isMyWin == 1)
-					{
-						giboValue.Add(new Tuple<Board, float>(board, 1));
-					}
-					else if (isMyWin == 0)
-					{
-						giboValue.Add(new Tuple<Board, float>(board, 0));
-					}
-					else
+					if (isMyWin == -1)
 					{
 						//상태값 없음.
 					}
+					else if (board.IsMyTurn)
+					{
+						giboValue.Add(new Tuple<Board, float>(board, isMyWin));
+					}
+					else 
+					{
+						giboValue.Add(new Tuple<Board, float>(board.GetOpposite(), isMyWin == 1 ? 0 : 1));
+					}
+					
 				}
-			}
+			}//);
 			Console.WriteLine($"    {giboPolicy.Count} policies, {giboValue.Count} values.");
 
 
@@ -604,6 +606,121 @@ namespace Runner.Process
 				dataValue.AddRange(giboValue);
 			}
 
+		}
+
+		void genMinMax()
+		{
+			MinMax minMax = new MinMax(tcpCommClient, valueNetName);
+
+			bool isMyFirst = Global.Rand.NextDouble() > 0.5;
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
+
+			bool isMyWin = false;
+
+			for (int i = 0; i < 80; i++)
+			{
+				if (board.IsMyTurn)
+				{
+
+				}
+			}
+		}
+
+		List<float> winGames = new List<float>();
+
+		int maxVisitedCount = 500;
+
+		void genRanPseudo()
+		{
+			Mcts mcts = new Mcts(new PseudoYame());
+			mcts.MaxVisitCount = maxVisitedCount;
+
+			bool isMyFirst = Global.Rand.NextDouble() > 0.5;
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
+
+			mcts.Init(board);
+
+			List<Tuple<Board, Move>> moves1 = new List<Tuple<Board, Move>>();
+			List<Tuple<Board, Move>> moves2 = new List<Tuple<Board, Move>>();
+
+			bool isMyWin = false;
+
+
+			for (int i = 0; i < 80; i++)
+			{
+				Move move;
+				if (board.IsMyTurn)
+				{
+					var task = mcts.SearchNextAsync();
+					task.Wait();
+					move = task.Result.prevMove;
+					moves1.Add(new Tuple<Board, Move>(board, move));
+				}
+				else
+				{
+					mcts.root.PrepareMoves();
+					List<Move> moves = mcts.root.moves;
+					move = moves[Global.Rand.Next(moves.Count)];
+					moves2.Add(new Tuple<Board, Move>(board, move));
+				}
+
+				mcts.SetMove(move);
+
+				board = board.GetNext(move);
+
+				//겜이 끝났는지 확인
+				if (board.IsFinished)
+				{
+					isMyWin = board.IsMyWin;
+					break;
+				}
+			}
+
+			//턴제한으로 끝났으면 점수로
+			if (!board.IsFinished)
+			{
+				isMyWin = (board.Point > 0);
+			}
+
+			lock (dataPolicy)
+			{
+				if (isMyWin)
+				{
+					dataPolicy.AddRange(moves1);
+				}
+				else
+				{
+					dataPolicy.AddRange(moves2);
+				}
+			}
+
+			lock (dataValue)
+			{
+				if (isMyWin)
+				{
+					var vals1 = from e in moves1 select new Tuple<Board, float>(e.Item1, 1);
+					var vals2 = from e in moves2 select new Tuple<Board, float>(e.Item1.GetOpposite(), 0);
+					dataValue.AddRange(vals1);
+					dataValue.AddRange(vals2);
+				}
+				else
+				{
+					var vals1 = from e in moves1 select new Tuple<Board, float>(e.Item1, 0);
+					var vals2 = from e in moves2 select new Tuple<Board, float>(e.Item1.GetOpposite(), 1);
+					dataValue.AddRange(vals1);
+					dataValue.AddRange(vals2);
+				}
+			}
+
+			winGames.Add(isMyWin ? 1 : 0);
+			while (winGames.Count > 100)
+			{
+				winGames.RemoveAt(0);
+			}
+
+			float rate = winGames.Average();
+
+			Console.WriteLine("    winning rate : " + rate);
 		}
 	}
 }

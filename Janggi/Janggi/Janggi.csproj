@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ai\Mcts.cs" />
+    <Compile Include="Ai\MinMax.cs" />
     <Compile Include="Ai\Node.cs" />
     <Compile Include="Ai\PrimaryUcb.cs" />
     <Compile Include="Ai\OnlyPolicy.cs" />

@@ -278,7 +278,7 @@ namespace Janggi.TensorFlow
 
 				if (readOk())
 				{
-					return reader.ReadByte() / 255.0f;
+					return reader.ReadByte() / 255.0f + (float)(Global.Rand.NextDouble() * 0.01f);
 				}
 				else
 				{

@@ -37,8 +37,8 @@ namespace Janggi.Ai
 			this.client = client;
 
 			MaxRolloutDepth = 100;
-			ExplorationRate = 1;
-			Alpha = 0.5f;
+			ExplorationRate = 0.2;
+			Alpha = 1;
 		}
 
 		public int MaxRolloutDepth
@@ -157,13 +157,18 @@ namespace Janggi.Ai
 				}
 				if (!finished)
 				{
-					rolloutResult = client.EvaluateValue(rollout, valueNetName);
+					rolloutResult = (float)Math.Max(Math.Min(rollout.Point * 0.01 + 0.5, 1), 0);
 				}
 			}
 
-			
+
 			//100% value network으로 대체
-			float valueResult = client.EvaluateValue(node.board, valueNetName);
+
+			float valueResult = 0;
+			if (Alpha != 1)
+			{
+				valueResult = client.EvaluateValue(node.board, valueNetName);
+			}
 
 			return rolloutResult * Alpha + (1 - Alpha) * valueResult;
 		}

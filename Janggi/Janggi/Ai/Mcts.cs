@@ -256,25 +256,25 @@ namespace Janggi.Ai
 					signalPause.WaitOne();
 				}
 
-				Console.WriteLine($"Max depth : {maxDepth}");
-				Console.WriteLine($"Visited : {root.visited}");
+				//Console.WriteLine($"Max depth : {maxDepth}");
+				//Console.WriteLine($"Visited : {root.visited}");
 			});
 
 
 
 
-			for (int i = 0; i < root.children.Length; i++)
-			{
-				Node child = root.children[i];
-				if (child != null)
-				{
-					Console.WriteLine($"{i} : {child.win} / {child.visited} ... {root.moves[i]}");
-				}
-				else
-				{
-					Console.WriteLine($"{i} : ... ");
-				}
-			}
+			//for (int i = 0; i < root.children.Length; i++)
+			//{
+			//	Node child = root.children[i];
+			//	if (child != null)
+			//	{
+			//		Console.WriteLine($"{i} : {child.win} / {child.visited} ... {root.moves[i]}");
+			//	}
+			//	else
+			//	{
+			//		Console.WriteLine($"{i} : ... ");
+			//	}
+			//}
 
 
 
