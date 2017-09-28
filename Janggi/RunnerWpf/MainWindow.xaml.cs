@@ -138,9 +138,9 @@ namespace RunnerWpf
 
 			if (realYame == null)
 			{
-				//realYame = new RealYame();
+				realYame = new RealYame();
 			}
-			mcts = new Mcts(pseudoYame)
+			mcts = new Mcts(realYame)
 			{
 				MaxVisitCount = 500
 			};

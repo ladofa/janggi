@@ -11,22 +11,23 @@ namespace Janggi.Ai
 	public class OnlyPolicy : Mcts.Handlers
 	{
 		TensorFlow.TcpCommClient client = new TensorFlow.TcpCommClient();
-		string networkName = "policy256";
-		public OnlyPolicy()
+		string networkName;
+		public OnlyPolicy(TensorFlow.TcpCommClient client = null, string networkName = "policy192")
 		{
-			while (!client.Connect("localhost", 9999))
-			{
-				Console.WriteLine("ConnectionFailed.");
-				System.Threading.Thread.Sleep(1000);
-			}
-
-			client.LoadModel(TensorFlow.NetworkKinds.Policy, networkName, networkName);
-		}
-
-		public OnlyPolicy(TensorFlow.TcpCommClient client, string networkName)
-		{
-			this.client = client;
 			this.networkName = networkName;
+			if (client == null)
+			{
+				while (!this.client.Connect("localhost", 9999))
+				{
+					Console.WriteLine("ConnectionFailed.");
+					System.Threading.Thread.Sleep(1000);
+				}
+				this.client.LoadModel(TensorFlow.NetworkKinds.Policy, networkName, networkName);
+			}
+			else
+			{
+				this.client = client;
+			}
 		}
 
 		public int MaxRolloutDepth

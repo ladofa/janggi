@@ -85,7 +85,7 @@ namespace Runner.Process
 					}
 					else
 					{
-						genRanPseudo();
+						genRealPseudo();
 						signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 					}
 
@@ -144,7 +144,7 @@ namespace Runner.Process
 			running = true;
 			while (running)
 			{
-				const int setCount = 255 * 2;
+				const int setCount = 255 * 5;
 
 				if (bufferPolicy.Count < setCount && bufferValue.Count < setCount)
 				{
@@ -162,8 +162,6 @@ namespace Runner.Process
 					}
 
 					tcpCommClient.TrainPolicy(sub, policyNetName);
-					maxVisitedCount += 10;
-					Console.WriteLine("    maxVisitedCount : " + maxVisitedCount);
 				}
 				else
 				{
@@ -626,7 +624,8 @@ namespace Runner.Process
 			}
 		}
 
-		List<float> winGames = new List<float>();
+		List<float> winGames2 = new List<float>();
+		List<float> winGames3 = new List<float>();
 
 		int maxVisitedCount = 500;
 
@@ -712,15 +711,130 @@ namespace Runner.Process
 				}
 			}
 
-			winGames.Add(isMyWin ? 1 : 0);
-			while (winGames.Count > 100)
+			winGames2.Add(isMyWin ? 1 : 0);
+			while (winGames2.Count > 100)
 			{
-				winGames.RemoveAt(0);
+				winGames2.RemoveAt(0);
 			}
 
-			float rate = winGames.Average();
+			winGames3.Add(isMyWin ? 1 : 0);
+			while (winGames3.Count > 1000)
+			{
+				winGames3.RemoveAt(0);
+			}
 
-			Console.WriteLine("    winning rate : " + rate);
+			float rate2 = winGames2.Average();
+			float rate3 = winGames3.Average();
+
+			Console.WriteLine("    winning rate : " + rate2 + ", " + rate3);
+		}
+
+		void genRealPseudo()
+		{
+			//Mcts mcts1 = new Mcts(new OnlyPolicy(tcpCommClient));
+			Mcts mcts1 = new Mcts(new PseudoYame());
+			Mcts mcts2 = new Mcts(new PseudoYame());
+			mcts1.MaxVisitCount = 500;
+			mcts2.MaxVisitCount = 500;
+
+			bool isMyFirst = Global.Rand.Next() % 2 == 0;
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
+			
+
+			mcts1.Init(new Board(board));
+			mcts2.Init(new Board(board));
+
+			List<Tuple<Board, Move>> moves1 = new List<Tuple<Board, Move>>();
+			List<Tuple<Board, Move>> moves2 = new List<Tuple<Board, Move>>();
+
+			bool isMyWin = false;
+
+
+			for (int i = 0; i < 80; i++)
+			{
+				Move move;
+				if (board.IsMyTurn)
+				{
+					var task = mcts1.SearchNextAsync();
+					task.Wait();
+					move = task.Result.prevMove;
+					moves1.Add(new Tuple<Board, Move>(board, move));
+				}
+				else
+				{
+					var task = mcts2.SearchNextAsync();
+					task.Wait();
+					move = task.Result.prevMove;
+					moves2.Add(new Tuple<Board, Move>(board, move));
+				}
+
+				mcts1.SetMove(move);
+				mcts2.SetMove(move);
+
+				board = board.GetNext(move);
+
+				//겜이 끝났는지 확인
+				if (board.IsFinished)
+				{
+					isMyWin = board.IsMyWin;
+					break;
+				}
+
+				//mcts2.MaxVisitCount += 200;
+			}
+
+			//턴제한으로 끝났으면 점수로
+			if (!board.IsFinished)
+			{
+				isMyWin = (board.Point > 0);
+			}
+
+			lock (dataPolicy)
+			{
+				if (isMyWin)
+				{
+					dataPolicy.AddRange(moves1);
+				}
+				else
+				{
+					dataPolicy.AddRange(moves2);
+				}
+			}
+
+			lock (dataValue)
+			{
+				if (isMyWin)
+				{
+					var vals1 = from e in moves1 select new Tuple<Board, float>(e.Item1, 1);
+					var vals2 = from e in moves2 select new Tuple<Board, float>(e.Item1.GetOpposite(), 0);
+					dataValue.AddRange(vals1);
+					dataValue.AddRange(vals2);
+				}
+				else
+				{
+					var vals1 = from e in moves1 select new Tuple<Board, float>(e.Item1, 0);
+					var vals2 = from e in moves2 select new Tuple<Board, float>(e.Item1.GetOpposite(), 1);
+					dataValue.AddRange(vals1);
+					dataValue.AddRange(vals2);
+				}
+			}
+
+			winGames2.Add(isMyWin ? 1 : 0);
+			while (winGames2.Count > 100)
+			{
+				winGames2.RemoveAt(0);
+			}
+
+			winGames3.Add(isMyFirst ? 1 : 0);
+			while (winGames3.Count > 100)
+			{
+				winGames3.RemoveAt(0);
+			}
+
+			float rate2 = winGames2.Average();
+			float rate3 = winGames3.Average();
+
+			Console.WriteLine("    winning rate : " + rate2 + ", " + rate3);
 		}
 	}
 }
