@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>db42e584-379e-425d-aae9-b10a50d1b7b3</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>tcp_comm_server.py</StartupFile>
+    <StartupFile>game.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,13 +21,34 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="dataset.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="game.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="gibo.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="move_transfer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="params.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="policy_networks.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tcp_comm_server.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tensor_networks.py" />
+    <Compile Include="train_policy.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="value_networks.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="game\" />

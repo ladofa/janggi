@@ -11,7 +11,7 @@ namespace Janggi
 		public sbyte X;
 		public sbyte Y;
 
-		public static Pos Empty = new Pos(12, 27);
+		public static Pos Empty = new Pos(12, 27); //255
 
 		public Pos(sbyte x, sbyte y)
 		{
