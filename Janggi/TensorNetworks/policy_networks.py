@@ -24,3 +24,4 @@ def _classic(ph_board):
             logits = tf.layers.dense(fc0, 2451, activation=tf.nn.softmax)
     
     return logits
+

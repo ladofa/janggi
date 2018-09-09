@@ -33,13 +33,15 @@ class Stone(IntEnum):
     YO_SA = 13,
     YO_KING = 14
 
+STONE_SCORE = [0, 2, 3, 5, 7, 13, 3, 10000, -2, -3, -5, -7, -13, -3, -10000]
+
 _stone_letters = [
     "＋", "졸", "상","마", "포", "차", "사","초", "兵", "象", "馬", "包", "車", "士", "楚"
 	]
 
-def is_my_stone(stone):
+def is_my(stone):
     return 1 <= stone <= 7
-def is_yo_stone(stone):
+def is_yo(stone):
     return 8 <= stone <= 14
 def get_opposite_stone(stone):
     if stone == Stone.EMPTY:
@@ -84,13 +86,13 @@ def get_setting_from_korean(korean):
 
 # 장기판위의 위치, position - pos 는 (y, x)의 튜플로 나타냄 - 기보 노테이션과 비교해서 
 # x y 순서는 같은데 0부터 시작하는 점에 유의
-# move는 [pos, pos]로 나타냄. 어떤 말이 움직여는지에 대한 정보는 포함하지 않음.
+# move는 (pos, pos)로 나타냄. 어떤 말이 움직여는지에 대한 정보는 포함하지 않음.
 
 # 널 포지션... 쓸데없는 것 같지만 필요함
-pos_empty = (12, 27)
+POS_EMPTY = (12, 27)
 
 # 널 무브.. 마찬가지로.
-move_empty = [pos_empty, pos_empty]
+MOVE_EMPTY = (POS_EMPTY, POS_EMPTY)
 
 
 # pos를 1 byte로 나타낸 것을 point라고 칭함. point = pos.y * 9 + pos.x
@@ -181,6 +183,29 @@ def init_board(my_setting, yo_setting):
 
     return board
 
+def get_score(board):
+    '''
+    장기 점수를 계산
+    value network 대신 쓸 수 있다.
+    '''
+    score = 0
+    for y in range(10):
+        for x in range(9):
+            score += STONE_SCORE[board[y, x]]
+    return score
+
+def get_next_board(board, move):
+    '''
+    move를 적용한 다음 보드를 리턴
+    '''
+    pos_from = move[0]
+    pos_to = move[1]
+    nu_board = np.copy(board)
+    stone_from = nu_board[pos_from]
+    nu_board[pos_from] = Stone.EMPTY
+    nu_board[pos_to] = stone_from
+
+    return nu_board
 
 # get_possible_move에서 쓰는 상수
 # 마길
@@ -215,43 +240,44 @@ _way_goong = [
 _way_my_jol = [(0, -1), (0, 1), (-1, 0)]
 _way_yo_jol = [(0, -1), (0, 1), (1, 0)]
 
-# 특정한 위치에서 움직일 수 있는 리스트를 출력한다.
-# 항상 초(하단)의 입장에서 보기 때문에
-# 한에 대해서는 판을 돌려서 생각하고 리턴할 때 다시 돌린다.
+# 특정한 위치(pos_from)에서 움직일 수 있는 리스트를 출력한다.
+# 항상 초(하단)의 입장에서 본다.
 def get_possible_move(board, pos_from):
 
-    if board[pos_from] == pos_empty:
+    if board[pos_from] == POS_EMPTY:
         raise Exception()
-    elif is_yo_stone(board[pos_from]):
-        board = rot_board(board)
-        is_rot = True
-    else:
-        is_rot = False
+    elif is_yo(board[pos_from]):
+        raise Exception()
 
     py = pos_from[0]
     px = pos_from[1]
 
     stone_from = board[pos_from]
 
+    #가능한 도착 지점
+    pos_to_all = []
+    #가능한 도착 지점의 부분집합. 특별히 상대 기물을 취할 수 있는 지점
+    pos_to_take = []
+
     def add_to_move(pos_to):
         stone_to = board[pos_to]
         if stone_to == Stone.EMPTY:
-            moves.append(pos_to)
-        elif is_yo_stone(stone_to):
-            moves.append(pos_to)
-            takes.append(pos_to)
+            pos_to_all.append(pos_to)
+        elif is_yo(stone_to):
+            pos_to_all.append(pos_to)
+            pos_to_take.append(pos_to)
 
     if stone_from == Stone.MY_CHA :
         def visit_cha(pos_to):
             stone_to = board[pos_to]
             #비어있으면 계속 진행가능
             if stone_to == Stone.EMPTY:
-                moves.append(pos_to)
+                pos_to_all.append(pos_to)
                 return True 
             #상대기물이면 여기까지 진행가능
-            elif is_yo_stone(stone_to):
-                moves.append(pos_to)
-                takes.append(pos_to)
+            elif is_yo(stone_to):
+                pos_to_all.append(pos_to)
+                pos_to_take.append(pos_to)
                 return False
             #내 기물이면 멱이므로 진행 불가능
             else:
@@ -311,11 +337,11 @@ def get_possible_move(board, pos_from):
                     return True
             else:
                 if stone_to == Stone.EMPTY:
-                    moves.append(pos_to)
+                    pos_to_all.append(pos_to)
                     return True
-                elif is_yo_stone(stone_to):
-                    moves.append(pos_to)
-                    takes.append(pos_to)
+                elif is_yo(stone_to):
+                    pos_to_all.append(pos_to)
+                    pos_to_take.append(pos_to)
                     return False
                 else:
                     return False
@@ -390,22 +416,19 @@ def get_possible_move(board, pos_from):
 
             add_to_move(pos_to)
 
-    elif stone_from == Stone.MY_SA or stone_from == Stone.YO_SA or stone_from == Stone.MY_KING or stone_from == Stone.YO_KING:
-        relative_x = pos_from[1] - 3
-        if pos_from[0] <= 3:
-            relative_y = pos_from[0]
-        else:
-            relative_y = pos_from[0] - 7
+    elif stone_from == Stone.MY_SA  or stone_from == Stone.MY_KING:        
+        relative_y = pos_from[0] - 7
+        relative_x = pos_from[1] - 3        
 
         ways = _way_goong[relative_y][relative_x]
         for way in ways:
             pos_to = (py + way[0], px + way[1])
             stone_to = boaard[pos_to]
             if stone_to == Stone.EMPTY:
-                moves.append(pos_to)
-            elif is_yo_stone(stone_to):
-                moves.append(pos_to)
-                takes.append(pos_to)
+                pos_to_all.append(pos_to)
+            elif is_yo(stone_to):
+                pos_to_all.append(pos_to)
+                pos_to_take.append(pos_to)
 
     elif stone_from == Stone.MY_JOL:
         for way in _way_my_jol:
@@ -423,37 +446,46 @@ def get_possible_move(board, pos_from):
     else:
         raise Exception('unexpected kind of stone')
 
-    if is_rot:
-        return rot_moves(moves, takes)
-    else:
-        return moves, takes       
+    return pos_to_all, pos_to_take
+
+def get_all_possible_moves(board):
+    moves = []
+    takes = []
+    for y in range(10):
+        for x in range(9):
+            stone_from = board[y, x]
+            if is_my(stone_from):
+                pos_to_all, pos_to_take = get_possible_move(board, (y, x))
+                moves += [((y, x), pt) for pt in pos_to_all]
+                takes += [((y, x), pt) for pt in pos_to_take]
+    return moves, takes
+
 
 
 
 # 판 위 아래 뒤집기
 # AI는 무조건 아래쪽 입장에서 생각하기 때문에 위쪽 진영을 위한 전략을 AI에게 물어볼 때, 뒤집어서 물어본다.
 # value network는 판을 뒤집지 않고 +-를 반대로 생각해도 되지만 policy network는 무조건 뒤집을 수 밖에 없다.
-# 한편, 학습할 때 뒤집어서 넣으면 샘플 개수를 두 배로 늘릴 수 있다.
 def rot_board(board):
     nu_board = np.zeros([10, 9], np.uint8)
+    #위치도 바꿔주고 세력도 바꿔준다. (한->초, 초->한)
     for y in range(10):
         for x in range(9):
             nu_board[y, x] = get_opposite_stone(board[9 - y, 8 - x])
+
     return nu_board
 
-def rot_moves(moves, takes = None):
+#move를 판과 같이 뒤집어준다ㅏ.
+def rot_move(move):
+    pos_from = move[0]
+    pos_to = move[1]
+    return (9 - pos_from[0], 8 - pos_from[1]), (9 - pos_to[0], 8 - pos_to[1])
+
+def rot_moves(moves):
     nu_moves = []
-
     for move in moves:
-        nu_moves.append((9 - move[0], 8 - move[1]))
-
-    if takes == None:
-        return nu_moves
-    else:
-        nu_takes = []
-        for take in takes:
-            nu_takes.append((9 - take[0], 8 - take[1]))
-        return nu_moves
+        nu_moves.append(rot_move(move))
+    return nu_movess
 
 # 장기 특성상 좌우를 바꿔도 동일하다.
 # 학습 샘플의 개수를 두 배로 늘릴 수 있다.
@@ -464,9 +496,15 @@ def flip_lr(board):
             nu_board[y, x] = board[y, 8 - x]
     return nu_board
 
-    
 
 def read_gibo(path):
+    '''
+    기보 파일을 파싱
+    '''
+    ###########################################
+    #1차 파싱
+
+
     #평범하게 텍스트 모드로 읽고 싶은데 0xff같은 것이 껴 있어서 cp949로 못 읽을 수 있다.
     #해서 바이트로 읽은 후 0xff를 없애준다.
     file_bytes = open(path, 'rb').read()
@@ -530,7 +568,7 @@ def read_gibo(path):
                 num = int(word_num[:-1]) #마지막 점을 뺀다
                 #한수쉼
                 if word_move[0] == '한':
-                    move = move_empty
+                    move = MOVE_EMPTY
                 else:
                     fy = int(word_move[0]) - 1
                     fx = int(word_move[1]) - 1
@@ -553,9 +591,19 @@ def read_gibo(path):
                     move = [move_from, move_to]
                 out_moves.append(move)
 
+    ####################################
+    #2차 파싱
+    #학습에 맞도록 재구성
+
+    #board, move, winner
+
+    
+
+    
+
     return out_gibo
 
-#기보 정보를 이용하여 board와 기타 다른 정보를 만든다.
+#파싱된 기보 정보를 이용하여 board와 기타 다른 정보를 만든다.
 def init_board_from_gibo(gibo):
     info = gibo['info']
     board = np.zeros([10, 9], np.uint8)
@@ -613,11 +661,8 @@ def init_board_from_gibo(gibo):
             #'한 판정승' 은 건너뛴다.
             if y > 9:
                 break
-        info['board'] = board
-        info['my_first'] = False # 상대(위쪽)부터 시작
 
-    #판이 아니면 무조건 한차림 초차림이 있어야 한다.
-    #근데 한포진 초보진도 있다..
+    #판이 아니면 무조건 한차림 초차림(혹은 한포진 초포진)이 있어야 한다.
     else:
         if '초차림' in info:
             mine = info['초차림']
@@ -631,9 +676,6 @@ def init_board_from_gibo(gibo):
         yo_setting = get_setting_from_korean(yors)
         board = init_board(my_setting, yo_setting)
 
-        info['board'] = board
-        info['my_first'] = True # 나(아래쪽)부터 시작
-
     return board
 
 def print_board(board):
@@ -646,7 +688,7 @@ def print_board(board):
 
             if stone == Stone.EMPTY:
                 fore_color = Fore.LIGHTBLACK_EX
-            elif is_my_stone(stone):
+            elif is_my(stone):
                 fore_color = Fore.CYAN
             else:
                 fore_color = Fore.MAGENTA
@@ -656,6 +698,48 @@ def print_board(board):
         print(line)
 
 ##-------------------------------------------------------------------------------------------
+
+#학습을 위한 게임
+#수를 놓을 때마다 판을 돌리기 때문에
+#게임 플레이에는 부적합..
+class Game:
+    def __init__(self, init_board, moves):
+        self.board = init_board
+        self.moves = moves
+
+        #첫 번째 시작이 한이면 초로 바꿈
+        first_move = self.moves[0]
+        from_pos = first_move[0]
+
+        if is_yo(self.board[from_pos]):
+            self.board = rot_board(self.board)
+            self.moves = rot_moves(self.moves)
+
+    def iterator(self):
+        '''
+        현재 보드, 다음 착수를 리턴
+        '''
+
+        cur_board = self.board.copy()
+        for turn, moves in enumerate(self.moves):
+            move = self.moves[turn]
+            #상대방 차례라면
+            if turn % 2 == 1:
+                move = rot_move(move)
+        
+            yield cur_board, move
+
+            # 다음 보드를 만든다.
+            if move != MOVE_EMPTY:
+                pos_from = move[0]
+                pos_to = move[1]
+
+                next_board = cur_board.copy()
+                next_board[pos_to] = next_board[pos_from]
+                next_board[pos_from] = 0
+
+            next_board = rot_board(next_board)
+            cur_board = next_board
 
 def test_print_board():
     import random
@@ -671,8 +755,16 @@ def test_gibo():
             file_path = path + '/' + file
             gibos = read_gibo(file_path)
             for gibo in gibos:
+                print(gibo['info'])
                 board = init_board_from_gibo(gibo)
-                print_board(board)
+                moves = gibo['moves']
+                game = Game(board, moves)
+
+                for cur_board, move in game.iterator():
+                    print_board(cur_board)
+                    print(move)
+                    input('')
+                
 
 if __name__ == '__main__':
     test_gibo()
