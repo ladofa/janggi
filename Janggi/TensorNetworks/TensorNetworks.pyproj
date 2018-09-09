@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>db42e584-379e-425d-aae9-b10a50d1b7b3</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>game.py</StartupFile>
+    <StartupFile>dataset.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
