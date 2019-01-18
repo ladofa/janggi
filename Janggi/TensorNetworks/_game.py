@@ -5,8 +5,7 @@ from colorama import Fore, Back, Style
 import colorama
 colorama.init(autoreset=True)
 
-import params
-args = params.args
+from _params import args
 
 
 # 네트워크나 인공지는과는 상관없이 장기 본연에 대한 내용이 담김
@@ -202,7 +201,10 @@ def get_next_board(board, move):
 # get_possible_to에서 쓰는 상수
 # 마길
 _way_ma = [
+    #현재 위치를 0으로 볼떄
+    #위로, 왼쪽 위로
     [(-1, 0), (-2, -1)],
+    #위로, 오른쪽 위로
     [(-1, 0), (-2, 1)],
     [(1, 0), (2, -1)],
     [(1, 0), (2, 1)],
@@ -232,9 +234,12 @@ _way_goong = [
 _way_my_jol = [(0, -1), (0, 1), (-1, 0)]
 _way_yo_jol = [(0, -1), (0, 1), (1, 0)]
 
-# 특정한 위치(pos_from)에서 움직일 수 있는 리스트를 출력한다.
-# 항상 초(하단)의 입장에서 본다.
+
 def get_possible_pos_to(board, pos_from):
+    '''
+    특정한 위치(pos_from)에서 움직일 수 있는 리스트를 출력한다.
+    항상 초(하단)의 입장에서 본다.
+    '''
 
     if board[pos_from] == 0:
         raise Exception()
@@ -250,6 +255,9 @@ def get_possible_pos_to(board, pos_from):
     pos_to_all = []
     #가능한 도착 지점의 부분집합. 특별히 상대 기물을 취할 수 있는 지점
     pos_to_take = []
+    #아군을 타깃으로 하는 움직임. pos_to_all에는 포함되지 않음
+    #사실 당장 possible은 아님.
+    pos_to_protect = []
 
     def add_pos_to(pos_to):
         stone_to = board[pos_to]
@@ -258,6 +266,8 @@ def get_possible_pos_to(board, pos_from):
         elif is_yo(stone_to):
             pos_to_all.append(pos_to)
             pos_to_take.append(pos_to)
+        else:
+            pos_to_protect.append(pos_to)
 
     if stone_from == Stone.MY_CHA :
         def visit_cha(pos_to):
@@ -273,6 +283,7 @@ def get_possible_pos_to(board, pos_from):
                 return False
             #내 기물이면 멱이므로 진행 불가능
             else:
+                pos_to_protect.append(pos_to)
                 return False
 
         #상하좌우 방향으로 살핀다.
@@ -305,37 +316,38 @@ def get_possible_pos_to(board, pos_from):
         elif px == 5 and (py == 2 or py == 9):
             if visit_cha((py - 1, px - 1)):
                 visit_cha((py - 2, px - 2))
+        #궁중에서 움직임
         elif px == 4 and (py == 1 or py == 8):
             add_pos_to((py + 1, px + 1))
             add_pos_to((py + 1, px - 1))
             add_pos_to((py - 1, px + 1))
             add_pos_to((py - 1, px - 1))
 
-        #궁중에서 대각선
-
 
     elif stone_from == Stone.MY_PO or stone_from == Stone.YO_PO:
         dari = [False] #다리를 못 밟았으면 False, 다리를 밟았으면 True
         def visit_po(pos_to):
             stone_to = board[pos_to]
-            #포를 만나면 다리고 뭐고 그냥 멈춤
-            if stone_to == Stone.MY_PO or stone_to == Stone.YO_PO:
-                return False
             if not dari[0]:
                 if stone_to == Stone.EMPTY:
                     return True
-                else:
+                #포만 아니면 다리로 삼을 수 있다.
+                elif stone_to != Stone.MY_PO and stone_to != Stone.YO_PO:
                     dari[0] = True
                     return True
             else:
+                #빈칸은 전진 가능
                 if stone_to == Stone.EMPTY:
                     pos_to_all.append(pos_to)
                     return True
-                elif is_yo(stone_to):
+                #상대 기물이면서 포가 아니면 먹을 수 있다.
+                elif is_yo(stone_to) and stone_to != Stone.YO_PO:
                     pos_to_all.append(pos_to)
                     pos_to_take.append(pos_to)
                     return False
+                #내 기물이면
                 else:
+                    pos_to_protect.append(pos_to)
                     return False
 
         #상하좌우 방향으로 살핀다.
@@ -376,8 +388,8 @@ def get_possible_pos_to(board, pos_from):
 
     elif stone_from == Stone.MY_MA or stone_from == Stone.YO_MA:
         for way in _way_ma:
-            pos_to = (py + way[1][0], px + way[1][0])
-            pos_myuk = (py + way[0][0], px + way[0][0])
+            pos_to = (py + way[1][0], px + way[1][1])
+            pos_myuk = (py + way[0][0], px + way[0][1])
 
             # 보드 범위를 벗어나는 경우 X
             if not in_board(pos_to):
@@ -388,15 +400,12 @@ def get_possible_pos_to(board, pos_from):
                 continue
 
             add_pos_to(pos_to)
-            #같은 편은 못 먹..
-            #else:
-            #    continue
-
+            
     elif stone_from == Stone.MY_SANG or stone_from == Stone.YO_SANG:
         for way in _way_sang:
-            pos_to = (py + way[2][0], px + way[2][0])
-            pos_myuk1 = (py + way[0][0], px + way[0][0])
-            pos_myuk2 = (py + way[1][0], px + way[1][0])
+            pos_to = (py + way[2][0], px + way[2][1])
+            pos_myuk1 = (py + way[0][0], px + way[0][1])
+            pos_myuk2 = (py + way[1][0], px + way[1][1])
 
             # 보드 범위를 벗어나는 경우 X
             if not in_board(pos_to):
@@ -438,19 +447,21 @@ def get_possible_pos_to(board, pos_from):
     else:
         raise Exception('unexpected kind of stone')
 
-    return pos_to_all, pos_to_take
+    return pos_to_all, pos_to_take, pos_to_protect
 
 def get_all_moves(board):
     moves = []
     takes = []
+    prots = []
     for y in range(10):
         for x in range(9):
             stone_from = board[y, x]
             if is_my(stone_from):
-                pos_to_all, pos_to_take = get_possible_pos_to(board, (y, x))
+                pos_to_all, pos_to_take, pos_to_protect = get_possible_pos_to(board, (y, x))
                 moves += [((y, x), pt) for pt in pos_to_all]
                 takes += [((y, x), pt) for pt in pos_to_take]
-    return moves, takes
+                prots+= [((y, x), pt) for pt in pos_to_protect]
+    return moves, takes, prots
 
 
 
@@ -533,10 +544,11 @@ def print_board(board, yellow_back = [], green_back = [], magenta_back = [], cya
 
 ##-------------------
 
-#학습을 위한 게임
-#수를 놓을 때마다 판을 돌리기 때문에
-#게임 플레이에는 부적합..
-class Replay:
+class ReplayForTraining:
+    '''
+    학습을 위한 게임 플레이 데이터를 만든다.
+    한 입장의 착수는 판을 돌려서 초 입장으로 바꾼다.
+    '''
     def __init__(self, init_board, moves):
         self.board = init_board
         self.moves = moves

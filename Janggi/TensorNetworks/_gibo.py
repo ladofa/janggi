@@ -1,20 +1,25 @@
+'''
+기보 파일을 읽는 데까지.
+'''
+
+
 import os
 import numpy as np
-import game
+import _game
+from _game import Stone
 
-import params
-args = params.args
+from _params import args
 
 
 def get_setting_from_korean(korean):
     if korean == '마상상마':
-        return game.Setting.MSSM
+        return _game.Setting.MSSM
     elif korean == '상마마상':
-        return game.Setting.SMMS
+        return _game.Setting.SMMS
     elif korean == '상마상마':
-        return game.Setting.SMSM
+        return _game.Setting.SMSM
     elif korean == '마상마상':
-        return game.Setting.MSMS
+        return _game.Setting.MSMS
     else:
        raise Exception('unknown setting : ' + korean)
 
@@ -47,7 +52,7 @@ def read_gibo(path):
 
     lines = fixed_bytes.decode('cp949').splitlines()
 
-    out_info = {}
+    out_info = {'path' : path}
     out_moves = []
     out_gibo = []
 
@@ -67,7 +72,7 @@ def read_gibo(path):
             #모든 정보를 다 읽었으므로 저장한다.
             if len(out_info) != 0 and len(out_moves) != 0:
                 out_gibo.append({'info':out_info, 'moves':out_moves})
-                out_info = {}
+                out_info = {'path' : path}
                 out_moves = []
         #대회 정보
         elif line[0] == '[':
@@ -90,7 +95,7 @@ def read_gibo(path):
                 num = int(word_num[:-1]) #마지막 점을 뺀다
                 #한수쉼
                 if word_move[0] == '한':
-                    move = game.MOVE_EMPTY
+                    move = _game.MOVE_EMPTY
                 else:
                     fy = int(word_move[0]) - 1
                     fx = int(word_move[1]) - 1
@@ -116,17 +121,30 @@ def read_gibo(path):
     ####################################
     #2차 파싱
     #학습에 맞도록 재구성
+    #... 은 다른 함수에서~
 
-    #board, move, winner
-
-    
-
-    
+    #board, move, winner   
 
     return out_gibo
 
-#파싱된 기보 정보를 이용하여 board와 기타 다른 정보를 만든다.
+def read_all_gibos(path):
+    gibo_list = []
+    for root, dirs, files in os.walk(path):
+       for file in files:
+           print(file)
+           #기보 파일이 아니면 버리고
+           first, last = os.path.splitext(file)
+           if last != '.gib':
+               continue
+           #기보를 읽어서 저장
+           gibos = read_gibo(root + '\\' + file)
+           gibo_list += gibos
+    return gibo_list
+
 def init_board_from_gibo(gibo):
+    '''
+    파싱된 기보 정보를 이용하여 board와 기타 다른 정보를 만든다.
+    '''
     info = gibo['info']
     board = np.zeros([10, 9], np.uint8)
     #기물의 위치를 전부 지정해주는 경우
@@ -196,7 +214,7 @@ def init_board_from_gibo(gibo):
         elif '한포진' in info:
             yors = info['한포진']
         yo_setting = get_setting_from_korean(yors)
-        board = game.init_board(my_setting, yo_setting)
+        board = _game.init_board(my_setting, yo_setting)
 
     return board
 
@@ -214,13 +232,13 @@ def test_gibo():
                 print(gibo['info'])
                 board = init_board_from_gibo(gibo)
                 moves = gibo['moves']
-                replay = game.Replay(board, moves)
+                replay = _game.Replay(board, moves)
 
                 prev_move = []
                 for cur_board, move in replay.iterator():
-                    game.print_board(cur_board, yellow_back=move, green_back=prev_move)
+                    _game.print_board(cur_board, yellow_back=move, green_back=prev_move)
                     print(move)
-                    prev_move = game.rot_move(move)
+                    prev_move = _game.rot_move(move)
                     input('')
                 
 

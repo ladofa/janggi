@@ -4,13 +4,14 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>db42e584-379e-425d-aae9-b10a50d1b7b3</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>dataset.py</StartupFile>
+    <StartupFile>_dataset.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>TensorNetworks</Name>
     <RootNamespace>TensorNetworks</RootNamespace>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda36-64</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,19 +22,19 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="dataset.py">
+    <Compile Include="_dataset.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="game.py">
+    <Compile Include="_game.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="gibo.py">
+    <Compile Include="_gibo.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="move_transfer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="params.py">
+    <Compile Include="_params.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="policy_networks.py">
@@ -52,6 +53,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="game\" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda36-64" />
+    <InterpreterReference Include="Global|PythonCore|3.6" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
