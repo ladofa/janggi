@@ -52,6 +52,7 @@ namespace RunnerWpf
 
 		public void Load(Mcts mcts)
 		{
+			if (mcts == null) return;
 			this.mcts = mcts;
 			mcts.PauseSearching();
 			mcts.WaitCycle();
@@ -116,7 +117,7 @@ namespace RunnerWpf
 				if (!node.prevMove.Equals(Move.Empty))
 				{
 					uint stone = node.board[node.prevMove.To];
-					letter = StoneHelper.GetLetter(stone, node.board.IsMyFirst);
+					letter = StoneHelper.GetLetter(stone, true);
 				}
 				else
 				{
@@ -166,7 +167,7 @@ namespace RunnerWpf
 				if (!node.prevMove.Equals(Move.Empty))
 				{
 					uint stone = node.board[node.prevMove.To];
-					letter = StoneHelper.GetLetter(stone, node.board.IsMyFirst);
+					letter = StoneHelper.GetLetter(stone, true);
 				}
 				else
 				{

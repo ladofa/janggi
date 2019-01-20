@@ -15,7 +15,7 @@ namespace Janggi.Ai
 		public delegate float CalcLeafEvaluationHandler(Node node);
 		public delegate void CalcPolicyWeightsHandler(Node node);
 
-		public abstract class Handlers
+		public abstract class Strategy
 		{
 			public abstract float[] CalcScores(Node node);
 			public abstract float CalcLeafEvaluation(Node node);
@@ -41,7 +41,7 @@ namespace Janggi.Ai
 
 		int myFirst;//나부터 시작했으면 0
 
-		public Mcts(Handlers handlers)
+		public Mcts(Strategy handlers)
 		{
 			CalcScores = handlers.CalcScores;
 			CalcLeafEvaluation = handlers.CalcLeafEvaluation;

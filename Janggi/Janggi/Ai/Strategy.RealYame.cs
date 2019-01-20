@@ -9,7 +9,7 @@ using Janggi.TensorFlow;
 
 namespace Janggi.Ai
 {
-	public class RealYame : Mcts.Handlers
+	public class RealYame : Mcts.Strategy
 	{
 		TcpCommClient client = new TcpCommClient();
 

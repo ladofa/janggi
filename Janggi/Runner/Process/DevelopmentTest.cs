@@ -17,10 +17,10 @@ namespace Runner.Process
 			for (int i = 0; i < 32; i++)
 			{
 				uint stone = (uint)1 << i;
-				Console.WriteLine(((Stones)stone).ToString() + ", " + GetPoint(stone));
+				//Console.WriteLine(((Stones)stone).ToString() + ", " + GetPoint(stone));
 			}
 
-			Board board = new Board(Board.Tables.Outer, Board.Tables.Left, true);
+			Board board = new Board(Board.Tables.Outer, Board.Tables.Left, true, false);
 
 			PrimaryUcb primaryUcb = new PrimaryUcb();
 			Mcts mcts = new Mcts(primaryUcb);

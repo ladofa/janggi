@@ -4,13 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using static Janggi.Board;
+
 namespace Janggi
 {
 	public static class StoneHelper
 	{
-		public enum Stones : uint
+		public struct Stones
 		{
-			Empty = 0,
+			public const uint Empty = 0,
 			MyJol1 = 0x01,
 			MyJol2 = 0x02,
 			MyJol3 = 0x04,
@@ -44,22 +46,35 @@ namespace Janggi
 			YoSa2 = 0x40_00_00_00,
 			YoKing = 0x80_00_00_00,
 
-			Jol =  0x00_1F_00_1F,
-			MyJol = 0x00_00_00_1F,
-			YoJol = 0x00_1F_00_00,
-			Sang = 0x00_60_00_60,
-			Ma =   0x01_80_01_80,
-			Po =   0x06_00_06_00,
-			MyPo = 0x00_00_06_00,
-			YoPo = 0x06_00_00_00,
-			Cha =  0x18_00_18_00,
-			MyCha = 0x00_00_18_00,
-			YoCha = 0x18_00_00_00,
-			Sa =   0x60_00_60_00,
-			King = 0x80_00_80_00,
-			Mine = 0x00_00_FF_FF,
-			Yours = 0xFF_FF_00_00
-		}
+			Jol    = 0x00_1F_00_1F,
+			MyJol  = 0x00_00_00_1F,
+			YoJol  = 0x00_1F_00_00,
+
+			Sang   = 0x00_60_00_60,
+			MySang = 0x00_00_00_60,
+			YoSang = 0x00_60_00_00,
+
+			Ma     = 0x01_80_01_80,
+			MyMa   = 0x00_00_01_80,
+			YoMa   = 0x01_80_00_00,
+
+			Po     = 0x06_00_06_00,
+			MyPo   = 0x00_00_06_00,
+			YoPo   = 0x06_00_00_00,
+
+			Cha    = 0x18_00_18_00,
+			MyCha  = 0x00_00_18_00,
+			YoCha  = 0x18_00_00_00,
+
+			Sa     = 0x60_00_60_00,
+			MySa   = 0x00_00_60_00,
+			YoSa   = 0x60_00_00_00,
+
+			King   = 0x80_00_80_00,
+
+			Mine   = 0x00_00_FF_FF,
+			Yours  = 0xFF_FF_00_00;
+		};
 
 		public static bool IsEmpty(uint s) => s == (uint)Stones.Empty;
 		public static bool IsJol(uint s) => (s & (uint)Stones.Jol) != 0;
@@ -96,6 +111,135 @@ namespace Janggi
 			}
 		}
 
+		public static uint[,] GetStones(Tables myTable, Tables yoTable)
+		{
+			uint[,] stones = new uint[Height, Width];
+			stones[0, 0] = (uint)Stones.YoCha1;
+			stones[0, 3] = (uint)Stones.YoSa1;
+			stones[0, 5] = (uint)Stones.YoSa2;
+			stones[0, 8] = (uint)Stones.YoCha2;
+			stones[1, 4] = (uint)Stones.YoKing;
+			stones[2, 1] = (uint)Stones.YoPo1;
+			stones[2, 7] = (uint)Stones.YoPo2;
+			stones[3, 0] = (uint)Stones.YoJol1;
+			stones[3, 2] = (uint)Stones.YoJol2;
+			stones[3, 4] = (uint)Stones.YoJol3;
+			stones[3, 6] = (uint)Stones.YoJol4;
+			stones[3, 8] = (uint)Stones.YoJol5;
+
+			stones[6, 0] = (uint)Stones.MyJol1;
+			stones[6, 2] = (uint)Stones.MyJol2;
+			stones[6, 4] = (uint)Stones.MyJol3;
+			stones[6, 6] = (uint)Stones.MyJol4;
+			stones[6, 8] = (uint)Stones.MyJol5;
+			stones[7, 1] = (uint)Stones.MyPo1;
+			stones[7, 7] = (uint)Stones.MyPo2;
+			stones[8, 4] = (uint)Stones.MyKing;
+			stones[9, 0] = (uint)Stones.MyCha1;
+			stones[9, 3] = (uint)Stones.MySa1;
+			stones[9, 5] = (uint)Stones.MySa2;
+			stones[9, 8] = (uint)Stones.MyCha2;
+
+			if (myTable == Tables.Inner)
+			{
+				stones[9, 1] = (uint)Stones.MyMa1;
+				stones[9, 2] = (uint)Stones.MySang1;
+				stones[9, 6] = (uint)Stones.MySang2;
+				stones[9, 7] = (uint)Stones.MyMa2;
+			}
+			else if (myTable == Tables.Outer)
+			{
+				stones[9, 1] = (uint)Stones.MySang1;
+				stones[9, 2] = (uint)Stones.MyMa1;
+				stones[9, 6] = (uint)Stones.MyMa2;
+				stones[9, 7] = (uint)Stones.MySang2;
+			}
+			else if (myTable == Tables.Left)
+			{
+				stones[9, 1] = (uint)Stones.MySang1;
+				stones[9, 2] = (uint)Stones.MyMa1;
+				stones[9, 6] = (uint)Stones.MySang2;
+				stones[9, 7] = (uint)Stones.MyMa2;
+			}
+			else
+			{
+				stones[9, 1] = (uint)Stones.MyMa1;
+				stones[9, 2] = (uint)Stones.MySang1;
+				stones[9, 6] = (uint)Stones.MyMa2;
+				stones[9, 7] = (uint)Stones.MySang2;
+			}
+
+			if (yoTable == Tables.Inner)
+			{
+				stones[0, 1] = (uint)Stones.YoMa1;
+				stones[0, 2] = (uint)Stones.YoSang1;
+				stones[0, 6] = (uint)Stones.YoSang2;
+				stones[0, 7] = (uint)Stones.YoMa2;
+			}
+			else if (yoTable == Tables.Outer)
+			{
+				stones[0, 1] = (uint)Stones.YoSang1;
+				stones[0, 2] = (uint)Stones.YoMa1;
+				stones[0, 6] = (uint)Stones.YoMa2;
+				stones[0, 7] = (uint)Stones.YoSang2;
+			}
+			else if (yoTable == Tables.Left)
+			{
+				stones[0, 1] = (uint)Stones.YoMa1;
+				stones[0, 2] = (uint)Stones.YoSang1;
+				stones[0, 6] = (uint)Stones.YoMa2;
+				stones[0, 7] = (uint)Stones.YoSang2;
+			}
+			else
+			{
+				stones[0, 1] = (uint)Stones.YoSang1;
+				stones[0, 2] = (uint)Stones.YoMa1;
+				stones[0, 6] = (uint)Stones.YoSang2;
+				stones[0, 7] = (uint)Stones.YoMa2;
+			}
+
+			return stones;
+		}
+
+		public static uint[,] GetOpposite(uint[,] stones)
+		{
+			uint[,] nuStones = new uint[Height, Width];
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					//회전된 새로운 위치
+					int nx = Width - x - 1;
+					int ny = Height - y - 1;
+
+					//편을 바꿔서 넣는다.
+					nuStones[ny, nx] = Opposite(stones[y, x]);
+				}
+			}
+
+			return nuStones;
+		}
+
+		public static uint[,] GetFlip(uint[,] stones)
+		{
+			uint[,] nuStones = new uint[Height, Width];
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					//회전된 새로운 위치
+					int nx = Width - x - 1;
+					int ny = y;
+
+					//편 바꾸지 않고 그냥 넣어야지.
+					nuStones[ny, nx] = stones[y, x];
+				}
+			}
+
+			return nuStones;
+		}
+
+
 		public static uint Index2Stone(int index)
 		{
 			return (uint)1 << index;
@@ -103,6 +247,11 @@ namespace Janggi
 
 		private static int[] lookupStone2Index = new int[0x8001];
 
+		/// <summary>
+		/// stone 종류를 0부터 32까지의 숫자로 나타낸다.
+		/// </summary>
+		/// <param name="stone"></param>
+		/// <returns></returns>
 		public static int Stone2Index(uint stone)
 		{
 			if (stone > 0x8000)
@@ -134,9 +283,9 @@ namespace Janggi
 			}
 		}
 
-		public static string GetLetter(uint stone, bool myFirst)
+		public static string GetLetter(uint stone, bool myDum)
 		{
-			return GetLetter(Stone2Index(stone), myFirst);
+			return GetLetter(Stone2Index(stone), myDum);
 		}
 
 		private static string[] lookupLetter = {
@@ -148,13 +297,10 @@ namespace Janggi
 		};
 	
 
-		public static string GetLetter(int index, bool myFirst)
+		public static string GetLetter(int index, bool myDum)
 		{
-			if (myFirst)
-			{
-				return lookupLetter[index];
-			}
-			else
+			//초한을 서로 바꿔준다...
+			if (myDum)
 			{
 				if (index == 0)
 				{
@@ -168,6 +314,10 @@ namespace Janggi
 				{
 					return lookupLetter[index + 16];
 				}
+			}
+			else
+			{
+				return lookupLetter[index];
 			}
 		}
 

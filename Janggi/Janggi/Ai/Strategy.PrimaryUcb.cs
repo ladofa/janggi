@@ -8,7 +8,7 @@ using static Janggi.StoneHelper;
 
 namespace Janggi.Ai
 {
-	public class PrimaryUcb : Mcts.Handlers
+	public class PrimaryUcb : Mcts.Strategy
 	{
 		public PrimaryUcb()
 		{

@@ -34,7 +34,6 @@ namespace Janggi.TensorFlow
 		{
 			//--req
 			Check = 1,
-			Create = 2,
 			Load = 3,
 			Save = 4,
 			Evaluate = 5,
@@ -196,19 +195,6 @@ namespace Janggi.TensorFlow
 			}
 		}
 
-		public static int FixedLength = 64;
-		public bool CreateModel(NetworkKinds kinds, string callname)
-		{
-			lock (this)
-			{
-				if (!IsConnected) throw new Exception("Is Not Connected.");
-
-				write(Code.Create, kinds);
-				write(callname);
-				return readOk();
-			}
-		}
-
 		public bool LoadModel(NetworkKinds kinds, string callname, string filename)
 		{
 			lock (this)
@@ -217,7 +203,6 @@ namespace Janggi.TensorFlow
 
 				write(Code.Load, kinds);
 				write(callname);
-				write(filename);
 				return readOk();
 			}
 		}
@@ -230,7 +215,6 @@ namespace Janggi.TensorFlow
 
 				write(Code.Save, kinds);
 				write(callname);
-				write(filename);
 				return readOk();
 			}
 		}
@@ -247,14 +231,21 @@ namespace Janggi.TensorFlow
 
 				if (readOk())
 				{
-					byte[] arr = readByteArray(Move.moveSet.Count);
+					byte[] arrFrom = readByteArray(90);
+					byte[] arrTo = readByteArray(90);
 
 					float[] proms = new float[moves.Count];
 					for (int i = 0; i < moves.Count; i++)
 					{
 						Move move = moves[i];
-						int index = Move.move2index[move];
-						proms[i] = arr[index] / 255.0f;
+						if (move.IsEmpty)
+						{
+							proms[i] = 0;
+						}
+						else
+						{
+							proms[i] = arrFrom[move.From.Byte] * arrTo[move.From.Byte] / (255.0f * 255.0f);
+						}
 					}
 
 					return proms;
@@ -278,7 +269,7 @@ namespace Janggi.TensorFlow
 
 				if (readOk())
 				{
-					return reader.ReadByte() / 255.0f + (float)(Global.Rand.NextDouble() * 0.01f);
+					return reader.ReadByte() / 255.0f;
 				}
 				else
 				{
@@ -304,16 +295,12 @@ namespace Janggi.TensorFlow
 				byte size = (byte)(list.Count / 255);
 
 				writer.Write(size);
-				int index = 0;
-				for (int i = 0; i < size; i++)
+				for (int i = 0; i < size * 255; i++)
 				{
-					for (int j = 0; j < 255; j++)
-					{
-						var tuple = list[index++];
-						var boardBytes = tuple.Item1.GetBytes();
-						write(boardBytes);
-						write(tuple.Item2);
-					}
+					var tuple = list[i];
+					var boardBytes = tuple.Item1.GetBytes();
+					write(boardBytes);
+					write(tuple.Item2);
 				}
 
 				//나머지는 버린다.

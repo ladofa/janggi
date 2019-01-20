@@ -8,7 +8,7 @@ using static Janggi.StoneHelper;
 
 namespace Janggi.Ai
 {
-	public class PseudoYame : Mcts.Handlers
+	public class PseudoYame : Mcts.Strategy
 	{
 		public PseudoYame()
 		{

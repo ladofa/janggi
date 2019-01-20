@@ -38,9 +38,12 @@ namespace Runner.Process
 		public Reinforcement()
 		{
 			//genGibo();
-			System.Timers.Timer timer = new System.Timers.Timer(600000);
-			timer.Elapsed += Timer_Elapsed;
-			timer.Start();
+
+			//일정 시간에 모델 저장
+			System.Timers.Timer saveTimer = new System.Timers.Timer(10/*분*/ * 60 * 1000);
+			saveTimer.Elapsed += saveTimer_Elapsed;
+			saveTimer.Start();
+			
 			while (!tcpCommClient.Connect("localhost", 9999))
 			{
 				Console.WriteLine("ConnectionFailed.");
@@ -85,7 +88,7 @@ namespace Runner.Process
 					}
 					else
 					{
-						genRealPseudo();
+						generate(new PseudoYame(), new PseudoYame());
 						signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 					}
 
@@ -184,7 +187,7 @@ namespace Runner.Process
 			tcpCommClient.Disconnect();
 		}
 
-		private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+		private void saveTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
 		{
 			Console.WriteLine("save ...");
 			tcpCommClient.SaveModel(Janggi.TensorFlow.NetworkKinds.Policy, policyNetName, policyNetName);
@@ -203,7 +206,7 @@ namespace Runner.Process
 
 			//랜덤으로 보드 생성
 			//상대방 선수로 놓는다. 어차피 시작하자마자 GetOpposite로 돌릴 거다.
-			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), false);
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
 
 			//먼저시작하는 쪽이 p1이든 p2든 상관없다.
 			bool isP1Turn = false;
@@ -302,7 +305,7 @@ namespace Runner.Process
 			//랜덤으로 보드 생성
 			//상대방 선수로 놓는다. 어차피 시작하자마자 GetOpposite로 돌릴 거다.
 
-			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), false);
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
 
 			//먼저시작하는 쪽이 p1이든 p2든 상관없다.
 			bool isP1Turn = false;
@@ -398,8 +401,8 @@ namespace Runner.Process
 			mcts2.MaxVisitCount = 1;
 
 			//누가 먼저 시작하나.
-			bool isMyFirst = Global.Rand.NextDouble() > 0.5;
-			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
+			//bool isMyFirst = Global.Rand.NextDouble() > 0.5;
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
 
 			bool isMyWin = false;
 
@@ -428,7 +431,7 @@ namespace Runner.Process
 				}
 
 				//움직임을 저장해주고
-				if (isMyFirst)
+				if (board.IsMyTurn)
 				{
 					recP1.Add(new Tuple<Board, Move>(board, move));
 				}
@@ -544,17 +547,16 @@ namespace Runner.Process
 
 			Console.WriteLine(" read new Path .. " + curPath);
 
-			Gibo gibo = new Gibo();
-			gibo.Read(curPath);
+			List<Gibo> gibos = Gibo.Read(curPath);
 
 			List<Tuple<Board, Move>> giboPolicy = new List<Tuple<Board, Move>>();
 			List<Tuple<Board, float>> giboValue = new List<Tuple<Board, float>>();
 
-			//Parallel.For(0, gibo.historyList.Count, (k) =>
-			for (int k = 0; k < gibo.historyList.Count; k++)
+
+			foreach (Gibo gibo in gibos)
 			{
-				List<Board> history = gibo.historyList[k];
-				int isMyWin = gibo.isMyWinList[k];
+				List<Board> history = gibo.GetParsed();
+				int isMyWin = gibo.isMyWin;
 
 				for (int i = 0; i < history.Count - 1; i++)
 				{
@@ -610,8 +612,8 @@ namespace Runner.Process
 		{
 			MinMax minMax = new MinMax(tcpCommClient, valueNetName);
 
-			bool isMyFirst = Global.Rand.NextDouble() > 0.5;
-			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
+			//bool isMyFirst = Global.Rand.NextDouble() > 0.5;
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
 
 			bool isMyWin = false;
 
@@ -634,8 +636,7 @@ namespace Runner.Process
 			Mcts mcts = new Mcts(new PseudoYame());
 			mcts.MaxVisitCount = maxVisitedCount;
 
-			bool isMyFirst = Global.Rand.NextDouble() > 0.5;
-			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
 
 			mcts.Init(board);
 
@@ -729,16 +730,19 @@ namespace Runner.Process
 			Console.WriteLine("    winning rate : " + rate2 + ", " + rate3);
 		}
 
-		void genRealPseudo()
+		/// <summary>
+		/// 두 네트워크가 서로 싸움을 해서 그 기보를 학습 데이터로 내보낸다.
+		/// </summary>
+		void generate(Mcts.Strategy strategy1, Mcts.Strategy strategy2)
 		{
 			//Mcts mcts1 = new Mcts(new OnlyPolicy(tcpCommClient));
-			Mcts mcts1 = new Mcts(new PseudoYame());
-			Mcts mcts2 = new Mcts(new PseudoYame());
+			Mcts mcts1 = new Mcts(strategy1);
+			Mcts mcts2 = new Mcts(strategy2);
 			mcts1.MaxVisitCount = 500;
 			mcts2.MaxVisitCount = 500;
 
-			bool isMyFirst = Global.Rand.Next() % 2 == 0;
-			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), isMyFirst);
+			//bool isMyFirst = Global.Rand.Next() % 2 == 0;
+			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
 			
 
 			mcts1.Init(new Board(board));
@@ -819,22 +823,22 @@ namespace Runner.Process
 				}
 			}
 
-			winGames2.Add(isMyWin ? 1 : 0);
-			while (winGames2.Count > 100)
-			{
-				winGames2.RemoveAt(0);
-			}
+			//winGames2.Add(isMyWin ? 1 : 0);
+			//while (winGames2.Count > 100)
+			//{
+			//	winGames2.RemoveAt(0);
+			//}
 
-			winGames3.Add(isMyFirst ? 1 : 0);
-			while (winGames3.Count > 100)
-			{
-				winGames3.RemoveAt(0);
-			}
+			//winGames3.Add(isMyFirst ? 1 : 0);
+			//while (winGames3.Count > 100)
+			//{
+			//	winGames3.RemoveAt(0);
+			//}
 
-			float rate2 = winGames2.Average();
-			float rate3 = winGames3.Average();
+			//float rate2 = winGames2.Average();
+			//float rate3 = winGames3.Average();
 
-			Console.WriteLine("    winning rate : " + rate2 + ", " + rate3);
+			//Console.WriteLine("    winning rate : " + rate2 + ", " + rate3);
 		}
 	}
 }

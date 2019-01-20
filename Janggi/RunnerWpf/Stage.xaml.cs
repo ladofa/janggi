@@ -72,7 +72,7 @@ namespace RunnerWpf
 			List<Pos> moves = board.GetAllMoves(pos);
 			Brush brush;
 
-			if (board.IsMyFirst == IsMine(board[pos]))
+			if (IsMine(board[pos]))
 			{
 				brush = Brushes.Blue;
 			}
@@ -112,7 +112,7 @@ namespace RunnerWpf
 			isUnitMoving = true;
 
 			//오버레이 UI 설정
-			UnitMoving.SetStone(unit.Stone, board.IsMyFirst);
+			UnitMoving.SetStone(unit.Stone, true);
 			UnitMoving.Width = unit.ActualWidth;
 			UnitMoving.Height = unit.ActualHeight;
 
@@ -326,7 +326,7 @@ namespace RunnerWpf
 						for (int x = 0; x < Board.Width; x++)
 						{
 							var stone = value[y, x];
-							units[y, x].SetStone(stone, board.IsMyFirst);
+							units[y, x].SetStone(stone, true);
 						}
 					}
 

@@ -101,7 +101,7 @@ namespace RunnerWpf
 				isMyFirst = false;
 			}
 
-			mainBoard = new Board(myTable, yoTable, isMyFirst);
+			mainBoard = new Board(myTable, yoTable, isMyFirst, false);
 
 			StageMain.Board = mainBoard;
 			mainBoard.Changed += MainBoard_Changed;
@@ -126,29 +126,29 @@ namespace RunnerWpf
 
 
 			//종료 절차
-			if (mcts != null)
-			{
-				isRunning = false;
-				userWaiter.Set();
-				mcts.ProgressUpdated -= Mcts_ProgressUpdated;
-				ResumeSearching();
-				mcts.ForceStopSearch();
-				thread?.Join();
-			}
+			//if (mcts != null)
+			//{
+			//	isRunning = false;
+			//	userWaiter.Set();
+			//	mcts.ProgressUpdated -= Mcts_ProgressUpdated;
+			//	ResumeSearching();
+			//	mcts.ForceStopSearch();
+			//	thread?.Join();
+			//}
 
-			if (realYame == null)
-			{
-				realYame = new RealYame();
-			}
-			mcts = new Mcts(realYame)
-			{
-				MaxVisitCount = 500
-			};
+			//if (realYame == null)
+			//{
+			//	realYame = new RealYame();
+			//}
+			//mcts = new Mcts(realYame)
+			//{
+			//	MaxVisitCount = 500
+			//};
 
-			TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
-			mcts.Init(mainBoard);
-			mcts.ProgressUpdated += Mcts_ProgressUpdated;
-			ResumeSearching();
+			//TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
+			//mcts.Init(mainBoard);
+			//mcts.ProgressUpdated += Mcts_ProgressUpdated;
+			//ResumeSearching();
 
 			thread = new Thread(runner);
 			thread.Start();
@@ -225,7 +225,10 @@ namespace RunnerWpf
 				userWaiter.WaitOne();
 				StageMain.IsMovable = false;
 
-				mcts.ForceStopSearch();
+				if (mcts != null)
+				{
+					mcts.ForceStopSearch();
+				}
 				task?.Wait();
 
 				return userMove;
@@ -273,7 +276,7 @@ namespace RunnerWpf
 
 				//mcts의 상태를 변경해준다. board와는 따로 동작한다.
 				//반드시 보드보다 먼저 실행해야 한다. 좀 복잡하네 ㅋㅋ
-				mcts.SetMove(move);
+				mcts?.SetMove(move);
 				//현재 게임의 상태를 변경.
 				mainBoard.MoveNext(move);
 

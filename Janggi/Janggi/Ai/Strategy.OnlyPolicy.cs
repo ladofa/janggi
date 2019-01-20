@@ -8,7 +8,7 @@ using static Janggi.StoneHelper;
 
 namespace Janggi.Ai
 {
-	public class OnlyPolicy : Mcts.Handlers
+	public class OnlyPolicy : Mcts.Strategy
 	{
 		TensorFlow.TcpCommClient client = new TensorFlow.TcpCommClient();
 		string networkName;

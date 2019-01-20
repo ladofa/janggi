@@ -16,7 +16,7 @@ namespace Janggi
 
 		public Pos[] positions;
 
-		bool isMyTurn;
+		
 		public int Point;
 
 		Move prevMove = Move.Empty;
@@ -25,9 +25,19 @@ namespace Janggi
 			get => prevMove;
 		}
 
+		//내가 둘 차례인가?
+		bool isMyTurn;
 		public bool IsMyTurn
 		{
 			get => isMyTurn;
+		}
+
+		//덤 어느쪽으로 주는가?
+		//한을 잡으면 true
+		bool isMyDum;
+		public bool IsMyDum
+		{
+			get => isMyDum;
 		}
 
 		readonly public static int Width = 9;
@@ -43,7 +53,7 @@ namespace Janggi
 
 			Point = board.Point;
 			isMyTurn = board.isMyTurn;
-			isMyFirst = board.IsMyFirst;
+			isMyDum = board.isMyDum;
 		}
 
 		public enum Tables
@@ -56,10 +66,10 @@ namespace Janggi
 
 		public Board()
 		{
-			SetUp();
+			Init();
 		}
 
-		public void SetUp()
+		public void Init()
 		{
 			stones = new uint[Height, Width];
 			targets = new uint[Height, Width];
@@ -67,121 +77,36 @@ namespace Janggi
 			positions = new Pos[StoneCount];
 
 			Point = 0;
-
-			Changed?.Invoke(this);
 		}
 
-		public Board(Tables myTable, Tables yoTable, bool myFirst)
+		public Board(uint[,] stones, bool myFirst, bool myDum)
 		{
-			SetUp(myTable, yoTable, myFirst);
+			Init();
+
+			Point = 0;
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					this.stones[y, x] = stones[y, x];
+					Point += GetPoint(stones[y, x]);
+				}
+			}
+
+			isMyTurn = myFirst;
+			isMyDum = myDum;
+
+			setUpPosAndTargets();
 		}
 
-		bool isMyFirst;
-		public bool IsMyFirst
+		public Board(Tables myTable, Tables yoTable, bool myFirst, bool myDum)
 		{
-			get => isMyFirst;
-		}
+			Init();
 
-		public void SetUp(Tables myTable, Tables yoTable, bool myfirst)
-		{
-			SetUp();
+			stones = GetStones(myTable, yoTable);
 
-			stones[0, 0] = (uint)Stones.YoCha1;
-			stones[0, 3] = (uint)Stones.YoSa1;
-			stones[0, 5] = (uint)Stones.YoSa2;
-			stones[0, 8] = (uint)Stones.YoCha2;
-			stones[1, 4] = (uint)Stones.YoKing;
-			stones[2, 1] = (uint)Stones.YoPo1;
-			stones[2, 7] = (uint)Stones.YoPo2;
-			stones[3, 0] = (uint)Stones.YoJol1;
-			stones[3, 2] = (uint)Stones.YoJol2;
-			stones[3, 4] = (uint)Stones.YoJol3;
-			stones[3, 6] = (uint)Stones.YoJol4;
-			stones[3, 8] = (uint)Stones.YoJol5;
-
-			stones[6, 0] = (uint)Stones.MyJol1;
-			stones[6, 2] = (uint)Stones.MyJol2;
-			stones[6, 4] = (uint)Stones.MyJol3;
-			stones[6, 6] = (uint)Stones.MyJol4;
-			stones[6, 8] = (uint)Stones.MyJol5;
-			stones[7, 1] = (uint)Stones.MyPo1;
-			stones[7, 7] = (uint)Stones.MyPo2;
-			stones[8, 4] = (uint)Stones.MyKing;
-			stones[9, 0] = (uint)Stones.MyCha1;
-			stones[9, 3] = (uint)Stones.MySa1;
-			stones[9, 5] = (uint)Stones.MySa2;
-			stones[9, 8] = (uint)Stones.MyCha2;
-
-			if (myTable == Tables.Inner)
-			{
-				stones[9, 1] = (uint)Stones.MyMa1;
-				stones[9, 2] = (uint)Stones.MySang1;
-				stones[9, 6] = (uint)Stones.MySang2;
-				stones[9, 7] = (uint)Stones.MyMa2;
-			}
-			else if (myTable == Tables.Outer)
-			{
-				stones[9, 1] = (uint)Stones.MySang1;
-				stones[9, 2] = (uint)Stones.MyMa1;
-				stones[9, 6] = (uint)Stones.MyMa2;
-				stones[9, 7] = (uint)Stones.MySang2;
-			}
-			else if (myTable == Tables.Left)
-			{
-				stones[9, 1] = (uint)Stones.MySang1;
-				stones[9, 2] = (uint)Stones.MyMa1;
-				stones[9, 6] = (uint)Stones.MySang2;
-				stones[9, 7] = (uint)Stones.MyMa2;
-			}
-			else
-			{
-				stones[9, 1] = (uint)Stones.MyMa1;
-				stones[9, 2] = (uint)Stones.MySang1;
-				stones[9, 6] = (uint)Stones.MyMa2;
-				stones[9, 7] = (uint)Stones.MySang2;
-			}
-
-			if (yoTable == Tables.Inner)
-			{
-				stones[0, 1] = (uint)Stones.YoMa1;
-				stones[0, 2] = (uint)Stones.YoSang1;
-				stones[0, 6] = (uint)Stones.YoSang2;
-				stones[0, 7] = (uint)Stones.YoMa2;
-			}
-			else if (yoTable == Tables.Outer)
-			{
-				stones[0, 1] = (uint)Stones.YoSang1;
-				stones[0, 2] = (uint)Stones.YoMa1;
-				stones[0, 6] = (uint)Stones.YoMa2;
-				stones[0, 7] = (uint)Stones.YoSang2;
-			}
-			else if (yoTable == Tables.Left)
-			{
-				stones[0, 1] = (uint)Stones.YoMa1;
-				stones[0, 2] = (uint)Stones.YoSang1;
-				stones[0, 6] = (uint)Stones.YoMa2;
-				stones[0, 7] = (uint)Stones.YoSang2;
-			}
-			else
-			{
-				stones[0, 1] = (uint)Stones.YoSang1;
-				stones[0, 2] = (uint)Stones.YoMa1;
-				stones[0, 6] = (uint)Stones.YoSang2;
-				stones[0, 7] = (uint)Stones.YoMa2;
-			}
-
-			if (myfirst)
-			{
-				Point = -15;
-				isMyTurn = true;
-			}
-			else
-			{
-				Point = 15;
-				isMyTurn = false;
-			}
-
-			isMyFirst = myfirst;
+			isMyTurn = myFirst;
+			isMyDum = myDum;
 
 			setUpPosAndTargets();
 			
@@ -254,76 +179,30 @@ namespace Janggi
 		public Board GetOpposite()
 		{
 			Board nuBoard = new Board();
-			//이전 포석을 보관하고
 
-			for (int y = 0; y < Height; y++)
-			{
-				for (int x = 0; x < Width; x++)
-				{
-					//회전된 새로운 위치
-					int nx = Width - x - 1;
-					int ny = Height - y - 1;
-
-					//편을 바꿔서 넣는다.
-					nuBoard.stones[ny, nx] = Opposite(stones[y, x]);
-				}
-			}
+			nuBoard.stones = StoneHelper.GetOpposite(stones);
 
 			nuBoard.Point = -Point;
 			nuBoard.isMyTurn = !isMyTurn;
-			nuBoard.isMyFirst = !isMyFirst;
+			nuBoard.isMyDum = !isMyDum;
 
 			nuBoard.setUpPosAndTargets();
 
 			return nuBoard;
 		}
 
-		public void Set(uint[,] stones, bool isMyFirst, bool isMyTurn)
-		{
-			Point = 0;
-
-			for (int y = 0; y < Height; y++)
-			{
-				for (int x = 0; x < Width; x++)
-				{
-					this.stones[y, x] = stones[y, x];
-					Point += GetPoint(stones[y, x]);
-				}
-			}
-
-			this.isMyFirst = isMyFirst;
-			this.isMyTurn = isMyTurn;
-
-			setUpPosAndTargets();
-		}
-
 		//좌우로 뒤집는 효과
 		public Board GetFlip()
 		{
 			Board nuBoard = new Board();
-			//이전 포석을 보관하고
-
-			for (int y = 0; y < Height; y++)
-			{
-				for (int x = 0; x < Width; x++)
-				{
-					//회전된 새로운 위치
-					int nx = Width - x - 1;
-					int ny = y;
-
-					//편 바꾸지 않고 그냥 넣어야지.
-					nuBoard.stones[ny, nx] = stones[y, x];
-				}
-			}
+			
+			nuBoard.stones = StoneHelper.GetFlip(stones);
 
 			nuBoard.Point = Point;
 			nuBoard.isMyTurn = isMyTurn;
-			nuBoard.isMyFirst = isMyFirst;
+			nuBoard.isMyDum = isMyDum;
 
 			nuBoard.setUpPosAndTargets();
-
-			//나머진 다 똑같다.
-			
 
 			return nuBoard;
 		}
@@ -1461,13 +1340,13 @@ namespace Janggi
 			lock (Global.Rand)
 			{
 				bool colorInverse;
-				if (IsMyFirst)
+				if (IsMyDum)
 				{
-					colorInverse = false;
+					colorInverse = true;
 				}
 				else
 				{
-					colorInverse = true;
+					colorInverse = false;
 				}
 
 				string result = "";
@@ -1500,7 +1379,7 @@ namespace Janggi
 							Console.ForegroundColor = ConsoleColor.Magenta;
 						}
 
-						Console.Write(GetLetter(stone, IsMyFirst));
+						Console.Write(GetLetter(stone, IsMyDum));
 
 						Console.BackgroundColor = ConsoleColor.Black;
 						Console.Write(" ");
@@ -1516,14 +1395,14 @@ namespace Janggi
 		{
 			string[] letters;
 			
-			if (IsMyFirst)
+			if (IsMyDum)
 			{
-				letters = lettersCho;
+				letters = lettersHan;
 			
 			}
 			else
 			{
-				letters = lettersHan;
+				letters = lettersCho;
 			
 			}
 
@@ -1548,23 +1427,31 @@ namespace Janggi
 
 		public static int[] index2layer = new int[]
 		{
-			0, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8,
-			9, 9, 9, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15
+			0,
+			1, 1, 1, 1, 1, 2, 2,  3,  3,  4,  4,  5,  5,  6,  6, 7,
+			8, 8, 8, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14
 		};
+
+		public static uint[] targetLayers = new uint[]
+			{
+				Stones.MyJol, Stones.MySang, Stones.MyMa, Stones.MyPo, Stones.MyCha, Stones.MySa, Stones.MyKing,
+				Stones.YoJol, Stones.YoSang, Stones.YoMa, Stones.YoPo, Stones.YoCha, Stones.YoSa, Stones.YoKing,
+			};
 
 		public byte[] GetBytes()
 		{
-			//스톤 레이어 16개
-			//선수레이어 1개
-			//그냥 패딩 1개
-			//각 위치별 target 90개
-			// => 118 개 헐
+			//[0-14]  스톤 레이어 15개 (돌 종류별로 빈칸(1) + 초(7) + 한(7))
+			//[15]덤  레이어 1개 (한측이 1)
+			//[16]    그냥 1 패딩 1개 (바이어스 역할?)
+			//[17-30] 각 종류별 타겟 14개
+			
 			//누구 차례인지는 표시하지 않음..... 그냥 무조건 아래쪽 차례.
 
-			
-			byte[,,] layer = new byte[10, 9, 118];
+			//합쳐서 31개
 
-			int fromLayer = 18;//to 117
+
+			byte[,,] layer = new byte[10, 9, 31];
+
 			for (int y = 0; y < 10; y++)
 			{
 				for (int x = 0; x < 9; x++)
@@ -1577,54 +1464,35 @@ namespace Janggi
 					//타겟 칠하기
 					if (!IsEmpty(stone))
 					{
-						for (int ty = 0; ty < 10; ty++)
+						for (int i = 0; i < 14; i++)
 						{
-							for (int tx = 0; tx < 9; tx++)
+							if ((stone & targetLayers[i]) > 0)
 							{
-								if ((targets[ty, tx] & stone) != 0)
-								{
-									layer[ty, tx, fromLayer] = 1;
-								}
+								layer[y, x, i + 17] = 1;
 							}
 						}
 					}
 
-					fromLayer++;
-
 					//그냥 패딩
-
-					layer[y, x, 17] = 1;
+					layer[y, x, 16] = 1;
 				}
 			}
 
 
-			if (IsMyFirst)
+			if (IsMyDum)
 			{
 				for (int y = 0; y < 10; y++)
 				{
 					for (int x = 0; x < 9; x++)
 					{
-						layer[y, x, 16] = 1;
+						layer[y, x, 15] = 1;
 					}
 				}
 			}
 
-			byte[] data = new byte[10 * 9 * 118];
+			byte[] data = new byte[10 * 9 * 31];
 			
-
 			Buffer.BlockCopy(layer, 0, data, 0, data.Length * sizeof(byte));
-
-			//int index = 0;
-			//for (int y = 0; y < 10; y++)
-			//{
-			//	for (int x = 0; x < 9; x++)
-			//	{
-			//		for (int k = 0; k < 118; k++)
-			//		{
-			//			data[index++] = layer[y, x, k];
-			//		}
-			//	}
-			//}
 
 			return data;
 		}
