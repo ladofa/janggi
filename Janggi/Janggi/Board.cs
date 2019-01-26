@@ -197,6 +197,7 @@ namespace Janggi
 			nuBoard.Point = -Point;
 			nuBoard.isMyTurn = !isMyTurn;
 			nuBoard.isMyDum = !isMyDum;
+			nuBoard.prevMove = prevMove.GetOpposite();
 
 			nuBoard.setUpPosAndTargets();
 

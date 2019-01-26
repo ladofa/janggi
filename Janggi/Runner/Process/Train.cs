@@ -112,8 +112,6 @@ namespace Runner.Process
 						}
 					}
 
-					
-
 					lock (bufferPolicy)
 					{
 						Shuffle(bufferPolicy);
@@ -135,15 +133,15 @@ namespace Runner.Process
 			running = true;
 			while (running)
 			{
-				const int setCount = 128;
+				const int setCount = 240;
 
-				while (bufferPolicy.Count < setCount && bufferValue.Count < setCount)
+				while (bufferPolicy.Count < setCount * 10 && bufferValue.Count < setCount * 10)
 				{
 					signal.Reset();
 					signal.WaitOne();
 				}
 
-				if (bufferPolicy.Count > setCount)
+				if (bufferPolicy.Count > setCount * 10)
 				{
 					Console.WriteLine("train policy ... " + DateTime.Now.ToString());
 					List<Tuple<Board, Move>> sub;
@@ -156,7 +154,7 @@ namespace Runner.Process
 					tcpCommClient.TrainPolicy(sub);
 				}
 
-				if (bufferValue.Count > setCount)
+				if (bufferValue.Count > setCount * 10)
 				{
 					Console.WriteLine("train value ... " + DateTime.Now.ToString());
 					List<Tuple<Board, float>> sub;
@@ -374,9 +372,6 @@ namespace Runner.Process
 			}
 		}
 
-
-
-
 		List<string> pathList;
 
 		void genGibo()
@@ -385,7 +380,7 @@ namespace Runner.Process
 			{
 				Console.WriteLine("read gibos...");
 
-				string[] allfiles = Directory.GetFiles("d:/dataset/gibo/아마고수기보1", "*.gib", SearchOption.AllDirectories);
+				string[] allfiles = Directory.GetFiles("d:/dataset/gibo", "*.gib", SearchOption.AllDirectories);
 				pathList = allfiles.ToList();
 			}
 
@@ -407,33 +402,37 @@ namespace Runner.Process
 				int isMyWin = gibo.isMyWin;
 				int isYoWin = isMyWin == 1 ? 0 : 1;
 
-				for (int i = 0; i < history.Count - 1; i++)
+				for (int i = 0; i < history.Count; i++)
 				{
 					Board board = history[i];
-					Move move = history[i + 1].PrevMove;
 
 					if (board.IsMyTurn)
 					{
-						giboPolicy.Add(new Tuple<Board, Move>(board, move));
-					}
-					else
-					{
-						//policy는 내가 움직인 것으로 돌려서 저장
-						giboPolicy.Add(new Tuple<Board, Move>(board.GetOpposite(), move.GetOpposite()));
-					}
+						if (i < history.Count - 1)
+						{
+							Move move = history[i + 1].PrevMove;
+							giboPolicy.Add(new Tuple<Board, Move>(board, move));
+						}
 
-					//모든 상태를 저장.
-					if (isMyWin == -1)
-					{
-						//상태값 없음.
-					}
-					else if (board.IsMyTurn)
-					{
-						giboValue.Add(new Tuple<Board, float>(board, isMyWin));
+						if (i > 10 && isMyWin != -1)
+						{
+							giboValue.Add(new Tuple<Board, float>(board, isMyWin));
+						}
 					}
 					else
 					{
-						giboValue.Add(new Tuple<Board, float>(board.GetOpposite(), isYoWin));
+						//항상 두려고 하는 쪽을 아래에 배치한다.
+						var bp = board.GetOpposite();
+						if (i < history.Count - 1)
+						{
+							Move move = history[i + 1].PrevMove;
+							giboPolicy.Add(new Tuple<Board, Move>(board.GetOpposite(), move.GetOpposite()));
+						}
+
+						if (isMyWin != -1)
+						{
+							giboValue.Add(new Tuple<Board, float>(bp, isYoWin));
+						}
 					}
 				}
 			}
@@ -672,9 +671,9 @@ namespace Runner.Process
 		void Shuffle<T>(List<T> list)
 		{
 			int n = list.Count;
-			while (n > 5)
+			while (n > 1)
 			{
-				n -= 5;
+				n -= 1;
 				int k = random.Next(n + 1);
 				T value = list[k];
 				list[k] = list[n];

@@ -23,12 +23,15 @@ namespace Runner.Process
 				Console.WriteLine(path);
 				List<Gibo> gibos = Gibo.Read(path);
 
-				List<Board> boards = gibos[0].GetParsed();
-
-				if (boards.Count > 0)
+				foreach (Gibo gibo in gibos)
 				{
-					Console.WriteLine("IS MY WIN : " + gibos[0].isMyWin);
-					boards.Last().PrintStones();
+					List<Board> boards = gibo.GetParsed();
+
+					if (boards.Count > 0)
+					{
+						Console.WriteLine("IS MY WIN : " + gibo.isMyWin);
+						boards.Last().PrintStones();
+					}
 				}
 			}
 
