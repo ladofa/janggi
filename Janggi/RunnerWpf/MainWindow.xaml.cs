@@ -44,7 +44,7 @@ namespace RunnerWpf
 		Controllers myController;
 		Controllers yoController;
 
-		
+		Janggi.TensorFlow.TcpCommClient client = new Janggi.TensorFlow.TcpCommClient();
 		PrimaryUcb primaryUcb = new PrimaryUcb();
 		PseudoYame pseudoYame = new PseudoYame();
 		OnlyPolicy onlyPolicy;
@@ -126,29 +126,30 @@ namespace RunnerWpf
 
 
 			//종료 절차
-			//if (mcts != null)
-			//{
-			//	isRunning = false;
-			//	userWaiter.Set();
-			//	mcts.ProgressUpdated -= Mcts_ProgressUpdated;
-			//	ResumeSearching();
-			//	mcts.ForceStopSearch();
-			//	thread?.Join();
-			//}
+			if (mcts != null)
+			{
+				isRunning = false;
+				userWaiter.Set();
+				mcts.ProgressUpdated -= Mcts_ProgressUpdated;
+				ResumeSearching();
+				mcts.ForceStopSearch();
+				thread?.Join();
+			}
 
-			//if (realYame == null)
-			//{
-			//	realYame = new RealYame();
-			//}
-			//mcts = new Mcts(realYame)
-			//{
-			//	MaxVisitCount = 500
-			//};
+			if (realYame == null)
+			{
+				realYame = new RealYame(client);
+			}
 
-			//TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
-			//mcts.Init(mainBoard);
-			//mcts.ProgressUpdated += Mcts_ProgressUpdated;
-			//ResumeSearching();
+			mcts = new Mcts(realYame)
+			{
+				MaxVisitCount = 500
+			};
+
+			TextBoxMaxVisitCount.Text = mcts.MaxVisitCount.ToString();
+			mcts.Init(mainBoard);
+			mcts.ProgressUpdated += Mcts_ProgressUpdated;
+			ResumeSearching();
 
 			thread = new Thread(runner);
 			thread.Start();

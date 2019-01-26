@@ -26,8 +26,6 @@ namespace Janggi.Ai
 					Console.WriteLine("ConnectionFailed.");
 					System.Threading.Thread.Sleep(1000);
 				}
-
-				this.client.LoadModel(TensorFlow.NetworkKinds.Value, valueNetName, valueNetName);
 			}
 		}
 
@@ -57,7 +55,7 @@ namespace Janggi.Ai
 				{
 					for (int i = 0; i < evals.Length; i++)
 					{
-						float eval = client.EvaluateValue(board, valueNetName);
+						float eval = client.EvaluateValue(board);
 						evals[i] = eval;
 					}
 				}
@@ -66,7 +64,7 @@ namespace Janggi.Ai
 					for (int i = 0; i < evals.Length; i++)
 					{
 						//상대방이 이길 확률.
-						float eval = client.EvaluateValue(board.GetOpposite(), valueNetName);
+						float eval = client.EvaluateValue(board.GetOpposite());
 						evals[i] = 1 - eval;
 					}
 				}

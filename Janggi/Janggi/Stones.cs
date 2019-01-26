@@ -201,7 +201,7 @@ namespace Janggi
 			return stones;
 		}
 
-		public static uint[,] GetOpposite(uint[,] stones)
+		public static uint[,] GetFlipVer(uint[,] stones)
 		{
 			uint[,] nuStones = new uint[Height, Width];
 			for (int y = 0; y < Height; y++)
@@ -213,7 +213,7 @@ namespace Janggi
 					int ny = Height - y - 1;
 
 					//편을 바꿔서 넣는다.
-					nuStones[ny, nx] = Opposite(stones[y, x]);
+					nuStones[ny, nx] = stones[y, x];
 				}
 			}
 

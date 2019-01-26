@@ -6,12 +6,17 @@ def get_network(name, input_board):
 
 
 def simple_network(input_board):
-	x = input_board
-	x = tf.layers.conv2d(x, 56, 5, padding='same', activation=tf.nn.relu)
-	x = tf.layers.conv2d(x, 56, 5, padding='same', activation=tf.nn.relu)
-	x = tf.layers.conv2d(x, 56, 5, padding='same', activation=tf.nn.relu)
-	x = tf.layers.conv2d(x, 56, 5, padding='same', activation=tf.nn.relu)
-	x = tf.layers.conv2d(x, 56, 5, padding='same', activation=tf.nn.relu)
+	channels = 56
+	x = tf.cast(input_board, tf.float32)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
+	x = tf.layers.conv2d(x, channels, 3, padding='same', activation=tf.nn.relu)
 	x = tf.layers.conv2d(x, 2, 3, padding='same')
 
 	return x

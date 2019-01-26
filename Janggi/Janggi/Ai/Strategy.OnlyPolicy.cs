@@ -22,7 +22,6 @@ namespace Janggi.Ai
 					Console.WriteLine("ConnectionFailed.");
 					System.Threading.Thread.Sleep(1000);
 				}
-				this.client.LoadModel(TensorFlow.NetworkKinds.Policy, networkName, networkName);
 			}
 			else
 			{
@@ -56,14 +55,14 @@ namespace Janggi.Ai
 
 			if (node.board.IsMyTurn)
 			{
-				node.policyWeights = client.EvaluatePolicy(node.board, node.moves, networkName);
+				node.policyWeights = client.EvaluatePolicy(node.board, node.moves);
 			}
 			else
 			{
 				Board opBoard = node.board.GetOpposite();
 				
 				List<Move> opMoves = Move.GetOpposite(node.moves);
-				node.policyWeights = client.EvaluatePolicy(opBoard, opMoves, networkName);
+				node.policyWeights = client.EvaluatePolicy(opBoard, opMoves);
 			}
 			float[] proms = node.policyWeights;
 

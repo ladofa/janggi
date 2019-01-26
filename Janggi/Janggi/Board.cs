@@ -180,7 +180,19 @@ namespace Janggi
 		{
 			Board nuBoard = new Board();
 
-			nuBoard.stones = StoneHelper.GetOpposite(stones);
+			uint[,] nuStones = nuBoard.stones;
+			for (int y = 0; y < Height; y++)
+			{
+				for (int x = 0; x < Width; x++)
+				{
+					//회전된 새로운 위치
+					int nx = Width - x - 1;
+					int ny = Height - y - 1;
+
+					//편을 바꿔서 넣는다.
+					nuStones[ny, nx] = Opposite(stones[y, x]);
+				}
+			}
 
 			nuBoard.Point = -Point;
 			nuBoard.isMyTurn = !isMyTurn;
@@ -207,21 +219,21 @@ namespace Janggi
 			return nuBoard;
 		}
 
-		public float[] GetProms(float[] gp)
-		{
-			List<Move> moves = GetAllPossibleMoves();
-			float[] proms = new float[moves.Count];
+		//public float[] GetProms(float[] gp)
+		//{
+		//	List<Move> moves = GetAllPossibleMoves();
+		//	float[] proms = new float[moves.Count];
 
-			for (int i = 0; i < moves.Count; i++)
-			{
-				Move move = moves[i];
-				int index = Move.move2index[move];
-				float prom = proms[index];
-				proms[i] = prom;
-			}
+		//	for (int i = 0; i < moves.Count; i++)
+		//	{
+		//		Move move = moves[i];
+		//		int index = Move.move2index[move];
+		//		float prom = proms[index];
+		//		proms[i] = prom;
+		//	}
 
-			return proms;
-		}
+		//	return proms;
+		//}
 
 
 		public Move GetRandomMove(float[] proms, out float total)
@@ -258,34 +270,33 @@ namespace Janggi
 			}
 		}
 
-		public Move GetBsetMove(float[] proms)
-		{
-			List<Move> moves = GetAllPossibleMoves();
-			float bestProm = 0;
-			int bestIndex = -1;
-			for (int i = 0; i < moves.Count; i++)
-			{
-				int index = Move.move2index[moves[i]];
-				float prom = proms[index];
+		//public Move GetBsetMove(float[] proms)
+		//{
+		//	List<Move> moves = GetAllPossibleMoves();
+		//	float bestProm = 0;
+		//	int bestIndex = -1;
+		//	for (int i = 0; i < moves.Count; i++)
+		//	{
+		//		float prom = proms[index];
 
-				if (prom > bestProm)
-				{
-					bestProm = prom;
-					bestIndex = i;
-				}
-			}
+		//		if (prom > bestProm)
+		//		{
+		//			bestProm = prom;
+		//			bestIndex = i;
+		//		}
+		//	}
 
-			//얼마나 policy network가 그지같으면 불가능한 움직임만 확률로 나왔을까.
-			if (bestIndex == -1)
-			{
-				int best = Global.Rand.Next(moves.Count);
-				return moves[best];
-			}
-			else
-			{
-				return moves[bestIndex];
-			}
-		}
+		//	//얼마나 policy network가 그지같으면 불가능한 움직임만 확률로 나왔을까.
+		//	if (bestIndex == -1)
+		//	{
+		//		int best = Global.Rand.Next(moves.Count);
+		//		return moves[best];
+		//	}
+		//	else
+		//	{
+		//		return moves[bestIndex];
+		//	}
+		//}
 
 		List<Move> allPossibleMoves = null;
 		public List<Move> GetAllPossibleMoves()
@@ -1464,9 +1475,10 @@ namespace Janggi
 					//타겟 칠하기
 					if (!IsEmpty(stone))
 					{
+						uint target = targets[y, x];
 						for (int i = 0; i < 14; i++)
 						{
-							if ((stone & targetLayers[i]) > 0)
+							if ((target & targetLayers[i]) > 0)
 							{
 								layer[y, x, i + 17] = 1;
 							}

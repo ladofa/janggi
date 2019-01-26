@@ -18,15 +18,6 @@ namespace Janggi.Ai
 
 		public RealYame()
 		{
-			while (!client.Connect("localhost", 9999))
-			{
-				Console.WriteLine("ConnectionFailed.");
-				System.Threading.Thread.Sleep(1000);
-			}
-
-			client.LoadModel(NetworkKinds.Policy, policyNetName, policyNetName);
-			client.LoadModel(NetworkKinds.Value, valueNetName, valueNetName);
-
 			MaxRolloutDepth = 100;
 			ExplorationRate = 1;
 			Alpha = 0.5f;
@@ -66,13 +57,13 @@ namespace Janggi.Ai
 
 			if (node.board.IsMyTurn)
 			{
-				node.policyWeights = client.EvaluatePolicy(node.board, node.moves, policyNetName);
+				node.policyWeights = client.EvaluatePolicy(node.board, node.moves);
 			}
 			else
 			{
 				Board opBoard = node.board.GetOpposite();
 				List<Move> opMoves = Move.GetOpposite(node.moves);
-				node.policyWeights = client.EvaluatePolicy(opBoard, opMoves, policyNetName);
+				node.policyWeights = client.EvaluatePolicy(opBoard, opMoves);
 			}
 
 			float[] proms = node.policyWeights;
@@ -167,7 +158,7 @@ namespace Janggi.Ai
 			float valueResult = 0;
 			if (Alpha != 1)
 			{
-				valueResult = client.EvaluateValue(node.board, valueNetName);
+				valueResult = client.EvaluateValue(node.board);
 			}
 
 			return rolloutResult * Alpha + (1 - Alpha) * valueResult;

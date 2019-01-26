@@ -267,7 +267,6 @@ namespace RunnerWpf
 						var move = MakeNodeButtonAndState(children[i], maxVisited);
 						StackPanelMoves.Children.Add(move);
 					}
-					
 				}
 				else
 				{

@@ -51,7 +51,7 @@
   <ItemGroup>
     <Compile Include="Process\DevelopmentTest.cs" />
     <Compile Include="Process\GiboTest.cs" />
-    <Compile Include="Process\Reinforcement.cs" />
+    <Compile Include="Process\Train.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -28,19 +28,14 @@ namespace Janggi
 
 		public static List<Gibo> Read(string path)
 		{
+			FileInfo fileInfo = new FileInfo(path);
 			FileStream stream = new FileStream(path, FileMode.Open);
-			MemoryStream ms = new MemoryStream();
+			MemoryStream ms = new MemoryStream((int)fileInfo.Length);
 
-			while (true)
-			{
-				int val = stream.ReadByte();
-				if (val < 0) break; //case of -1
-				if (val == 255) continue; //case of 0xff
-				ms.WriteByte((byte)val);
-			}
+			byte[] byteArr = new byte[fileInfo.Length];
+			int val = stream.Read(byteArr, 0, (int)fileInfo.Length);
 
-			string raw = Encoding.GetEncoding(51949).GetString(ms.GetBuffer());
-
+			string raw = Encoding.GetEncoding(51949).GetString(byteArr);
 			List<Gibo> gibos = new List<Gibo>();
 
 			string[] lines = raw.Split('\n');
@@ -50,8 +45,10 @@ namespace Janggi
 
 			bool commentFound = false;
 
-			foreach (string line in lines)
+			foreach (string _line in lines)
 			{
+				char[] trimLetters = { ' ', '', '\u001a'};
+				string line = _line.Trim('\r').TrimStart(trimLetters);
 				//Console.WriteLine(line);
 
 				//코멘트가 발견되면
@@ -101,7 +98,7 @@ namespace Janggi
 					string[] words = line.Split(' ');
 					//<0>과 같은 문자를 제거한다.
 					words = (from word in words
-							where (word != "<0>" & word != "\x1a")
+							where (word != "<0>" & word != "\r")
 							select word).ToArray();
 					
 					for (int k = 0; k < words.Length; k += 2)
@@ -119,11 +116,30 @@ namespace Janggi
 							int fromY = int.Parse(wordMove[0].ToString()) - 1;
 							int fromX = int.Parse(wordMove[1].ToString()) - 1;
 
-							int toY = int.Parse(wordMove[3].ToString()) - 1;
-							int toX = int.Parse(wordMove[4].ToString()) - 1;
+							int nextIntIndex = 3;
+							int toY;
+							while (true)
+							{
+								bool foundNumber =  int.TryParse(wordMove[nextIntIndex].ToString(), out toY);
+								if (foundNumber)
+								{
+									toY--;
+									break;
+								}
+								else
+								{
+									nextIntIndex++;
+								}
+							}
+							int toX = int.Parse(wordMove[nextIntIndex + 1].ToString()) - 1;
 
 							if (fromY == -1) fromY = 9;
 							if (toY == -1) toY = 9;
+
+							if (fromX < 0 || fromY < 0 || toX < 0 || toY < 0)
+							{
+								throw new Exception("???");
+							}
 
 							move = new Move((sbyte)fromX, (sbyte)fromY, (sbyte)toX, (sbyte)toY);
 						}
@@ -230,11 +246,11 @@ namespace Janggi
 
 								else
 									throw new Exception("unknown letter! : " + letter);
-								
+								x++;
 							}
-							x++;
 						}
 						y++;
+						x = 0;
 					}
 				}
 				else if (tag == "대국결과")
@@ -295,31 +311,45 @@ namespace Janggi
 			} //end of foreach
 
 
-			bool myFirst = true;
+			
 			if (completeTable)
 			{
 				stones = GetStones(myTable, yoTable);
 			}
-			Pos starting = moves[0].From;
+			
 
 			//한이 아래쪽에 있으면 일단 바꿈
 			if (stones[8, 4] == Stones.YoKing)
 			{
-				stones = GetOpposite(stones);
+				stones = GetFlipVer(stones);
 				moves = Move.GetOpposite(moves);
 			}
 
 			//상대방부터 시작하면
+			Pos starting = moves[0].From;
+			bool myFirst = true;
+
+			//일부러 봐주는 이런 판은 그냥 무시한다.
+			if (starting.IsEmpty)
+			{
+				return new List<Board>();
+			}
+
 			if (IsYours(stones[starting.Y, starting.X]))
 			{
 				myFirst = false;
 			}
 
-			Board initBoard = new Board(stones, myFirst, false);
-
 			List<Board> boards = new List<Board>();
+			Board board = new Board(stones, myFirst, false);
+			boards.Add(board);
 
-			boards.Add(initBoard);
+			foreach (Move move in moves)
+			{
+				Board next = board.GetNext(move);
+				boards.Add(next);
+				board = next;
+			}
 
 			return boards;
 		}

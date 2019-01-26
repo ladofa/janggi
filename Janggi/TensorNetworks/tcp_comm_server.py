@@ -2,16 +2,17 @@
 import socket
 import numpy as np
 import time
+import struct
 
 import tensor_networks as tn
 import move_transfer as mt
 
 
 
+
 #네트워크를 string라벨 붙여서 저장
 time_recv = 0
 time_train = 0
-
 
 
 ############################################################################3
@@ -51,10 +52,10 @@ def recv_move(socket):
 	if received[0] == 255:
 		return move
 
-	fy = received[0] // 10
-	fx = received[0] % 10
-	ty = received[1] // 10
-	tx = received[1] % 10
+	fy = received[0] // 9
+	fx = received[0] % 9
+	ty = received[1] // 9
+	tx = received[1] % 9
 
 	move[fy, fx, 0] = 1
 	move[ty, tx, 1] = 1
@@ -74,18 +75,18 @@ def send_proms(socket, proms):
 	socket.send(msg)
 
 def recv_judge(socket):
-	msg = socket.recv(1)
-	judge = msg[0] / 255.0
+	msg = socket.recv(4)
+	judge = struct.unpack('f', msg)
 	return judge
 
 def send_judge(socket, judge):
-	msg = bytes([int(judge * 255)])
+	msg = struct.pack('f', judge)
 	socket.send(msg)
 
 def recv_policy_train_data(socket):
 	#255개 단위로 들어옴.
 	size_255 = socket.recv(1)
-	size = size_255[0] * 255
+	size = size_255[0]
 	data_board = [None] * size
 	data_move = [None] * size
 	for i in range(size):
@@ -94,8 +95,7 @@ def recv_policy_train_data(socket):
 	return {'board':data_board, 'move':data_move}
 
 def recv_value_train_data(socket):
-	size_255 = socket.recv(1)
-	size = size_255[0] * 255
+	size = socket.recv(1)[0]
 	data_board = [None] * size
 	data_judge = [None] * size
 	for i in range(size):
@@ -108,35 +108,24 @@ def recv_value_train_data(socket):
 def proc_check(kind, socket):
 	send_ok(socket)
 
-def proc_load(kind, socket):
-	name = recv_string(socket)
-	if kind == 1:
-		tn.load_policy(name)
-		send_ok(socket)
-	else:
-		tn.load_value(name)
-		send_ok(socket)
-
 def proc_save(kind, socket):
 	print("save...")
-	name = recv_string(socket)
 	if kind == 1:
-		tn.save_policy(name)
+		tn.save_policy()
 	else:
-		tn.save_value(name)
+		tn.save_value()
 	send_ok(socket)
 	print("save OK.")
 
 def proc_evaluate(kind, socket):
-	name = recv_string(socket)
 	if kind == 1:
 		board = recv_board(socket)
-		proms = tn.evaluate_policy(name, board)
+		proms = tn.eval_policy(board)
 		send_ok(socket)
 		send_proms(socket, proms[0])
 	else:
 		board = recv_board(socket)
-		judge = proms = tn.evaluate_value(name, board)
+		judge = proms = tn.eval_value(board)
 		send_ok(socket)
 		send_judge(socket, judge[0])
 
@@ -144,22 +133,14 @@ time_recv = 0
 time_train = 0
 
 def proc_train(kind, socket):
-	name = recv_string(socket)
-	
 	if kind == 1:
-		print("train policy...")	
-			
 		policy_train_data = recv_policy_train_data(socket)		
-		loss, gs = tn.train_policy(name, policy_train_data)
-		print('gs : ', gs, '  loss : ', loss)
-		print("train OK.")
-	
+		loss, gs, move_from, move_to = tn.train_policy(policy_train_data)
+		print('%d train : %.3lf' % (gs, loss))
 	else:
-		print("train value...")
 		value_train_data = recv_value_train_data(socket)
-		loss, gs = tn.train_value(name, value_train_data)
-		print('gs : ', gs, '  loss : ', loss)
-		print("train OK.")
+		loss, gs, judge = tn.train_value(value_train_data)
+		print('%d \t\t\t\t\t\tvalid : %.3lf' % (gs, loss))
 
 	send_ok(socket)
 
@@ -188,8 +169,6 @@ while 1:
 
 		if code == 1:
 			proc_check(kind, client_socket)
-		elif code == 3:
-			proc_load(kind, client_socket)
 		elif code == 4:
 			proc_save(kind, client_socket)
 		elif code == 5:

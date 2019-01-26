@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 using Janggi;
 
@@ -12,7 +13,7 @@ using Janggi.Ai;
 
 namespace Runner.Process
 {
-	public class Reinforcement
+	public class Train
 	{
 		bool running;
 
@@ -25,70 +26,42 @@ namespace Runner.Process
 		List<Tuple<Board, Move>> dataPolicy = new List<Tuple<Board, Move>>();
 		List<Tuple<Board, float>> dataValue = new List<Tuple<Board, float>>();
 
-		//flip, orientation을 거친 최종본
+		//augmentation을 거친 최종본
 		List<Tuple<Board, Move>> bufferPolicy = new List<Tuple<Board, Move>>();
 		List<Tuple<Board, float>> bufferValue = new List<Tuple<Board, float>>();
 
 		System.Threading.ManualResetEvent signal = new System.Threading.ManualResetEvent(false);
 		Janggi.TensorFlow.TcpCommClient tcpCommClient = new Janggi.TensorFlow.TcpCommClient();
 
-		string policyNetName = "policy192";
-		string valueNetName = "value192";
-
-		public Reinforcement()
+		public Train()
 		{
-			//genGibo();
-
 			//일정 시간에 모델 저장
 			System.Timers.Timer saveTimer = new System.Timers.Timer(10/*분*/ * 60 * 1000);
 			saveTimer.Elapsed += saveTimer_Elapsed;
 			saveTimer.Start();
-			
-			while (!tcpCommClient.Connect("localhost", 9999))
-			{
-				Console.WriteLine("ConnectionFailed.");
-				System.Threading.Thread.Sleep(1000);
-			}
 
 			Console.WriteLine("Connected!");
-
-			bool succeed = tcpCommClient.LoadModel(Janggi.TensorFlow.NetworkKinds.Policy, policyNetName, policyNetName);
-			if (succeed)
-			{
-				Console.WriteLine("LOAD succeed : " + policyNetName);
-			}
-			else
-			{
-				Console.WriteLine("CREATE new network : " + policyNetName);
-			}
-
-			succeed = tcpCommClient.LoadModel(Janggi.TensorFlow.NetworkKinds.Value, valueNetName, valueNetName);
-			if (succeed)
-			{
-				Console.WriteLine("LOAD succeed : " + valueNetName);
-			}
-			else
-			{
-				Console.WriteLine("CREATE new network : " + valueNetName);
-			}
 
 			////////////////////////////////////////////////////			
 
 			//학습
+			//CPU를 최대로 활용하기 위해 여러 단계로 프로세스를 나눔
 
-			//자료 생성 프로세스
+			//generation
 			Task.Run(() =>
 			{
 				int makingTurn = 0;
 				while (running)
 				{
+					//자료가 한 쪽이라도 남아있으면 쉰다.
 					if (dataPolicy.Count > 5000 || dataValue.Count > 5000)
 					{
 						System.Threading.Thread.Sleep(1000);
 					}
 					else
 					{
-						generate(new PseudoYame(), new PseudoYame());
+						genGibo();
+						//genReinforce();
 						signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 					}
 
@@ -96,7 +69,7 @@ namespace Runner.Process
 				}
 			});
 
-			//생성된 자료를 뒤집어서 데이터를 추가하는 프로세스
+			//Augmentation
 			Task.Run(() =>
 			{
 				while (running)
@@ -118,7 +91,6 @@ namespace Runner.Process
 							bufferPolicy.AddRange(sub2);
 							signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 						}
-
 					}
 
 					while (bufferValue.Count < 10000 && dataValue.Count >= 255)
@@ -131,7 +103,6 @@ namespace Runner.Process
 						}
 
 						var subFlip = from e in sub select new Tuple<Board, float>(e.Item1.GetFlip(), e.Item2);
-						
 
 						lock (bufferValue)
 						{
@@ -140,21 +111,39 @@ namespace Runner.Process
 							signal.Set();//만들었으니 학습을 시도하시오 파란불 반짝
 						}
 					}
+
+					
+
+					lock (bufferPolicy)
+					{
+						Shuffle(bufferPolicy);
+					}
+
+					lock (bufferValue)
+					{
+						Shuffle(bufferValue);
+					}
+
+					
+
+					System.Threading.Thread.Sleep(1000);
 				}
 			});
+
 
 			//학습 프로세스
 			running = true;
 			while (running)
 			{
-				const int setCount = 255 * 5;
+				const int setCount = 128;
 
-				if (bufferPolicy.Count < setCount && bufferValue.Count < setCount)
+				while (bufferPolicy.Count < setCount && bufferValue.Count < setCount)
 				{
 					signal.Reset();
 					signal.WaitOne();
 				}
-				else if (bufferPolicy.Count > bufferValue.Count)
+
+				if (bufferPolicy.Count > setCount)
 				{
 					Console.WriteLine("train policy ... " + DateTime.Now.ToString());
 					List<Tuple<Board, Move>> sub;
@@ -164,9 +153,10 @@ namespace Runner.Process
 						bufferPolicy.RemoveRange(0, setCount);
 					}
 
-					tcpCommClient.TrainPolicy(sub, policyNetName);
+					tcpCommClient.TrainPolicy(sub);
 				}
-				else
+
+				if (bufferValue.Count > setCount)
 				{
 					Console.WriteLine("train value ... " + DateTime.Now.ToString());
 					List<Tuple<Board, float>> sub;
@@ -174,13 +164,13 @@ namespace Runner.Process
 					{
 						sub = bufferValue.GetRange(0, setCount);
 						if (sub[0] == null) throw new Exception("???");
-						
+
 						bufferValue.RemoveRange(0, setCount);
 						if (sub[0] == null) throw new Exception("???");
 					}
 
 					if (sub[0] == null) throw new Exception("???");
-					tcpCommClient.TrainValue(sub, valueNetName);
+					tcpCommClient.TrainValue(sub);
 				}
 			}
 
@@ -190,8 +180,8 @@ namespace Runner.Process
 		private void saveTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
 		{
 			Console.WriteLine("save ...");
-			tcpCommClient.SaveModel(Janggi.TensorFlow.NetworkKinds.Policy, policyNetName, policyNetName);
-			tcpCommClient.SaveModel(Janggi.TensorFlow.NetworkKinds.Value, valueNetName, valueNetName);
+			tcpCommClient.SaveModel(Janggi.TensorFlow.NetworkKinds.Policy);
+			tcpCommClient.SaveModel(Janggi.TensorFlow.NetworkKinds.Value);
 			Console.WriteLine("save OK. #######################################################");
 		}
 
@@ -225,7 +215,7 @@ namespace Runner.Process
 				Move move;
 				if (turn < 10 && confirmRandom % 20 == 0)
 				{
-					var proms = tcpCommClient.EvaluatePolicy(board, board.GetAllPossibleMoves(), policyNetName);
+					var proms = tcpCommClient.EvaluatePolicy(board, board.GetAllPossibleMoves());
 
 					//proms를 기반으로 랜덤으로 고른다.
 					Move move2 = board.GetRandomMove(proms, out float total);
@@ -295,6 +285,9 @@ namespace Runner.Process
 			confirmRandom++;
 		}
 
+		/// <summary>
+		/// policy network만으로 서로 경기를 한다.
+		/// </summary>
 		void genPolicy()
 		{
 			Console.WriteLine("genPolicy ... ");
@@ -322,7 +315,7 @@ namespace Runner.Process
 				isP1Turn = !isP1Turn;
 
 				List<Move> moves = board.GetAllPossibleMoves();
-				var proms = tcpCommClient.EvaluatePolicy(board, moves, policyNetName);
+				var proms = tcpCommClient.EvaluatePolicy(board, moves);
 
 				//proms를 기반으로 랜덤으로 고른다.
 				Move move = board.GetRandomMove(proms, out float total);
@@ -381,169 +374,24 @@ namespace Runner.Process
 			}
 		}
 
-		void genMcts()
-		{
-			Console.WriteLine("genMcts ... ");
-			//게임 한 판 시작 ---------------------------
-			List<Tuple<Board, Move>> recP1 = new List<Tuple<Board, Move>>();
-			List<Tuple<Board, Move>> recP2 = new List<Tuple<Board, Move>>();
 
-			//랜덤으로 보드 생성
-			//상대방 선수로 놓는다. 어차피 시작하자마자 GetOpposite로 돌릴 거다.
-
-			RealYame yame = new RealYame(tcpCommClient);
-			OnlyPolicy policy = new OnlyPolicy(tcpCommClient, policyNetName);
-
-			Mcts mcts1 = new Mcts(yame);
-			Mcts mcts2 = new Mcts(policy);
-
-			mcts1.MaxVisitCount = 300;
-			mcts2.MaxVisitCount = 1;
-
-			//누가 먼저 시작하나.
-			//bool isMyFirst = Global.Rand.NextDouble() > 0.5;
-			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
-
-			bool isMyWin = false;
-
-			mcts1.Init(board);
-			mcts2.Init(board);
-
-			for (int turn = 0; turn < 100; turn++)
-			{
-				Move move;
-				Task<Node> task;
-				if (board.IsMyTurn)
-				{
-					task = mcts1.SearchNextAsync();
-				}
-				else
-				{
-					task = mcts2.SearchNextAsync();
-				}
-				task.Wait();
-				move = task.Result.prevMove;
-
-				if (move.IsEmpty)
-				{
-					var moves = board.GetAllPossibleMoves();
-					move = moves[Global.Rand.Next(moves.Count - 1)];
-				}
-
-				//움직임을 저장해주고
-				if (board.IsMyTurn)
-				{
-					recP1.Add(new Tuple<Board, Move>(board, move));
-				}
-				else
-				{
-					recP2.Add(new Tuple<Board, Move>(board, move));
-				}
-
-				mcts1.SetMove(move);
-				mcts2.SetMove(move);
-
-				board = board.GetNext(move);
-
-
-				board.PrintStones();
-
-				//겜이 끝났는지 확인
-				if (board.IsFinished)
-				{
-					isMyWin = board.IsMyWin;
-					break;
-				}
-			}
-
-			//턴제한으로 끝났으면 점수로
-			if (!board.IsFinished)
-			{
-				isMyWin = (board.Point > 0);
-			}
-
-			lock (dataPolicy)
-			{
-				if (isMyWin)
-				{
-					Console.WriteLine("    Collect data : my win");
-					var flip = from rec in recP1 select (new Tuple<Board, Move>(rec.Item1.GetFlip(), rec.Item2.GetFlip()));
-					dataPolicy.AddRange(recP1);
-					dataPolicy.AddRange(flip);
-
-
-					var list1 = from rec in recP1 select (new Tuple<Board, float>(rec.Item1, 1.0f));
-					var list2 = from rec in recP2 select (new Tuple<Board, float>(rec.Item1.GetOpposite(), 0f));
-
-					var list1Flip = from rec in list1 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
-					var list2Flip = from rec in list2 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
-
-					dataValue.AddRange(list1);
-					dataValue.AddRange(list2);
-					dataValue.AddRange(list1Flip);
-					dataValue.AddRange(list2Flip);
-				}
-				else
-				{
-					Console.WriteLine("    Collect data : YO win");
-					var flip = from rec in recP2 select (new Tuple<Board, Move>(rec.Item1.GetFlip(), rec.Item2.GetFlip()));
-					dataPolicy.AddRange(recP2);
-					dataPolicy.AddRange(flip);
-
-
-					var list1 = from rec in recP1 select (new Tuple<Board, float>(rec.Item1, 0f));
-					var list2 = from rec in recP2 select (new Tuple<Board, float>(rec.Item1.GetOpposite(), 1.0f));
-
-					var list1Flip = from rec in list1 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
-					var list2Flip = from rec in list2 select (new Tuple<Board, float>(rec.Item1.GetFlip(), rec.Item2));
-
-					dataValue.AddRange(list1);
-					dataValue.AddRange(list2);
-					dataValue.AddRange(list1Flip);
-					dataValue.AddRange(list2Flip);
-				}
-			}
-		}
 
 
 		List<string> pathList;
-		int pathIndex = 0;
-		List<Gibo> gibos = new List<Gibo>();
-
 
 		void genGibo()
 		{
-			if (pathList == null)
+			if (pathList == null || pathList.Count == 0)
 			{
 				Console.WriteLine("read gibos...");
-				pathList = new List<string>();
 
-				Search("d:/temp");
-
-				void Search(string path)
-				{
-					Console.WriteLine("search : " + path);
-					string[] files = System.IO.Directory.GetFiles(path, "*.gib");
-
-					foreach (string file in files)
-					{
-						pathList.Add(file);
-					}
-
-					string[] dirs = System.IO.Directory.GetDirectories(path);
-					foreach (string dir in dirs)
-					{
-						Search(dir);
-					}
-				}
+				string[] allfiles = Directory.GetFiles("d:/dataset/gibo/아마고수기보1", "*.gib", SearchOption.AllDirectories);
+				pathList = allfiles.ToList();
 			}
 
-
-			string curPath = pathList[pathIndex++];
-			if (pathIndex == pathList.Count)
-			{
-				pathIndex = 0;
-			}
+			//pop
+			string curPath = pathList[0];
+			pathList.RemoveAt(0);
 
 			Console.WriteLine(" read new Path .. " + curPath);
 
@@ -557,6 +405,7 @@ namespace Runner.Process
 			{
 				List<Board> history = gibo.GetParsed();
 				int isMyWin = gibo.isMyWin;
+				int isYoWin = isMyWin == 1 ? 0 : 1;
 
 				for (int i = 0; i < history.Count - 1; i++)
 				{
@@ -582,20 +431,18 @@ namespace Runner.Process
 					{
 						giboValue.Add(new Tuple<Board, float>(board, isMyWin));
 					}
-					else 
+					else
 					{
-						giboValue.Add(new Tuple<Board, float>(board.GetOpposite(), isMyWin == 1 ? 0 : 1));
+						giboValue.Add(new Tuple<Board, float>(board.GetOpposite(), isYoWin));
 					}
-					
 				}
-			}//);
+			}
 			Console.WriteLine($"    {giboPolicy.Count} policies, {giboValue.Count} values.");
 
+			
 
 			//순서대로 그냥 계속 쳐 넣는다.
-
-
-			var subPolicy = giboPolicy.GetRange(0, Math.Min(2500, giboPolicy.Count));
+			//var subPolicy = giboPolicy.GetRange(0, Math.Min(2500, giboPolicy.Count));
 			lock (dataPolicy)
 			{
 				dataPolicy.AddRange(giboPolicy);
@@ -605,12 +452,11 @@ namespace Runner.Process
 			{
 				dataValue.AddRange(giboValue);
 			}
-
 		}
 
 		void genMinMax()
 		{
-			MinMax minMax = new MinMax(tcpCommClient, valueNetName);
+			MinMax minMax = new MinMax(tcpCommClient);
 
 			//bool isMyFirst = Global.Rand.NextDouble() > 0.5;
 			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
@@ -699,16 +545,12 @@ namespace Runner.Process
 				if (isMyWin)
 				{
 					var vals1 = from e in moves1 select new Tuple<Board, float>(e.Item1, 1);
-					var vals2 = from e in moves2 select new Tuple<Board, float>(e.Item1.GetOpposite(), 0);
 					dataValue.AddRange(vals1);
-					dataValue.AddRange(vals2);
 				}
 				else
 				{
 					var vals1 = from e in moves1 select new Tuple<Board, float>(e.Item1, 0);
-					var vals2 = from e in moves2 select new Tuple<Board, float>(e.Item1.GetOpposite(), 1);
 					dataValue.AddRange(vals1);
-					dataValue.AddRange(vals2);
 				}
 			}
 
@@ -733,17 +575,17 @@ namespace Runner.Process
 		/// <summary>
 		/// 두 네트워크가 서로 싸움을 해서 그 기보를 학습 데이터로 내보낸다.
 		/// </summary>
-		void generate(Mcts.Strategy strategy1, Mcts.Strategy strategy2)
+		void genReinforce()
 		{
 			//Mcts mcts1 = new Mcts(new OnlyPolicy(tcpCommClient));
-			Mcts mcts1 = new Mcts(strategy1);
-			Mcts mcts2 = new Mcts(strategy2);
+			Mcts mcts1 = new Mcts(new RealYame(tcpCommClient));
+			Mcts mcts2 = new Mcts(new RealYame(tcpCommClient));
 			mcts1.MaxVisitCount = 500;
 			mcts2.MaxVisitCount = 500;
 
 			//bool isMyFirst = Global.Rand.Next() % 2 == 0;
 			Board board = new Board((Board.Tables)Global.Rand.Next(4), (Board.Tables)Global.Rand.Next(4), true, false);
-			
+
 
 			mcts1.Init(new Board(board));
 			mcts2.Init(new Board(board));
@@ -823,22 +665,21 @@ namespace Runner.Process
 				}
 			}
 
-			//winGames2.Add(isMyWin ? 1 : 0);
-			//while (winGames2.Count > 100)
-			//{
-			//	winGames2.RemoveAt(0);
-			//}
+		}
 
-			//winGames3.Add(isMyFirst ? 1 : 0);
-			//while (winGames3.Count > 100)
-			//{
-			//	winGames3.RemoveAt(0);
-			//}
+		public Random random = new Random();
 
-			//float rate2 = winGames2.Average();
-			//float rate3 = winGames3.Average();
-
-			//Console.WriteLine("    winning rate : " + rate2 + ", " + rate3);
+		void Shuffle<T>(List<T> list)
+		{
+			int n = list.Count;
+			while (n > 5)
+			{
+				n -= 5;
+				int k = random.Next(n + 1);
+				T value = list[k];
+				list[k] = list[n];
+				list[n] = value;
+			}
 		}
 	}
 }

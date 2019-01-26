@@ -27,7 +27,20 @@ namespace Janggi.TensorFlow
 
 		public bool IsConnected
 		{
-			get => client != null && client.Connected;
+			get => client != null;// && client.Connected;
+		}
+
+		public void ConfirmConnection()
+		{
+			if (!IsConnected)
+			{
+				Console.WriteLine("Try to connect ..");
+				while (!Connect("localhost", 9999))
+				{
+					Console.WriteLine("ConnectionFailed.");
+					System.Threading.Thread.Sleep(1000);
+				}
+			}
 		}
 
 		public enum Code : byte
@@ -70,7 +83,6 @@ namespace Janggi.TensorFlow
 			{
 				data[i + 1] = bytes[i];
 			}
-
 
 			return data;
 		}
@@ -195,38 +207,24 @@ namespace Janggi.TensorFlow
 			}
 		}
 
-		public bool LoadModel(NetworkKinds kinds, string callname, string filename)
+		public bool SaveModel(NetworkKinds kinds)
 		{
 			lock (this)
 			{
-				if (!IsConnected) throw new Exception("Is Not Connected.");
-
-				write(Code.Load, kinds);
-				write(callname);
-				return readOk();
-			}
-		}
-
-		public bool SaveModel(NetworkKinds kinds, string callname, string filename)
-		{
-			lock (this)
-			{
-				if (!IsConnected) throw new Exception("Is Not Connected.");
+				ConfirmConnection();
 
 				write(Code.Save, kinds);
-				write(callname);
 				return readOk();
 			}
 		}
 
-		public float[] EvaluatePolicy(Board board, List<Move> moves, string name)
+		public float[] EvaluatePolicy(Board board, List<Move> moves)
 		{
 			lock (this)
 			{
-				if (!IsConnected) throw new Exception("Is Not Connected.");
+				ConfirmConnection();
 
 				write(Code.Evaluate, NetworkKinds.Policy);
-				write(name);
 				write(board.GetBytes());
 
 				if (readOk())
@@ -257,19 +255,18 @@ namespace Janggi.TensorFlow
 			}
 		}
 
-		public float EvaluateValue(Board board, string name)
+		public float EvaluateValue(Board board)
 		{
 			lock (this)
 			{
-				if (!IsConnected) throw new Exception("Is Not Connected.");
+				ConfirmConnection();
 
 				write(Code.Evaluate, NetworkKinds.Value);
-				write(name);
 				write(board.GetBytes());
 
 				if (readOk())
 				{
-					return reader.ReadByte() / 255.0f;
+					return reader.ReadSingle();
 				}
 				else
 				{
@@ -278,24 +275,19 @@ namespace Janggi.TensorFlow
 			}
 		}
 
-		public bool TrainPolicy(List<Tuple<Board, Move>> list, string name)
+		public bool TrainPolicy(List<Tuple<Board, Move>> list)
 		{
 			lock (this)
 			{
-				if (list.Count < 255)
-				{
-					return false;
-				}
-				if (!IsConnected) throw new Exception("Is Not Connected.");
+				ConfirmConnection();
 
 				write(Code.Train, NetworkKinds.Policy);
-				write(name);
 
 				//255개로 끊어서 넣고
-				byte size = (byte)(list.Count / 255);
+				byte size = (byte)(list.Count);
 
 				writer.Write(size);
-				for (int i = 0; i < size * 255; i++)
+				for (int i = 0; i < size; i++)
 				{
 					var tuple = list[i];
 					var boardBytes = tuple.Item1.GetBytes();
@@ -309,21 +301,20 @@ namespace Janggi.TensorFlow
 			}
 		}
 
-		public bool TrainValue(List<Tuple<Board, float>> list, string name)
+		public bool TrainValue(List<Tuple<Board, float>> list)
 		{
 			lock (this)
 			{
-				if (!IsConnected) throw new Exception("Is Not Connected.");
+				ConfirmConnection();
 
 				write(Code.Train, NetworkKinds.Value);
-				write(name);
 
-				byte size = (byte)(list.Count / 255);
+				byte size = (byte)(list.Count);
 				writer.Write(size);
 				foreach (var tuple in list)
 				{
 					write(tuple.Item1.GetBytes());
-					writer.Write((byte)(tuple.Item2 * 255));
+					writer.Write(tuple.Item2);
 				}
 
 				return readOk();
