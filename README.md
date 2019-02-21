@@ -7,6 +7,8 @@ Janggi : https://en.wikipedia.org/wiki/Janggi
 
 야매장기는 알파고에서 강하게 영감을 받아 딥러닝으로 구현한 장기 AI입니다. 딥러닝은 텐서플로우로 구현되었고, 나머지 게임과 MinMax, 강화 학습 등은 WPF 및 C#으로 제작 중입니다.
 
+**현재 과거의 버그를 고치고 새로 나온 텐서 플로우에 맞춰서 업데이트 중입니다. 로컬에서 작업이 끝나는 대로 올리도록 하겠습니다.**
+
 ## Features
 
   알파고의 구현 원리를 참고하되, 학습 방법에서 다소 저의 편의대로 변형이 있을 수 있습니다. 누군가 같이 개발해주면 좋겠지만 아직 특별히 도움을 기대하지 않으므로 저 나름 재미나게 만들 계획입니다.
@@ -18,7 +20,7 @@ Janggi : https://en.wikipedia.org/wiki/Janggi
  - Windows 10
  - Python 3.6 64bit
 
-모든 개발은 Visual Studio 2017에서 이루어졌습니다. C#/WPF 코드는 .NET 4.6.2 환경에서 만들었습니다. TensorFlow를 이용한 딥러닝 알고리즘은 Python 3.6에서 작동됩니다.
+모든 개발은 Visual Studio 2017에서 이루어졌습니다. C#/WPF 코드는 .NET 4.7 환경에서 만들었습니다. TensorFlow를 이용한 딥러닝 알고리즘은 Python 3.6에서 작동됩니다.
 
 ## Goal
 
