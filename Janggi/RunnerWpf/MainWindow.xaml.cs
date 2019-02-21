@@ -29,8 +29,6 @@ namespace RunnerWpf
 		{
 			InitializeComponent();
 			StageMain.UnitMoved += StageMain_UnitMoved;
-
-			
 		}
 
 		Board mainBoard;
@@ -139,6 +137,11 @@ namespace RunnerWpf
 			if (realYame == null)
 			{
 				realYame = new RealYame(client);
+			}
+
+			if (onlyPolicy == null)
+			{
+				onlyPolicy = new OnlyPolicy(client);
 			}
 
 			mcts = new Mcts(realYame)

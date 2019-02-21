@@ -229,8 +229,14 @@ namespace Janggi.TensorFlow
 
 				if (readOk())
 				{
-					byte[] arrFrom = readByteArray(90);
-					byte[] arrTo = readByteArray(90);
+					byte[] byteArrFrom = readByteArray(90 * sizeof(float));
+					byte[] byteArrTo = readByteArray(90 * sizeof(float));
+
+					float[] arrFrom = new float[90];
+					float[] arrTo = new float[90];
+					Buffer.BlockCopy(byteArrFrom, 0, arrFrom, 0, byteArrFrom.Length);
+					Buffer.BlockCopy(byteArrTo, 0, arrTo, 0, byteArrTo.Length);
+
 
 					float[] proms = new float[moves.Count];
 					for (int i = 0; i < moves.Count; i++)
@@ -242,15 +248,19 @@ namespace Janggi.TensorFlow
 						}
 						else
 						{
-							proms[i] = arrFrom[move.From.Byte] * arrTo[move.From.Byte] / (255.0f * 255.0f);
+							float prom = arrFrom[move.From.Byte] * arrTo[move.To.Byte];
+							proms[i] = prom;
 						}
 					}
+
+					
+					
 
 					return proms;
 				}
 				else
 				{
-					return null;
+					throw new Exception("read failed");
 				}
 			}
 		}
@@ -282,11 +292,9 @@ namespace Janggi.TensorFlow
 				ConfirmConnection();
 
 				write(Code.Train, NetworkKinds.Policy);
-
-				//255개로 끊어서 넣고
-				byte size = (byte)(list.Count);
-
+				int size = list.Count;
 				writer.Write(size);
+
 				for (int i = 0; i < size; i++)
 				{
 					var tuple = list[i];
@@ -296,7 +304,6 @@ namespace Janggi.TensorFlow
 				}
 
 				//나머지는 버린다.
-
 				return readOk();
 			}
 		}
@@ -309,7 +316,7 @@ namespace Janggi.TensorFlow
 
 				write(Code.Train, NetworkKinds.Value);
 
-				byte size = (byte)(list.Count);
+				int size = list.Count;
 				writer.Write(size);
 				foreach (var tuple in list)
 				{

@@ -9,6 +9,8 @@ from _params import args
 
 input_channels = 31
 
+batch_size = 64
+
 sess = tf.Session()
 policy_tensors = {}
 value_tensors = {}
@@ -28,10 +30,10 @@ def load_policy():
 
 
 		input_from = input_move_float[:, :, 0]
-		input_to = input_move_float[:, :, 0]
+		input_to = input_move_float[:, :, 1]
 
 		move_from = move_float[:, :, 0]
-		move_to = move_float[:, :, 0]
+		move_to = move_float[:, :, 1]
 
 		lossFrom = tf.losses.softmax_cross_entropy(input_from, move_from)
 		lossTo = tf.losses.softmax_cross_entropy(input_to, move_to)
@@ -51,14 +53,16 @@ def load_policy():
 	all_vars = tf.global_variables('policy')
 	save_vars = tf.trainable_variables('policy/net') + [gs]
 	init_vars = [var for var in all_vars if var not in save_vars]
-
+	
 	latest_checkpoint = tf.train.latest_checkpoint('training/' + args.model_policy + '/policy')
 	if latest_checkpoint:
+		print('policy : found latest checkpoint : ' + latest_checkpoint)
 		saver = tf.train.Saver(save_vars)
 		saver.restore(sess, latest_checkpoint)
 		init_op = tf.initializers.variables(init_vars)
 	else:
 		#init all
+		print('policy : init all...')
 		init_op = tf.initializers.variables(all_vars)
 
 	sess.run(init_op)
@@ -66,7 +70,7 @@ def load_policy():
 
 	_sum_loss = tf.placeholder(tf.float32, [])
 	sum_loss = tf.summary.scalar('loss', _sum_loss)
-	file_writer = tf.summary.FileWriter('logs/policy/' + args.model_policy)
+	file_writer = tf.summary.FileWriter('logs/' + args.model_policy + '/policy')
 
 	policy_tensors['input_board'] = input_board
 	policy_tensors['input_move'] = input_move
@@ -90,8 +94,6 @@ def train_policy(data):
 
 	if (data_size == 0): return
 
-	batch_size = 8
-
 	input_board = policy_tensors['input_board']
 	input_move = policy_tensors['input_move']
 	move_from = policy_tensors['move_from']
@@ -101,7 +103,6 @@ def train_policy(data):
 	gs = policy_tensors['gs']
 	loss = policy_tensors['loss']
 	sum_loss = policy_tensors['sum_loss']
-	file_writer = policy_tensors['file_writer']
 
 	file_writer = policy_tensors['file_writer']
 	sum_loss = policy_tensors['sum_loss']
@@ -123,15 +124,26 @@ def train_policy(data):
 
 	return loss_avr, ev_gs, ev_move_from, ev_move_to
 
-def eval_policy():
-	pass
+def eval_policy(board):
+	if len(policy_tensors.keys()) == 0:
+		load_policy()
+	
+	input_board = policy_tensors['input_board']
+	move_from = policy_tensors['move_from']
+	move_to = policy_tensors['move_to']
+
+	ex_board = np.expand_dims(board, 0)
+
+	ev_move_from, ev_move_to = sess.run([move_from, move_to], feed_dict={input_board:ex_board})
+	return ev_move_from[0], ev_move_to[0]
+
 
 def save_policy():
 	save_vars = policy_tensors['save_vars']
 	gs = policy_tensors['gs']
 	ev_gs = sess.run(gs)
 	saver = tf.train.Saver(save_vars)
-	saver.save(sess,'training/' + args.model_policy + '/policy', ev_gs)
+	saver.save(sess,'training/' + args.model_policy + '/policy/policy', ev_gs)
 
 
 def load_value():
@@ -160,19 +172,20 @@ def load_value():
 
 	latest_checkpoint = tf.train.latest_checkpoint('training/' + args.model_value + '/value')
 	if latest_checkpoint:
+		print('value: found latest checkpoint : ' + latest_checkpoint)
 		saver = tf.train.Saver(save_vars)
 		saver.restore(sess, latest_checkpoint)
 		init_op = tf.initializers.variables(init_vars)
 	else:
 		#init all
+		print('value : init all...')
 		init_op = tf.initializers.variables(all_vars)
 
 	sess.run(init_op)
 
-
 	_sum_loss = tf.placeholder(tf.float32, [])
 	sum_loss = tf.summary.scalar('loss', _sum_loss)
-	file_writer = tf.summary.FileWriter('logs/value/' + args.model_value)
+	file_writer = tf.summary.FileWriter('logs/' + args.model_value + '/value')
 
 	value_tensors['input_board'] = input_board
 	value_tensors['input_judge'] = input_judge
@@ -194,7 +207,6 @@ def train_value(data):
 	data_size = len(data_board)
 	if data_size == 0:
 		return
-	batch_size = 8
 
 	input_board = value_tensors['input_board']
 	input_judge = value_tensors['input_judge']
@@ -204,7 +216,6 @@ def train_value(data):
 	gs = value_tensors['gs']
 	loss = value_tensors['loss']
 	sum_loss = value_tensors['sum_loss']
-	file_writer = value_tensors['file_writer']
 
 	file_writer = value_tensors['file_writer']
 	sum_loss = value_tensors['sum_loss']
@@ -219,6 +230,7 @@ def train_value(data):
 		_, ev_judge, ev_gs, ev_loss = sess.run([train_op, judge, gs, loss], feed_dict={input_board:chunk_board, input_judge:chunk_judge})
 
 		losses.append(ev_loss)
+
 	loss_avr = sum(losses) / len(losses)
 
 	summary = sess.run(sum_loss, feed_dict={_sum_loss:loss_avr})
@@ -234,4 +246,4 @@ def save_value():
 	gs = value_tensors['gs']
 	ev_gs = sess.run(gs)
 	saver = tf.train.Saver(save_vars)
-	saver.save(sess, 'training/' + args.model_value + '/value', ev_gs)
+	saver.save(sess, 'training/' + args.model_value + '/value/value', ev_gs)

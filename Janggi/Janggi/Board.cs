@@ -1351,7 +1351,7 @@ namespace Janggi
 		{
 			lock (Global.Rand)
 			{
-				bool colorInverse;
+				bool colorInverse = false;
 				if (IsMyDum)
 				{
 					colorInverse = true;
@@ -1380,9 +1380,8 @@ namespace Janggi
 						if (stone == 0)
 						{
 							Console.ForegroundColor = ConsoleColor.Gray;
-
 						}
-						else if (IsMine(stone) ^ colorInverse)
+						else if (IsMine(stone))
 						{
 							Console.ForegroundColor = ConsoleColor.Cyan;
 						}

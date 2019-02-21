@@ -69,9 +69,8 @@ def recv_moves(socket):
 		moves.append(recv_move(socket))
 	return moves
 
-def send_proms(socket, proms):
-	msg2 = bytes([int(p * 255) for p in proms])
-	msg = msg2
+def send_move(socket, proms):
+	msg = bytes(proms)
 	socket.send(msg)
 
 def recv_judge(socket):
@@ -84,9 +83,8 @@ def send_judge(socket, judge):
 	socket.send(msg)
 
 def recv_policy_train_data(socket):
-	#255개 단위로 들어옴.
-	size_255 = socket.recv(1)
-	size = size_255[0]
+	size = int.from_bytes(socket.recv(4), byteorder='little')
+	#size_255 = socket.recv(1)
 	data_board = [None] * size
 	data_move = [None] * size
 	for i in range(size):
@@ -95,7 +93,8 @@ def recv_policy_train_data(socket):
 	return {'board':data_board, 'move':data_move}
 
 def recv_value_train_data(socket):
-	size = socket.recv(1)[0]
+	size = int.from_bytes(socket.recv(4), byteorder='little')
+	#size = socket.recv(1)[0]
 	data_board = [None] * size
 	data_judge = [None] * size
 	for i in range(size):
@@ -120,9 +119,10 @@ def proc_save(kind, socket):
 def proc_evaluate(kind, socket):
 	if kind == 1:
 		board = recv_board(socket)
-		proms = tn.eval_policy(board)
+		move_from, move_to = tn.eval_policy(board)
 		send_ok(socket)
-		send_proms(socket, proms[0])
+		send_move(socket, move_from)
+		send_move(socket, move_to)
 	else:
 		board = recv_board(socket)
 		judge = proms = tn.eval_value(board)
@@ -136,11 +136,11 @@ def proc_train(kind, socket):
 	if kind == 1:
 		policy_train_data = recv_policy_train_data(socket)		
 		loss, gs, move_from, move_to = tn.train_policy(policy_train_data)
-		print('%d train : %.3lf' % (gs, loss))
+		print('%d policy : %.3lf' % (gs, loss))
 	else:
 		value_train_data = recv_value_train_data(socket)
 		loss, gs, judge = tn.train_value(value_train_data)
-		print('%d \t\t\t\t\t\tvalid : %.3lf' % (gs, loss))
+		print('\t\t\t\t\t\t%d value : %.3lf' % (gs, loss))
 
 	send_ok(socket)
 

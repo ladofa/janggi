@@ -29,7 +29,9 @@ def simple_network(input_board):
 def res_network(input_board):
 	channels = 96
 	x = tf.cast(input_board, tf.float32)
+	x = tf.layers.conv2d(x, channels, 5, padding='same')
 
+	x = res_se_layer(x, channels)
 	x = res_se_layer(x, channels)
 	x = res_se_layer(x, channels)
 	x = res_se_layer(x, channels)
@@ -37,6 +39,8 @@ def res_network(input_board):
 	x = res_se_layer(x, channels)
 
 	x = tf.reshape(x, [-1, channels * 90])
+	x = tf.layers.dense(x, 128, activation=tf.nn.sigmoid)
+	x = tf.layers.dense(x, 128, activation=tf.nn.sigmoid)
 	x = tf.layers.dense(x, 2)
 
 	return x

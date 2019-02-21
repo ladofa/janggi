@@ -15,6 +15,8 @@ namespace Runner.Process
 {
 	public class Train
 	{
+		const int setCount = 512;
+
 		bool running;
 
 		public void Stop()
@@ -54,7 +56,7 @@ namespace Runner.Process
 				while (running)
 				{
 					//자료가 한 쪽이라도 남아있으면 쉰다.
-					if (dataPolicy.Count > 5000 || dataValue.Count > 5000)
+					if (dataPolicy.Count > 5000  || dataValue.Count > 5000)
 					{
 						System.Threading.Thread.Sleep(1000);
 					}
@@ -74,13 +76,13 @@ namespace Runner.Process
 			{
 				while (running)
 				{
-					while (bufferPolicy.Count < 10000 && dataPolicy.Count >= 255)
+					while (bufferPolicy.Count < setCount * 20 && dataPolicy.Count >= 5000)
 					{
 						List<Tuple<Board, Move>> sub;
 						lock (dataPolicy)
 						{
-							sub = dataPolicy.GetRange(0, 255);
-							dataPolicy.RemoveRange(0, 255);
+							sub = dataPolicy.GetRange(0, 5000);
+							dataPolicy.RemoveRange(0, 5000);
 						}
 
 						var sub2 = from e in sub select new Tuple<Board, Move>(e.Item1.GetFlip(), e.Item2.GetFlip());
@@ -93,13 +95,13 @@ namespace Runner.Process
 						}
 					}
 
-					while (bufferValue.Count < 10000 && dataValue.Count >= 255)
+					while (bufferValue.Count < 10000 && dataValue.Count >= 5000)
 					{
 						List<Tuple<Board, float>> sub;
 						lock (dataValue)
 						{
-							sub = dataValue.GetRange(0, 255);
-							dataValue.RemoveRange(0, 255);
+							sub = dataValue.GetRange(0, 5000);
+							dataValue.RemoveRange(0, 5000);
 						}
 
 						var subFlip = from e in sub select new Tuple<Board, float>(e.Item1.GetFlip(), e.Item2);
@@ -133,15 +135,15 @@ namespace Runner.Process
 			running = true;
 			while (running)
 			{
-				const int setCount = 240;
+				
 
-				while (bufferPolicy.Count < setCount * 10 && bufferValue.Count < setCount * 10)
+				while (bufferPolicy.Count < setCount && bufferValue.Count < setCount)
 				{
 					signal.Reset();
 					signal.WaitOne();
 				}
 
-				if (bufferPolicy.Count > setCount * 10)
+				if (bufferPolicy.Count > setCount)
 				{
 					Console.WriteLine("train policy ... " + DateTime.Now.ToString());
 					List<Tuple<Board, Move>> sub;
@@ -154,7 +156,7 @@ namespace Runner.Process
 					tcpCommClient.TrainPolicy(sub);
 				}
 
-				if (bufferValue.Count > setCount * 10)
+				if (bufferValue.Count > setCount)
 				{
 					Console.WriteLine("train value ... " + DateTime.Now.ToString());
 					List<Tuple<Board, float>> sub;
@@ -400,7 +402,7 @@ namespace Runner.Process
 			{
 				List<Board> history = gibo.GetParsed();
 				int isMyWin = gibo.isMyWin;
-				int isYoWin = isMyWin == 1 ? 0 : 1;
+				int isYoWin = 1 - isMyWin;
 
 				for (int i = 0; i < history.Count; i++)
 				{
@@ -408,6 +410,8 @@ namespace Runner.Process
 
 					if (board.IsMyTurn)
 					{
+						//Console.WriteLine("MY TURN");
+						//board.PrintStones();
 						if (i < history.Count - 1)
 						{
 							Move move = history[i + 1].PrevMove;
@@ -421,21 +425,26 @@ namespace Runner.Process
 					}
 					else
 					{
+						
 						//항상 두려고 하는 쪽을 아래에 배치한다.
-						var bp = board.GetOpposite();
+						board = board.GetOpposite();
+
+						//Console.WriteLine("YO TURN");
+						//board.PrintStones();
 						if (i < history.Count - 1)
 						{
-							Move move = history[i + 1].PrevMove;
-							giboPolicy.Add(new Tuple<Board, Move>(board.GetOpposite(), move.GetOpposite()));
+							Move move = history[i + 1].PrevMove.GetOpposite();
+							giboPolicy.Add(new Tuple<Board, Move>(board, move));
 						}
 
-						if (isMyWin != -1)
+						if (i > 10 && isMyWin != -1)
 						{
-							giboValue.Add(new Tuple<Board, float>(bp, isYoWin));
+							giboValue.Add(new Tuple<Board, float>(board, isYoWin));
 						}
 					}
 				}
 			}
+
 			Console.WriteLine($"    {giboPolicy.Count} policies, {giboValue.Count} values.");
 
 			
