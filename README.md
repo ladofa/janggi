@@ -64,13 +64,13 @@ RunnerConsole과 TensorNetworks를 동시에 실행하셔야 합니다. 솔루�
 
 ### 학습 결과 활용
 
-결과를 보시려면 RunnerWpf와 TensorNetworks 를 동시에 실행합니다. RnnnerWpf의 MainWikndows.xaml.cs 에서 'net Mcts'로 검색해보세요. Mcts는 각종 변형이 있을 수 있는데 이와 관련된 함수를 인자로 받아옵니다. realYame는 가장 보통의 Mcts 구현이고.... onlyPolicy는 정책 네트워크만 사용한 구현입니다.
+결과를 보시려면 RunnerWpf와 TensorNetworks 를 동시에 실행합니다. RnnnerWpf의 MainWikndows.xaml.cs 에서 'new Mcts'로 검색해보세요. Mcts는 각종 변형이 있을 수 있는데 이와 관련된 함수를 인자로 받아옵니다. realYame는 가장 보통의 Mcts 구현이고.... onlyPolicy는 정책 네트워크만 사용한 구현입니다.
 
 오른쪽에서 Mcts를 트리구조로 탐색할 수 있고, 각 노드의 장기판을 볼 수도 있습니다. 요거 하나 그나마 쓸만한 거 같네요 ㅋㅋ
 
 ## 네트워크 간단 소개
 
-resnet이라고 구현해 놓은 것은 SE 적용된 버전을 올려놨습니다. 장기 학습에는 오히려 단순흔 VGG스타일이 좋을 것 같기도 하네요.
+resnet이라고 구현해 놓은 것은 SE 적용된 버전을 올려놨습니다. 장기 학습에는 오히려 단순한 VGG스타일이 좋을 것 같기도 하네요.
 
 네트워크의 입력은 현 보드의 상황이고, 출력은 이길 확률 혹은 어디를 둬야 할지 입니다. 학습하는 경우에는 정답을 같이 알려줘야겠죠. 보드 입력은 Janggi프로젝트에서 Board.cs 의 GetBytes를 보면 확인할 수 있는데요, 중요한 것은 항상 아래쪽이 둘 차례라는 것입니다.
 
