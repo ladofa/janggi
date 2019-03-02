@@ -384,6 +384,9 @@ namespace Runner.Process
 
 				string[] allfiles = Directory.GetFiles("d:/dataset/gibo", "*.gib", SearchOption.AllDirectories);
 				pathList = allfiles.ToList();
+
+				pathList = pathList.OrderBy(x => random.Next()).ToList();
+
 			}
 
 			//pop
