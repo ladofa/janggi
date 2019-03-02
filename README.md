@@ -1,5 +1,8 @@
 # 야매장기(Yame Janggi)
 
+![장기 그림](https://github.com/ladofa/janggi/blob/master/intro.jpg)
+
+
 ## Introduction
 This is an implementation of deep-learning AI for Janggi(Korean Chess). All documents, comments and other description are written in Korean.
 
@@ -62,8 +65,6 @@ RunnerConsole과 TensorNetworks를 동시에 실행하셔야 합니다. 솔루�
 ### 학습 결과 활용
 
 결과를 보시려면 RunnerWpf와 TensorNetworks 를 동시에 실행합니다. RnnnerWpf의 MainWikndows.xaml.cs 에서 'net Mcts'로 검색해보세요. Mcts는 각종 변형이 있을 수 있는데 이와 관련된 함수를 인자로 받아옵니다. realYame는 가장 보통의 Mcts 구현이고.... onlyPolicy는 정책 네트워크만 사용한 구현입니다.
-
-[[/images/20170923_01.jpg]]
 
 오른쪽에서 Mcts를 트리구조로 탐색할 수 있고, 각 노드의 장기판을 볼 수도 있습니다. 요거 하나 그나마 쓸만한 거 같네요 ㅋㅋ
 
