@@ -2,14 +2,27 @@
 
 ![장기 그림](https://github.com/ladofa/janggi/blob/master/intro.jpg)
 
-
 ## Introduction
 This is an implementation of deep-learning AI for Janggi(Korean Chess). All documents, comments and other description are written in Korean.
 
-Janggi : https://en.wikipedia.org/wiki/Janggi
+야매장기는 알파 제로 기반의 장기 구현입니다. 모든 학습은 TensorFlow/Keras 에서 이루어지며, 윈도우 UI 부분은 WPF로 구현됩니다. 과거 알파고 C# 기반의 프로그램을 전면적으로 수정중에 있습니다. 개발과 관련된 자세한 설명은 각 폴더의 README.md를 참고하시기 바랍니다.
+
+## 진행 상황
+2021년 7월 5일 현재
+### 완료됨
+ - 기보 기반의 supervised learning
+ - MCTS를 활용한 강화 학습
+
+### 계획됨
+ - 학습 진행 상황 기록(TensorBoard)
+ - RESTful API 서비스 및 해당 서비스를 활용하는 WPF 응용
+   - 현재 상태 입력 -> 다음 수 출력 -> UI와 대전
+   - MCTS 트리 내용 출력 -> view
+
+
+# 구 버전 설명
 
 야매장기는 알파고에서 강하게 영감을 받아 딥러닝으로 구현한 장기 AI입니다. 딥러닝은 텐서플로우로 구현되었고, 나머지 게임과 MinMax, 강화 학습 등은 WPF 및 C#으로 되 어 있습니다. 프로젝트 시작한 지는 너무 오래됐는데 제가 관리를 안 해서 점점 시작한 의미가 없어지고 있네요. 앞으로도 별로 건드려볼 생각은 없습니다.. ㅎㅎ
-
 
 ## Environment / Requirement
 
