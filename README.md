@@ -24,6 +24,4 @@ This is an implementation of deep-learning AI for Janggi(Korean Chess). All docu
  - python_tf : Python/TensorFlow - 학습, 서비스
  - Janggi : Visual Studio - 레거시
 
-## 감사의 말
-본 프로젝트는 "2021년 NIPA 인공지능 고성능컴퓨팅 지원사업"의 도움으로 진행되었습니다.
 
