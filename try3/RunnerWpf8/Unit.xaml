@@ -1,0 +1,26 @@
+﻿<UserControl x:Class="RunnerWpf8.Unit"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RunnerWpf8"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <Grid x:Name="GridMarker" Visibility="Collapsed">
+            <Polygon Points="0,0 0,10, 10,0" Fill="Red" />
+            <Polygon Points="0,0 10,0, 0,10" Fill="Red" />
+            <Polygon Points="0,0 10,0, 0,10" Fill="Red" />
+            <Polygon Points="0,0 10,0, 0,10" Fill="Red" />
+
+        </Grid>
+        <Image Source="Images\HanCha.png" Visibility="Collapsed"/>
+        <Image x:Name="ImageUnit"/>
+        <Ellipse x:Name="EllipseMarker" Stroke="Red" StrokeThickness="2" Opacity="0.4" Visibility="Collapsed"/>
+
+        <Ellipse x:Name="EllipseMarkerTarget" Stroke="Green" StrokeThickness="2" Opacity="0.4" Visibility="Collapsed"/>
+        <Ellipse x:Name="EllipseMarkerBlock" Stroke="Yellow" StrokeThickness="2" Opacity="0.4" Visibility="Collapsed"/>
+
+
+    </Grid>
+</UserControl>

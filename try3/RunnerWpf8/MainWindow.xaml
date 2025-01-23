@@ -1,0 +1,93 @@
+﻿<Window x:Class="RunnerWpf8.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RunnerWpf8"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="700" Width="1300">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Vertical" Margin="2">
+            <Button x:Name="ButtonNewGame" Margin="2" Content="새 게임" Click="ButtonNewGame_Click"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="2">
+                <RadioButton x:Name="RadioButtonMyFirst" Content="선수" GroupName="MyFirst" IsChecked="True"/>
+                <RadioButton x:Name="RadioButtonYoFirst" Content="후수" GroupName="MyFirst"/>
+            </StackPanel>
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical">
+
+                    <TextBlock Text="상대방" HorizontalAlignment="Center" Margin="2"/>
+                    <RadioButton x:Name="RadioButtonYoLeft" Content="마상마상" GroupName="YoInit" IsChecked="True"/>
+                    <RadioButton x:Name="RadioButtonYoRight" Content="상마상마" GroupName="YoInit"/>
+                    <RadioButton x:Name="RadioButtonYoInner" Content="마상상마" GroupName="YoInit"/>
+                    <RadioButton x:Name="RadioButtonYoOuter" Content="상마마상" GroupName="YoInit"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Grid.Column="1">
+                    <TextBlock Text="나" HorizontalAlignment="Center"/>
+                    <RadioButton x:Name="RadioButtonMyRight" Content="마상마상" GroupName="MyInit" IsChecked="True"/>
+                    <RadioButton x:Name="RadioButtonMyLeft" Content="상마상마" GroupName="MyInit"/>
+                    <RadioButton x:Name="RadioButtonMyInner" Content="마상상마" GroupName="MyInit"/>
+                    <RadioButton x:Name="RadioButtonMyOuter" Content="상마마상" GroupName="MyInit"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical">
+
+                    <TextBlock Text="상대방" HorizontalAlignment="Center" Margin="2"/>
+                    <RadioButton x:Name="RadioButtonYoControllerAI" Content="AI" GroupName="YoController" IsChecked="True"/>
+                    <RadioButton x:Name="RadioButtonYoControllerHuman" Content="Human" GroupName="YoController"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Grid.Column="1">
+                    <TextBlock Text="나" HorizontalAlignment="Center"/>
+                    <RadioButton x:Name="RadioButtonMyControllerAI" Content="AI" GroupName="MyController"/>
+                    <RadioButton x:Name="RadioButtonMyControllerHuman" Content="Human" GroupName="MyController" IsChecked="True"/>
+                </StackPanel>
+            </Grid>
+            <Rectangle Fill="LightGray" Height="1" Margin="10"/>
+            <StackPanel Orientation="Horizontal" Margin="2">
+                <TextBlock Text="AI 탐색횟수 : "/>
+                <TextBox x:Name="TextBoxMaxVisitCount" Width="60" TextChanged="TextBoxMaxVisitCount_TextChanged"/>
+            </StackPanel>
+
+
+            <StackPanel Orientation="Horizontal" Margin="2">
+                <CheckBox x:Name="CheckBoxTimer" Content="AI 시간제한 : " Checked="CheckBoxTimer_Checked" Unchecked="CheckBoxTimer_Unchecked"/>
+                <TextBox x:Name="TextBoxTimer" Width="30" Text="5" TextChanged="TextBoxTimer_TextChanged"/>
+                <TextBlock Text="초"/>
+            </StackPanel>
+
+            <CheckBox x:Name="CheckBoxThinkAlways" Content="사용자가 둘 때 탐색" Margin="2" Checked="CheckBoxThinkAlways_Checked" Unchecked="CheckBoxThinkAlways_Unchecked" IsChecked="False"/>
+            <CheckBox x:Name="CheckBoxStepByStep" Content="AI 자동 시작" Margin="2" Checked="CheckBoxStepByStep_Checked" Unchecked="CheckBoxStepByStep_Unchecked" IsChecked="True"/>
+
+            <Button x:Name="ButtonStartAI" Content="AI 생각 시작" Margin="2" Click="ButtonStartAI_Click"/>
+            <Button x:Name="ButtonForceAI" Content="바로 두기" Margin="2" Click="ButtonForceAI_Click"/>
+            <Grid Margin="2">
+                <ProgressBar x:Name="ProgressBarVisitCount" Height="23"/>
+                <TextBlock x:Name="TextVisitCount" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+
+
+        </StackPanel>
+        <local:Stage x:Name="StageMain" Grid.Column="1"/>
+
+        <GridSplitter Grid.Column="2" HorizontalAlignment="Stretch"/>
+        <local:TreeViewer x:Name="TreeViewerMain" Grid.Column="3"/>
+    </Grid>
+</Window>

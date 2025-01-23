@@ -1,0 +1,46 @@
+﻿<UserControl x:Class="RunnerWpf8.Stage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RunnerWpf8"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <TextBlock x:Name="TextBlockInfo" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3"/>
+        <Grid x:Name="GridWood" Background="DarkGray">
+            <Grid x:Name="GridLine">
+            </Grid>
+            <Grid x:Name="GridStage">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+            </Grid>
+
+            <Grid x:Name="GridOverlay">
+                <local:Unit x:Name="UnitMoving" Opacity="0.4" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</UserControl>

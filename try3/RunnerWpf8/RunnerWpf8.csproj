@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Janggi\Janggi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Images\" />
+
+	<Resource Include="Images/HanCha.png" />
+	<Resource Include="Images/HanJol.png" />
+	<Resource Include="Images/HanKing.png" />
+	<Resource Include="Images/HanMa.png" />
+	<Resource Include="Images/HanPo.png" />
+	<Resource Include="Images/HanSa.png" />
+	<Resource Include="Images/HanSang.png" />
+	<Resource Include="Images/ChoCha.png" />
+	<Resource Include="Images/ChoJol.png" />
+	<Resource Include="Images/ChoKing.png" />
+	<Resource Include="Images/ChoMa.png" />
+	<Resource Include="Images/ChoPo.png" />
+	<Resource Include="Images/ChoSa.png" />
+	<Resource Include="Images/ChoSang.png" />
+
+	<Resource Include="Images/Empty.png" />
+
+
+  </ItemGroup>
+
+</Project>
